@@ -1,0 +1,6 @@
+{
+  "name": "send-reminders",
+  "description": "Sends reminders for upcoming events.",
+  "framework": null,
+  "plugins": []
+}

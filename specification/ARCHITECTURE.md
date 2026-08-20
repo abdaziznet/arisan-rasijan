@@ -11,6 +11,7 @@
 | Layer | Teknologi | Alasan |
 |---|---|---|
 | Mobile App | **Flutter** | Cross-platform Android & iOS dalam satu codebase |
+| State Management | **Riverpod** | Controller dikelompokkan per fitur, konsisten dengan struktur feature-first |
 | Backend & Database | **Supabase** (PostgreSQL) | Backend-as-a-service lengkap: Auth, DB, Storage, Realtime, Edge Functions |
 | Auth | **Supabase Auth — Email Magic Link/OTP** | Tanpa password, tanpa biaya SMS |
 | Storage Foto | **Supabase Storage** | Terintegrasi langsung dengan Auth & RLS |
@@ -102,10 +103,37 @@ lib/
 
 ## 4. State Management
 
-Disarankan tetap konsisten dengan pola state management yang sudah dipakai di project Flutter kamu sebelumnya, agar codebase mudah di-maintain bersamaan. Untuk kebutuhan app ini secara umum:
+**Riverpod** dipilih sebagai state management utama, dengan controller dikelompokkan per fitur (bukan 1 controller besar global). Pola ini konsisten dengan struktur folder feature-first di atas — tiap `features/<nama_fitur>/presentation/` punya provider/controller-nya sendiri.
 
-- Data async dari Supabase (list anggota, periode, histori) → cocok pakai pola provider/controller dengan state loading–data–error yang jelas
-- Realtime update hasil kocokan → subscribe stream dari Supabase Realtime, tampilkan perubahan otomatis ke UI tanpa perlu refresh manual
+**Konvensi penamaan & lokasi:**
+
+```
+features/<nama_fitur>/presentation/
+├── controllers/
+│   └── <nama_fitur>_controller.dart   # StateNotifier/AsyncNotifier untuk fitur ini
+├── providers/
+│   └── <nama_fitur>_providers.dart    # Provider definitions (repository, controller)
+└── screens/
+    └── <nama_fitur>_screen.dart       # ConsumerWidget yang consume provider di atas
+```
+
+**Contoh per fitur:**
+
+| Fitur | Controller | Tanggung Jawab |
+|---|---|---|
+| `auth` | `AuthController` (`AsyncNotifier`) | Status login, magic link, redeem invite code |
+| `members` | `MembersController` | List anggota, CRUD profil |
+| `periods` | `PeriodsController` | Periode berjalan, jadwal, tuan rumah |
+| `payments` | `PaymentsController` | Status iuran & donasi per periode |
+| `draw` | `DrawController` | Trigger kocokan, subscribe hasil Realtime |
+| `event_checklist` | `EventChecklistController` | Checklist rundown acara |
+| `gallery` | `GalleryController` | Upload & list foto |
+| `gathering` | `GatheringController` | Kas gathering, voting, tally |
+
+**Prinsip:**
+- Data async dari Supabase (list anggota, periode, histori, dsb) dibungkus `AsyncNotifier`/`FutureProvider` dengan state loading–data–error yang jelas dan konsisten di semua fitur
+- Realtime update (hasil kocokan, tally voting) di-subscribe di dalam controller terkait (`DrawController`, `GatheringController`), lalu di-expose sebagai `Stream`-based provider agar UI otomatis rebuild tanpa refresh manual
+- Controller tidak saling mengakses controller fitur lain secara langsung — kalau butuh data lintas fitur (misal `gathering` butuh data `members` untuk cek anggota aktif), akses lewat provider/repository fitur tsb, bukan import controller-nya langsung — menjaga agar tiap fitur tetap independen dan mudah diuji terpisah
 
 ---
 
@@ -115,6 +143,40 @@ Disarankan tetap konsisten dengan pola state management yang sudah dipakai di pr
 - Gunakan `supabase_flutter` SDK → `signInWithOtp(email: ...)`
 - Deep link handling untuk menangkap redirect dari email (perlu setup `android/app/src/main/AndroidManifest.xml` dan `ios/Runner/Info.plist` untuk custom URL scheme)
 - Setelah verifikasi, cek apakah `profiles` sudah ada untuk user tsb → jika belum, arahkan ke flow lengkapi profil (nama, no HP, foto)
+
+**Kontrak Edge Function — Invite Code:**
+
+Karena tabel `invite_codes` tidak boleh diakses langsung oleh client (lihat RLS di `DATABASE_SCHEMA.md` 2.14), pendaftaran anggota baru wajib lewat 2 Edge Function berikut (berjalan dengan `service_role` key):
+
+**`generate-invite-code`** *(dipanggil admin)*
+```
+Request:  { expires_in_days: number, max_uses?: number }
+Proses:   1. Generate kode acak (misal 8 karakter alfanumerik)
+          2. Hash kode dengan bcrypt/SHA-256
+          3. Insert ke invite_codes (code_hash, expires_at, max_uses, created_by)
+Response: { code: string }   // kode plaintext HANYA dikembalikan sekali ini,
+                              // tidak pernah disimpan/ditampilkan lagi setelahnya
+```
+
+**`redeem-invite-code`** *(dipanggil calon anggota baru, sebelum punya session)*
+```
+Request:  { code: string, email: string }
+Proses:   1. Hash kode yang dikirim, cari baris invite_codes yang cocok
+          2. Validasi: is_revoked = false, expires_at > now(), used_count < max_uses
+          3. Jika valid: increment used_count, lalu trigger signInWithOtp
+             untuk email tsb agar anggota lanjut ke flow magic link seperti biasa
+          4. Jika tidak valid: kembalikan error tanpa detail spesifik
+             (hindari membocorkan apakah kode salah/kadaluarsa/sudah revoked —
+             cukup "Kode undangan tidak valid")
+Response: { success: boolean, message: string }
+```
+
+**`revoke-invite-code`** *(dipanggil admin)*
+```
+Request:  { invite_code_id: uuid }
+Proses:   Set is_revoked = true, revoked_by, revoked_at
+Response: { success: boolean }
+```
 
 ### 5.2 Fitur Kocokan
 - Tombol "Mulai Kocokan" hanya muncul untuk role admin
@@ -149,6 +211,10 @@ Disarankan tetap konsisten dengan pola state management yang sudah dipakai di pr
   - Update `gathering_events.status` jadi `'decided'` dan set `winning_option_id`
 - Hasil voting di-broadcast lewat **Supabase Realtime** ke layar semua anggota, mirip pola yang dipakai di fitur kocokan
 - Setelah opsi terpilih, admin input `event_date` dan `fund_used` → sistem otomatis insert baris `'gathering_expense'` (nominal negatif) ke `fund_ledger`, mengurangi saldo kas gathering
+- **Toggle visibilitas voting**: admin mengatur `app_settings.gathering_votes_visible_to_members` dari halaman pengaturan admin. Flutter client membaca nilai ini untuk menentukan tampilan:
+  - Jika `'true'`: layar voting menampilkan daftar nama anggota beserta pilihannya (query langsung ke `gathering_votes`)
+  - Jika `'false'`: layar voting hanya menampilkan tally angka per opsi (panggil RPC function `get_gathering_vote_tally`), tanpa menampilkan siapa memilih apa
+  - Setting ini murni memengaruhi **apa yang ditampilkan/bisa diakses selama proses berlangsung** — hasil akhir (opsi pemenang) tetap terlihat semua anggota setelah voting resmi ditutup, karena itu bagian dari `gathering_events.winning_option_id` yang publik
 
 ---
 
@@ -157,7 +223,7 @@ Disarankan tetap konsisten dengan pola state management yang sudah dipakai di pr
 - **Row Level Security (RLS)** aktif di semua tabel (detail lihat `DATABASE_SCHEMA.md`)
 - Proses kocokan dijalankan di **Edge Function** (server-side), bukan di client, agar tidak bisa direkayasa
 - Proses penutupan voting gathering & penghitungan opsi pemenang juga dijalankan server-side (trigger/Edge Function), bukan di client, untuk menghindari manipulasi hasil dan race condition saat beberapa anggota vote bersamaan
-- Invite code untuk pendaftaran anggota baru disimpan terenkripsi/hash, punya masa berlaku, dan bisa di-revoke oleh admin
+- Invite code untuk pendaftaran anggota baru disimpan terenkripsi/hash, punya masa berlaku, dan bisa di-revoke oleh admin — lihat model data di `DATABASE_SCHEMA.md` (2.14 `invite_codes`) dan kontrak Edge Function di bagian 5.1 di atas
 
 ---
 

@@ -108,6 +108,7 @@ Aplikasi ini bersifat **privat**, hanya digunakan oleh anggota satu keluarga bes
 - **Voting otomatis ditutup** ketika seluruh anggota aktif sudah memberikan suara
 - Opsi dengan suara terbanyak menjadi **tujuan gathering terpilih**
 - Setelah voting selesai, admin dapat menetapkan tanggal & mencatat nominal kas yang dipakai untuk event tersebut, sehingga saldo kas gathering otomatis berkurang
+- **Pengaturan visibilitas voting**: admin memiliki toggle konfigurasi untuk menentukan apakah pilihan suara tiap anggota (siapa memilih opsi apa, tally sementara) bisa dilihat oleh seluruh anggota, atau hanya admin yang bisa melihat detailnya selama proses berlangsung — anggota tetap bisa melihat opsi yang tersedia dan status voting (berapa yang sudah/belum vote) terlepas dari pengaturan ini, yang dibatasi hanya rincian pilihan per anggota
 
 ### 5.2 Nice to Have (Fase 2)
 

@@ -1,69 +1,72 @@
-# Open Questions
+# Pertanyaan yang Belum Terjawab
 
-## OQ-001 — Invite code persistence
+## OQ-001 — Penyimpanan kode undangan
 
-Source:
+Sumber:
 PRD.md, ARCHITECTURE.md, DATABASE_SCHEMA.md
 
-Conflict:
-PRD requires invite codes for new members and Architecture requires codes to be hashed, expirable, and revocable. DATABASE_SCHEMA.md does not define an entity, columns, or policies for storing invite codes.
+Konflik:
+PRD mengharuskan adanya kode undangan untuk anggota baru dan arsitektur mengharuskan kode tersebut di-hash, memiliki masa berlaku, serta dapat dicabut. DATABASE_SCHEMA.md belum mendefinisikan entitas, kolom, atau kebijakan untuk menyimpan kode undangan.
 
-Impact:
-The invite onboarding flow cannot be implemented against the documented schema without introducing undocumented database structure.
+Dampak:
+Alur pendaftaran melalui undangan belum dapat diimplementasikan berdasarkan skema yang terdokumentasi tanpa menambahkan struktur database yang belum didokumentasikan.
 
-Recommendation:
-Specify the invite-code data model and RLS policies, or explicitly authorise a dedicated table/Edge Function contract.
+Rekomendasi:
+Tentukan model data dan kebijakan RLS untuk kode undangan, atau secara eksplisit setujui penggunaan tabel khusus atau kontrak Edge Function.
 
 Status:
-Pending
+Resolved
 
-## OQ-002 — Gathering voting visibility
+## OQ-002 — Visibilitas voting gathering
 
-Source:
+Sumber:
 DATABASE_SCHEMA.md, DESIGN.md
 
-Conflict:
-DATABASE_SCHEMA.md leaves whether members can see individual votes to family agreement. DESIGN.md recommends private voting by default, showing totals only.
+Konflik:
+DATABASE_SCHEMA.md menyerahkan keputusan mengenai apakah anggota dapat melihat pilihan vote individu kepada kesepakatan keluarga. DESIGN.md merekomendasikan voting privat secara bawaan, dengan hanya menampilkan jumlah total suara.
 
-Impact:
-The voting result and progress UI needs an agreed privacy behaviour.
+Dampak:
+Tampilan hasil dan progres voting membutuhkan perilaku privasi yang telah disepakati.
 
-Recommendation:
-Confirm private voting as the MVP default, with aggregate vote totals visible to members and individual choices hidden.
+Rekomendasi:
+Konfirmasikan voting privat sebagai perilaku bawaan MVP, dengan total suara terlihat oleh anggota tetapi pilihan setiap individu disembunyikan.
 
 Status:
-Pending
+Resolved
 
-## OQ-003 — Flutter state-management choice
+## OQ-003 — Pilihan manajemen state Flutter
 
-Source:
+Sumber:
 ARCHITECTURE.md
 
-Conflict:
-Architecture recommends retaining the state-management pattern used in prior projects, but this repository is a new empty project with no existing pattern.
+Konflik:
+Arsitektur menyarankan untuk mempertahankan pola manajemen state dari proyek sebelumnya, tetapi repositori ini adalah proyek baru dan belum memiliki pola yang digunakan.
 
-Impact:
-The app needs one consistent provider/controller implementation for asynchronous and realtime state.
+Dampak:
+Aplikasi membutuhkan satu implementasi provider/controller yang konsisten untuk state asynchronous dan realtime.
 
-Recommendation:
-Use Riverpod with feature-scoped controllers, unless an existing family project convention should be followed.
+Rekomendasi:
+Gunakan Riverpod dengan controller yang dikelompokkan per fitur, kecuali terdapat konvensi proyek keluarga yang sudah digunakan sebelumnya.
 
 Status:
-Pending
+Resolved
 
-## OQ-004 — Supabase environment configuration
+## OQ-004 — Konfigurasi environment Supabase
 
-Source:
+Sumber:
 ARCHITECTURE.md
 
-Conflict:
-The architecture mandates Supabase Auth, but the project has no Supabase project URL, anon key, redirect URI, or environment-file convention.
+Konflik:
+Arsitektur mengharuskan penggunaan Supabase Auth, tetapi proyek belum memiliki URL proyek Supabase, anon key, redirect URI, atau konvensi file environment.
 
-Impact:
-Email Magic Link/OTP cannot be connected or verified on a mobile device.
+Dampak:
+Email Magic Link/OTP belum dapat dihubungkan maupun diverifikasi pada perangkat seluler.
 
-Recommendation:
-Provide the Supabase project connection details and authorised Android/iOS deep-link scheme, then add a non-committed environment configuration.
+Rekomendasi:
+Sediakan detail koneksi proyek Supabase dan skema deep link Android/iOS yang diizinkan, kemudian tambahkan konfigurasi environment yang tidak dikomit ke repository.
+
+Evidence:
+sudah ada di file .env
 
 Status:
-Pending
+Resolved

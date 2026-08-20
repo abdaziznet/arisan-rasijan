@@ -23,6 +23,7 @@
 | `gathering_events` | Data event gathering keluarga (didanai dari kas bersama) |
 | `gathering_poll_options` | Opsi tujuan gathering yang dibuat admin untuk voting |
 | `gathering_votes` | Suara tiap anggota untuk voting gathering |
+| `invite_codes` | Kode undangan untuk pendaftaran anggota baru (hash, masa berlaku, status revoke) |
 
 Catatan: karena aplikasi ini untuk **satu grup keluarga saja** (bukan multi-tenant), tidak diperlukan tabel `families`/`groups` terpisah kecuali kamu ingin app ini reusable untuk lebih dari satu keluarga di kemudian hari.
 
@@ -180,8 +181,8 @@ Menyimpan konfigurasi umum aplikasi dalam bentuk key-value, termasuk aturan poto
 
 | Kolom | Tipe | Keterangan |
 |---|---|---|
-| `key` | `text` (PK) | Contoh: `'gathering_fund_percentage'` |
-| `value` | `text` | Contoh: `'10'` (artinya 10% dari tiap iuran) |
+| `key` | `text` (PK) | Contoh: `'gathering_fund_percentage'`, `'gathering_votes_visible_to_members'` |
+| `value` | `text` | Contoh: `'10'` (10% dari tiap iuran), atau `'true'`/`'false'` untuk setting boolean |
 | `updated_by` | `uuid` (FK → `profiles.id`), nullable | |
 | `updated_at` | `timestamptz`, default `now()` | |
 
@@ -254,7 +255,18 @@ Suara tiap anggota untuk satu event gathering.
 **Constraint:** `UNIQUE(gathering_event_id, member_id)` — satu anggota hanya boleh vote 1x per event (mencegah vote ganda).
 
 **RLS Policy:**
-- `SELECT`: semua anggota boleh lihat siapa vote apa (transparansi), atau bisa dibatasi hanya admin jika keluarga ingin voting rahasia — sesuaikan kesepakatan
+- `SELECT`: kondisional berdasarkan setting `app_settings.gathering_votes_visible_to_members`:
+  - Admin selalu bisa melihat semua baris
+  - Anggota selalu bisa melihat suaranya sendiri (`member_id = auth.uid()`)
+  - Anggota bisa melihat suara anggota lain **hanya jika** `gathering_votes_visible_to_members = 'true'`; jika `'false'`, anggota hanya melihat suaranya sendiri dan agregat jumlah suara per opsi tanpa tahu siapa memilih apa (agregat dihitung lewat view/RPC terpisah agar tidak bocor lewat `SELECT` langsung ke tabel ini)
+  - Policy ini dituliskan sebagai subquery ke `app_settings` di dalam kondisi `USING`, contoh pola:
+    ```sql
+    USING (
+      member_id = auth.uid()
+      OR is_admin()
+      OR (SELECT value FROM app_settings WHERE key = 'gathering_votes_visible_to_members') = 'true'
+    )
+    ```
 - `INSERT`: anggota hanya boleh insert baris untuk dirinya sendiri (`member_id = auth.uid()`), dan hanya jika `gathering_events.status = 'voting'`
 - Tidak ada `UPDATE`/`DELETE` — vote bersifat final setelah submit
 
@@ -262,6 +274,62 @@ Suara tiap anggota untuk satu event gathering.
 1. Hitung opsi dengan suara terbanyak → set `gathering_events.winning_option_id`
 2. Update `gathering_events.status = 'decided'`
 3. Set `gathering_events.closed_at = now()`
+
+---
+
+### 2.14 `invite_codes`
+Kode undangan untuk pendaftaran anggota baru. Menutup gap antara `PRD.md` (mensyaratkan fitur invite code) dan `ARCHITECTURE.md` (mensyaratkan kode di-hash, punya masa berlaku, dan dapat dicabut admin).
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| `id` | `uuid` (PK) | |
+| `code_hash` | `text` | Hash dari kode (misal SHA-256 atau bcrypt) — **kode asli/plaintext tidak pernah disimpan di database** |
+| `created_by` | `uuid` (FK → `profiles.id`) | Admin yang membuat kode |
+| `expires_at` | `timestamptz` | Waktu kadaluarsa kode |
+| `max_uses` | `integer`, default `1` | Berapa kali kode boleh dipakai (default single-use; admin bisa set lebih dari 1 untuk kode undangan bersama) |
+| `used_count` | `integer`, default `0` | Berapa kali sudah dipakai, increment tiap redeem berhasil |
+| `is_revoked` | `boolean`, default `false` | Dicabut manual oleh admin sebelum kadaluarsa |
+| `revoked_by` | `uuid` (FK → `profiles.id`), nullable | |
+| `revoked_at` | `timestamptz`, nullable | |
+| `created_at` | `timestamptz`, default `now()` | |
+
+**Kode dianggap valid untuk dipakai jika:**
+```
+is_revoked = false
+AND expires_at > now()
+AND used_count < max_uses
+```
+
+**RLS Policy:**
+- `SELECT`: hanya admin (`role = 'admin'`) — anggota biasa tidak perlu dan tidak boleh melihat daftar kode undangan yang aktif
+- `INSERT`: hanya admin
+- `UPDATE` (untuk revoke / increment `used_count`): hanya admin, **dan** hanya melalui Edge Function dengan `service_role` key — bukan langsung dari client
+- Tidak ada akses publik/anonim sama sekali ke tabel ini, termasuk saat proses redeem (lihat kontrak Edge Function di `ARCHITECTURE.md` bagian 5.1)
+
+**Catatan penting:** karena calon anggota baru **belum punya akun/session** saat memasukkan kode undangan, tabel ini tidak bisa divalidasi langsung dari Flutter client (client tidak akan lolos RLS `SELECT`). Validasi kode **wajib** lewat Edge Function yang berjalan dengan `service_role` key — lihat kontrak lengkapnya di `ARCHITECTURE.md`.
+
+---
+
+### 2.15 `get_gathering_vote_tally` *(RPC function, bukan view)*
+Fungsi (bukan `VIEW` biasa) untuk menampilkan jumlah suara per opsi tanpa membocorkan identitas pemilih — dipakai saat `gathering_votes_visible_to_members = 'false'` agar anggota tetap bisa melihat progres tally (misal "3 suara" per opsi) tanpa tahu siapa memilih apa.
+
+> **Catatan koreksi:** versi sebelumnya ditulis sebagai `VIEW`, tapi ternyata tidak aman — `VIEW` biasa di Postgres **tidak** otomatis bypass RLS dari tabel `gathering_votes`. Kalau anggota query view tsb saat `gathering_votes_visible_to_members = 'false'`, RLS tabel dasar tetap membatasi ke barisnya sendiri, sehingga hasil agregat jadi salah. Solusinya: dibuat sebagai **`SECURITY DEFINER` function**, yang berjalan dengan privilese pemiliknya (bypass RLS dengan aman) dan hanya mengembalikan angka agregat — tidak pernah baris mentah.
+
+```sql
+create or replace function get_gathering_vote_tally(p_gathering_event_id uuid)
+returns table (option_id uuid, vote_count bigint)
+language sql
+security definer
+set search_path = public
+as $$
+  select option_id, count(*) as vote_count
+  from gathering_votes
+  where gathering_event_id = p_gathering_event_id
+  group by option_id;
+$$;
+```
+
+**Akses:** `GRANT EXECUTE` ke role `authenticated` — semua anggota grup bisa memanggil fungsi ini, karena hanya mengembalikan agregat angka, bukan identitas pemilih.
 
 ---
 

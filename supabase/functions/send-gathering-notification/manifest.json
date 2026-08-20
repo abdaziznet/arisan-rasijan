@@ -1,0 +1,6 @@
+{
+  "name": "send-gathering-notification",
+  "description": "Sends notification when gathering voting opens.",
+  "framework": null,
+  "plugins": []
+}
