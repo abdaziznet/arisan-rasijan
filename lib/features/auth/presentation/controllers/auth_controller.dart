@@ -15,7 +15,32 @@ class AuthController extends Notifier<AuthScreenState> {
   AuthRepository get _repo => ref.read(authRepositoryProvider);
 
   // ---------------------------------------------------------------------------
-  // Magic Link (pengguna lama)
+  // Google Sign-In Native
+  // ---------------------------------------------------------------------------
+
+  Future<void> signInWithGoogle() async {
+    state = const AuthLoading();
+    try {
+      await _repo.signInWithGoogle();
+      state = const AuthSuccess();
+    } on AuthException catch (e) {
+      log('--- [AUTH CONTROLLER] AuthException: ${e.message} (Status: ${e.statusCode})');
+      if (e.message.contains('dibatalkan')) {
+        state = const AuthInitial();
+      } else {
+        state = AuthError(_friendlyAuthError(e));
+      }
+    } catch (e, st) {
+      log('--- [AUTH CONTROLLER ERROR] signInWithGoogle unexpected error: $e');
+      log('--- [AUTH CONTROLLER STACKTRACE] $st');
+      state = const AuthError(
+        'Gagal masuk dengan Google. Periksa koneksi lalu coba lagi.',
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Magic Link (fallback / legacy)
   // ---------------------------------------------------------------------------
 
   Future<void> sendMagicLink(String email) async {
@@ -95,7 +120,6 @@ class AuthController extends Notifier<AuthScreenState> {
   // ---------------------------------------------------------------------------
 
   String _friendlyAuthError(AuthException e) {
-    // Tidak bocorkan pesan mentah — petakan ke bahasa ramah pengguna
     final msg = e.message.toLowerCase();
     if (msg.contains('rate limit')) {
       return 'Terlalu banyak percobaan. Tunggu beberapa menit lalu coba lagi.';
@@ -103,6 +127,6 @@ class AuthController extends Notifier<AuthScreenState> {
     if (msg.contains('token has expired')) {
       return 'Link atau kode OTP sudah kedaluwarsa. Minta yang baru.';
     }
-    return 'Gagal mengirim link. Periksa koneksi lalu coba lagi.';
+    return 'Gagal masuk dengan Google. Periksa koneksi lalu coba lagi.';
   }
 }

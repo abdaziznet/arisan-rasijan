@@ -59,4 +59,17 @@ class MembersController extends AsyncNotifier<List<MemberModel>> {
       rethrow;
     }
   }
+
+  /// Generate kode undangan baru (Aksi Admin).
+  Future<String> generateInviteCode({
+    String? customCode,
+    int maxUses = 1,
+    int expiresDays = 30,
+  }) async {
+    return _repo.generateInviteCode(
+      customCode: customCode,
+      maxUses: maxUses,
+      expiresDays: expiresDays,
+    );
+  }
 }

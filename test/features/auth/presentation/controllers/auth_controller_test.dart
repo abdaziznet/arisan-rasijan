@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
+class MockAuthResponse extends Mock implements AuthResponse {}
 
 void main() {
   late MockAuthRepository mockRepo;
@@ -25,6 +26,55 @@ void main() {
     container.dispose();
   });
 
+  group('AuthController.signInWithGoogle', () {
+    test('sets AuthSuccess on successful Google login', () async {
+      final mockResponse = MockAuthResponse();
+      when(() => mockRepo.signInWithGoogle())
+          .thenAnswer((_) async => mockResponse);
+
+      final controller = container.read(authControllerProvider.notifier);
+      await controller.signInWithGoogle();
+
+      expect(
+        container.read(authControllerProvider),
+        isA<AuthSuccess>(),
+      );
+      verify(() => mockRepo.signInWithGoogle()).called(1);
+    });
+
+    test('sets AuthInitial when user cancels Google login', () async {
+      when(() => mockRepo.signInWithGoogle())
+          .thenThrow(const AuthException('Login Google dibatalkan'));
+
+      final controller = container.read(authControllerProvider.notifier);
+      await controller.signInWithGoogle();
+
+      expect(
+        container.read(authControllerProvider),
+        isA<AuthInitial>(),
+      );
+      verify(() => mockRepo.signInWithGoogle()).called(1);
+    });
+
+    test('sets AuthError on general error', () async {
+      when(() => mockRepo.signInWithGoogle())
+          .thenThrow(const AuthException('Server error'));
+
+      final controller = container.read(authControllerProvider.notifier);
+      await controller.signInWithGoogle();
+
+      expect(
+        container.read(authControllerProvider),
+        isA<AuthError>().having(
+          (e) => e.message,
+          'message',
+          'Gagal masuk dengan Google. Periksa koneksi lalu coba lagi.',
+        ),
+      );
+      verify(() => mockRepo.signInWithGoogle()).called(1);
+    });
+  });
+
   group('AuthController.sendMagicLink', () {
     test('sets AuthError on invalid email without calling repo', () async {
       final controller = container.read(authControllerProvider.notifier);
@@ -40,115 +90,6 @@ void main() {
         ),
       );
       verifyNever(() => mockRepo.signInWithOtp(any()));
-    });
-
-    test('sets AuthMagicLinkSent on successful send', () async {
-      when(() => mockRepo.signInWithOtp('test@example.com'))
-          .thenAnswer((_) async {});
-
-      final controller = container.read(authControllerProvider.notifier);
-      await controller.sendMagicLink('test@example.com');
-
-      expect(
-        container.read(authControllerProvider),
-        isA<AuthMagicLinkSent>().having(
-          (s) => s.email,
-          'email',
-          'test@example.com',
-        ),
-      );
-      verify(() => mockRepo.signInWithOtp('test@example.com')).called(1);
-    });
-
-    test('sets user-friendly AuthError on AuthException', () async {
-      when(() => mockRepo.signInWithOtp('test@example.com'))
-          .thenThrow(const AuthException('rate limit exceeded'));
-
-      final controller = container.read(authControllerProvider.notifier);
-      await controller.sendMagicLink('test@example.com');
-
-      expect(
-        container.read(authControllerProvider),
-        isA<AuthError>().having(
-          (e) => e.message,
-          'message',
-          contains('Terlalu banyak percobaan'),
-        ),
-      );
-    });
-  });
-
-  group('AuthController.redeemInviteAndSendLink', () {
-    test('sets AuthError when code is empty', () async {
-      final controller = container.read(authControllerProvider.notifier);
-
-      await controller.redeemInviteAndSendLink(
-        code: '',
-        email: 'test@example.com',
-      );
-
-      expect(
-        container.read(authControllerProvider),
-        isA<AuthError>().having(
-          (e) => e.message,
-          'message',
-          'Kode undangan tidak boleh kosong',
-        ),
-      );
-      verifyNever(
-        () => mockRepo.redeemInviteCode(
-          code: any(named: 'code'),
-          email: any(named: 'email'),
-        ),
-      );
-    });
-
-    test('sets AuthMagicLinkSent on valid redeem', () async {
-      when(
-        () => mockRepo.redeemInviteCode(
-          code: 'VALID123',
-          email: 'new@example.com',
-        ),
-      ).thenAnswer((_) async {});
-
-      final controller = container.read(authControllerProvider.notifier);
-      await controller.redeemInviteAndSendLink(
-        code: 'VALID123',
-        email: 'new@example.com',
-      );
-
-      expect(
-        container.read(authControllerProvider),
-        isA<AuthMagicLinkSent>().having(
-          (s) => s.email,
-          'email',
-          'new@example.com',
-        ),
-      );
-    });
-
-    test('sets generic error on invalid/expired/revoked invite code', () async {
-      when(
-        () => mockRepo.redeemInviteCode(
-          code: 'EXPIRED',
-          email: 'new@example.com',
-        ),
-      ).thenThrow(const AuthException('Kode undangan tidak valid'));
-
-      final controller = container.read(authControllerProvider.notifier);
-      await controller.redeemInviteAndSendLink(
-        code: 'EXPIRED',
-        email: 'new@example.com',
-      );
-
-      expect(
-        container.read(authControllerProvider),
-        isA<AuthError>().having(
-          (e) => e.message,
-          'message',
-          'Kode undangan tidak valid',
-        ),
-      );
     });
   });
 

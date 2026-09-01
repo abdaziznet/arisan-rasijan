@@ -17,6 +17,12 @@ abstract final class EnvConfig {
     return v!;
   }
 
+  static String? get googleWebClientId {
+    if (!dotenv.isInitialized) return null;
+    final v = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
+    return (v != null && v.isNotEmpty) ? v : null;
+  }
+
   /// Redirect URL untuk Magic Link — harus didaftarkan di Supabase Dashboard
   /// → Authentication → URL Configuration → Redirect URLs
   static String get redirectUrl {

@@ -80,4 +80,22 @@ class MembersRepository {
     final publicUrl = _client.storage.from('avatars').getPublicUrl(filePath);
     return publicUrl;
   }
+
+  /// Generate kode undangan baru (Khusus Admin).
+  Future<String> generateInviteCode({
+    String? customCode,
+    int maxUses = 1,
+    int expiresDays = 30,
+  }) async {
+    final response = await _client.rpc(
+      'generate_invite_code',
+      params: {
+        'p_custom_code': customCode?.trim(),
+        'p_max_uses': maxUses,
+        'p_expires_days': expiresDays,
+      },
+    );
+
+    return response.toString();
+  }
 }

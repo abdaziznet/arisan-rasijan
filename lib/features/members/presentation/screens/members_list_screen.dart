@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_components.dart';
 import '../../../../routing/app_router.dart';
 import '../../domain/member_model.dart';
 import '../providers/members_providers.dart';
+import '../widgets/generate_invite_code_dialog.dart';
 
 class MembersListScreen extends ConsumerStatefulWidget {
   const MembersListScreen({super.key});
@@ -43,6 +44,15 @@ class _MembersListScreenState extends ConsumerState<MembersListScreen> {
           ),
         ],
       ),
+      floatingActionButton: isAdmin
+          ? FloatingActionButton.extended(
+              onPressed: () => GenerateInviteCodeDialog.show(context),
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.person_add_alt_1_rounded),
+              label: const Text('Undang Anggota'),
+            )
+          : null,
       body: SafeArea(
         child: Column(
           children: [

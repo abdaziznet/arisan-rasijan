@@ -6,8 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
+class MockAuthResponse extends Mock implements AuthResponse {}
 
 void main() {
   late MockAuthRepository mockRepo;
@@ -26,52 +28,24 @@ void main() {
         ),
       );
 
-  testWidgets('renders login form correctly', (tester) async {
+  testWidgets('renders login screen with Google Sign-In button', (tester) async {
     await tester.pumpWidget(buildWidget());
 
     expect(find.text('BANI RASIJAN'), findsOneWidget);
-    expect(find.text('Masuk dengan email'), findsOneWidget);
-    expect(find.byType(TextFormField), findsOneWidget);
-    expect(find.text('Kirim Magic Link'), findsOneWidget);
-    expect(
-      find.text('Belum bergabung? Gunakan kode undangan.'),
-      findsOneWidget,
-    );
+    expect(find.text('Lanjut dengan Google'), findsOneWidget);
+    expect(find.byType(ElevatedButton), findsOneWidget);
   });
 
-  testWidgets('shows validation error when submitting empty email',
-      (tester) async {
-    await tester.pumpWidget(buildWidget());
-
-    await tester.tap(find.text('Kirim Magic Link'));
-    await tester.pump();
-
-    expect(find.text('Email tidak boleh kosong'), findsOneWidget);
-    verifyNever(() => mockRepo.signInWithOtp(any()));
-  });
-
-  testWidgets('shows validation error when submitting invalid email',
-      (tester) async {
-    await tester.pumpWidget(buildWidget());
-
-    await tester.enterText(find.byType(TextFormField), 'invalid-email');
-    await tester.tap(find.text('Kirim Magic Link'));
-    await tester.pump();
-
-    expect(find.text('Format email tidak valid'), findsOneWidget);
-    verifyNever(() => mockRepo.signInWithOtp(any()));
-  });
-
-  testWidgets('calls signInWithOtp on valid email', (tester) async {
-    when(() => mockRepo.signInWithOtp('user@example.com'))
-        .thenAnswer((_) async {});
+  testWidgets('triggers signInWithGoogle when Google button is tapped', (tester) async {
+    final mockResponse = MockAuthResponse();
+    when(() => mockRepo.signInWithGoogle()).thenAnswer((_) async => mockResponse);
+    when(() => mockRepo.hasProfile()).thenAnswer((_) async => true);
 
     await tester.pumpWidget(buildWidget());
 
-    await tester.enterText(find.byType(TextFormField), 'user@example.com');
-    await tester.tap(find.text('Kirim Magic Link'));
+    await tester.tap(find.text('Lanjut dengan Google'));
     await tester.pumpAndSettle();
 
-    verify(() => mockRepo.signInWithOtp('user@example.com')).called(1);
+    verify(() => mockRepo.signInWithGoogle()).called(1);
   });
 }

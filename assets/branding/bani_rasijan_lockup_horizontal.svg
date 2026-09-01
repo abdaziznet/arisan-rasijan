@@ -1,0 +1,8 @@
+<svg width="1536" height="512" viewBox="0 0 1536 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1536" height="512" rx="48" fill="#F8FAFC"/>
+  <rect x="64" y="64" width="384" height="384" rx="96" fill="#0F766E"/>
+  <text x="256" y="330" text-anchor="middle" fill="#F8FAFC" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif" font-size="196" font-weight="800" letter-spacing="-24">B<tspan fill="#D99A2B">R</tspan></text>
+  <text x="500" y="228" fill="#17202A" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif" font-size="76" font-weight="800" letter-spacing="1">BANI RASIJAN</text>
+  <rect x="504" y="258" width="56" height="6" rx="3" fill="#D99A2B"/>
+  <text x="504" y="318" fill="#64748B" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif" font-size="38" font-weight="500">Arisan Keluarga</text>
+</svg>
