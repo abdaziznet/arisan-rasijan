@@ -37,6 +37,18 @@ class AuthRepository {
   Future<AuthResponse> signInWithGoogle() async {
     try {
       log('--- [AUTH] Memulai Google Sign-In...');
+      // Reset state Google lokal (disconnect + signOut) agar account chooser dialog selalu dipaksa tampil
+      try {
+        await _googleSignIn.disconnect();
+      } catch (e) {
+        log('--- [AUTH] Warning saat pre-signIn disconnect: $e');
+      }
+      try {
+        await _googleSignIn.signOut();
+      } catch (e) {
+        log('--- [AUTH] Warning saat pre-signIn signOut: $e');
+      }
+
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         log('--- [AUTH] Login Google dibatalkan oleh pengguna.');
@@ -151,6 +163,11 @@ class AuthRepository {
       await _googleSignIn.signOut();
     } catch (e) {
       log('GoogleSignIn signOut error: $e');
+    }
+    try {
+      await _googleSignIn.disconnect();
+    } catch (e) {
+      log('GoogleSignIn disconnect error: $e');
     }
     await _client.auth.signOut();
   }

@@ -85,6 +85,7 @@ Primary Dark  #115E59
 ### Accent
 ```text
 Warm Gold     #D99A2B
+Orange        #ff914d
 ```
 
 Use gold mainly for winners, celebrations, achievements, and special highlights.

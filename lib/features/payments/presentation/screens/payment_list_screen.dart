@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_components.dart';
 import '../../../members/presentation/providers/members_providers.dart';
 import '../controllers/payment_list_controller.dart';
@@ -39,6 +40,8 @@ class PaymentListScreen extends ConsumerWidget {
                   // TODO: Tentukan dialog mana yang dibuka berdasarkan tab aktif
                   PaymentFormDialog.show(context);
                 },
+                backgroundColor: AppColors.orange,
+                foregroundColor: Colors.white,
                 child: const Icon(Icons.add),
               )
             : null,

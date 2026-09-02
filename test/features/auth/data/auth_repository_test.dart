@@ -48,6 +48,7 @@ void main() {
 
   group('AuthRepository.signInWithGoogle', () {
     test('successfully signs in with Google and Supabase', () async {
+      when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async => null);
       when(() => mockGoogleSignIn.signIn())
           .thenAnswer((_) async => mockGoogleAccount);
       when(() => mockGoogleAccount.authentication)
@@ -74,6 +75,7 @@ void main() {
     });
 
     test('throws exception when user cancels Google Sign-In', () async {
+      when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async => null);
       when(() => mockGoogleSignIn.signIn()).thenAnswer((_) async => null);
 
       expect(
@@ -92,6 +94,7 @@ void main() {
     });
 
     test('throws exception when idToken is null', () async {
+      when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async => null);
       when(() => mockGoogleSignIn.signIn())
           .thenAnswer((_) async => mockGoogleAccount);
       when(() => mockGoogleAccount.authentication)
@@ -117,11 +120,13 @@ void main() {
   group('AuthRepository.signOut', () {
     test('signs out from both Google and Supabase', () async {
       when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async => null);
+      when(() => mockGoogleSignIn.disconnect()).thenAnswer((_) async => null);
       when(() => mockGoTrue.signOut()).thenAnswer((_) async {});
 
       await repository.signOut();
 
       verify(() => mockGoogleSignIn.signOut()).called(1);
+      verify(() => mockGoogleSignIn.disconnect()).called(1);
       verify(() => mockGoTrue.signOut()).called(1);
     });
   });

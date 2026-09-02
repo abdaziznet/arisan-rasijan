@@ -22,8 +22,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _index = 0;
 
-  void _signOut() {
-    ref.read(authControllerProvider.notifier).signOut();
+  Future<void> _signOut() async {
+    await ref.read(authControllerProvider.notifier).signOut();
+    ref.invalidate(currentMemberProfileProvider);
+    if (!mounted) return;
     Navigator.pushReplacementNamed(context, AppRouter.login);
   }
 
@@ -113,410 +115,660 @@ class _HomeOverview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final connectionStatus = ref.watch(connectionStatusProvider);
     final currentMember = ref.watch(currentMemberProfileProvider).valueOrNull;
+    final session = ref.watch(currentSessionProvider);
+    final googleName = session?.user.userMetadata?['full_name'] as String? ??
+        session?.user.userMetadata?['name'] as String?;
+    final googleAvatar = session?.user.userMetadata?['avatar_url'] as String? ??
+        session?.user.userMetadata?['picture'] as String?;
+
+    final displayName =
+        (currentMember?.fullName != null && currentMember!.fullName.isNotEmpty)
+            ? currentMember.fullName
+            : (googleName ?? 'Anggota Keluarga');
+
+    final displayPhoto =
+        (currentMember?.photoUrl != null && currentMember!.photoUrl!.isNotEmpty)
+            ? currentMember.photoUrl
+            : googleAvatar;
+
     final activePeriodAsync = ref.watch(activePeriodProvider);
     final isAdmin = currentMember?.isAdmin ?? false;
 
-    return Column(
-      children: [
-        if (connectionStatus.value == ConnectionStatus.offline)
-          Container(
-            color: AppColors.error,
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            width: double.infinity,
-            child: const Text(
-              'Anda sedang offline. Data mungkin tidak terbaru.',
-              style: TextStyle(color: Colors.white),
-              textAlign: TextAlign.center,
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) => Transform.translate(
+        offset: Offset(0, 20 * (1 - value)),
+        child: Opacity(
+          opacity: value,
+          child: child,
+        ),
+      ),
+      child: Column(
+        children: [
+          if (connectionStatus.value == ConnectionStatus.offline)
+            Container(
+              color: AppColors.error,
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              width: double.infinity,
+              child: const Text(
+                'Anda sedang offline. Data mungkin tidak terbaru.',
+                style: TextStyle(color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
             ),
-          ),
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(activePeriodProvider);
-              ref.invalidate(currentMemberProfileProvider);
-            },
-            child: ListView(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              children: [
-          Row(
-            children: [
-              if (currentMember?.photoUrl != null &&
-                  currentMember!.photoUrl!.isNotEmpty)
-                CircleAvatar(
-                  radius: 24,
-                  backgroundImage: NetworkImage(currentMember.photoUrl!),
-                )
-              else
-                AppAvatar(name: currentMember?.fullName ?? 'A'),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Assalamu’alaikum,',
-                      style: AppTypography.body.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    Text(
-                      currentMember?.fullName ?? 'Anggota Keluarga',
-                      style: AppTypography.h2,
-                    ),
-                  ],
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(activePeriodProvider);
+                ref.invalidate(currentMemberProfileProvider);
+              },
+              child: ListView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.lg,
                 ),
-              ),
-              AppBadge(
-                label: isAdmin ? 'Admin' : 'Anggota',
-              ),
-              IconButton(
-                icon: const Icon(Icons.logout_outlined),
-                tooltip: 'Keluar',
-                onPressed: () => _showLogoutDialog(context),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          activePeriodAsync.when(
-            loading: () => const AppCard(
-              padding: EdgeInsets.all(AppSpacing.lg),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (err, _) => AppCard(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Text('Gagal memuat periode arisan: $err'),
-            ),
-            data: (period) {
-              if (period == null) {
-                return AppCard(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Column(
-                    children: [
-                      const AppBadge(label: 'ARISAN BERIKUTNYA'),
-                      const SizedBox(height: AppSpacing.md),
-                      const Text(
-                        'Belum ada periode aktif',
-                        style: AppTypography.h3,
+                children: [
+                  // Hero Greeting Card (Emerald Gradient)
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.primary, AppColors.primaryDark],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      if (isAdmin) ...[
-                        const SizedBox(height: AppSpacing.md),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.add),
-                          label: const Text('Buat Periode Baru'),
-                          onPressed: () => PeriodFormDialog.show(context),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.25),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
                         ),
                       ],
-                    ],
-                  ),
-                );
-              }
-
-              final hostName = period.host?.fullName ?? 'Belum ditentukan';
-              final address =
-                  period.hostAddress ?? period.host?.address ?? 'Rumah Tuan Rumah';
-
-              return AppCard(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    ),
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    child: Row(
                       children: [
-                        AppBadge(
-                          label: 'ARISAN PERIODE #${period.periodNumber}',
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 54,
+                              height: 54,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.accent,
+                                  width: 2.5,
+                                ),
+                              ),
+                            ),
+                            if (displayPhoto != null && displayPhoto.isNotEmpty)
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundImage: NetworkImage(displayPhoto),
+                              )
+                            else
+                              AppAvatar(name: displayName, radius: 24),
+                          ],
                         ),
-                        if (isAdmin)
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined, size: 20),
-                            onPressed: () => PeriodFormDialog.show(
-                              context,
-                              period: period,
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Assalamu’alaikum,',
+                                style: AppTypography.caption.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                displayName,
+                                style: AppTypography.h2.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.logout_rounded,
+                                color: Colors.white, size: 20),
+                            tooltip: 'Keluar',
+                            constraints: const BoxConstraints(),
+                            padding: EdgeInsets.zero,
+                            onPressed: () => _showLogoutDialog(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Active Period Card
+                  activePeriodAsync.when(
+                    loading: () => const AppCard(
+                      padding: EdgeInsets.all(AppSpacing.lg),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    error: (err, _) => AppCard(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Text('Gagal memuat periode arisan: $err'),
+                    ),
+                    data: (period) {
+                      if (period == null) {
+                        return AppCard(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          child: Column(
+                            children: [
+                              const AppBadge(label: 'ARISAN BERIKUTNYA'),
+                              const SizedBox(height: AppSpacing.md),
+                              const Text(
+                                'Belum ada periode aktif',
+                                style: AppTypography.h3,
+                              ),
+                              if (isAdmin) ...[
+                                const SizedBox(height: AppSpacing.md),
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Buat Periode Baru'),
+                                  onPressed: () =>
+                                      PeriodFormDialog.show(context),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      }
+
+                      final hostName =
+                          period.host?.fullName ?? 'Belum ditentukan';
+                      final address = period.hostAddress ??
+                          period.host?.address ??
+                          'Rumah Tuan Rumah';
+
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                AppBadge(
+                                  label:
+                                      'ARISAN PERIODE #${period.periodNumber}',
+                                ),
+                                if (isAdmin)
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined,
+                                        size: 20, color: AppColors.primary),
+                                    onPressed: () => PeriodFormDialog.show(
+                                      context,
+                                      period: period,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            Text(
+                              _formatDate(period.eventDate),
+                              style: AppTypography.h2.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(AppSpacing.xs),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(Icons.home_rounded,
+                                      color: AppColors.primary, size: 20),
+                                ),
+                                const SizedBox(width: AppSpacing.md),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Tuan Rumah',
+                                        style: AppTypography.caption.copyWith(
+                                            color: AppColors.textSecondary),
+                                      ),
+                                      Text(
+                                        'Di rumah $hostName',
+                                        style: AppTypography.bodyMedium
+                                            .copyWith(
+                                                fontWeight: FontWeight.w600),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(AppSpacing.xs),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.accent
+                                        .withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(Icons.location_on_rounded,
+                                      color: AppColors.accent, size: 20),
+                                ),
+                                const SizedBox(width: AppSpacing.md),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Lokasi Acara',
+                                        style: AppTypography.caption.copyWith(
+                                            color: AppColors.textSecondary),
+                                      ),
+                                      Text(
+                                        address,
+                                        style: AppTypography.bodyMedium,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Admin Quick Actions Grid
+                  if (isAdmin) ...[
+                    const AppSectionHeader(title: 'Aksi Cepat Admin'),
+                    const SizedBox(height: AppSpacing.sm),
+                    SizedBox(
+                      height: 90,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _AdminActionCard(
+                            icon: Icons.add_circle_outline_rounded,
+                            label: 'Periode Baru',
+                            color: AppColors.primary,
+                            onTap: () => PeriodFormDialog.show(context),
+                          ),
+                          _AdminActionCard(
+                            icon: Icons.payment_rounded,
+                            label: 'Catat Bayar',
+                            color: AppColors.success,
+                            onTap: () => onNavigate(1),
+                          ),
+                          _AdminActionCard(
+                            icon: Icons.checklist_rounded,
+                            label: 'Agenda Acara',
+                            color: AppColors.info,
+                            onTap: () => activePeriodAsync.maybeWhen(
+                              data: (period) {
+                                if (period != null) {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRouter.eventChecklist,
+                                    arguments: period.id,
+                                  );
+                                } else {
+                                  AppSnackbar.show(
+                                      context, 'Tidak ada periode aktif.');
+                                }
+                              },
+                              orElse: () => AppSnackbar.show(
+                                  context, 'Tidak ada periode aktif.'),
                             ),
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      _formatDate(period.eventDate),
-                      style: AppTypography.h2,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Row(
-                      children: [
-                        const Icon(Icons.home_outlined, color: AppColors.primary),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: Text(
-                            'Di rumah $hostName',
-                            style: AppTypography.bodyMedium,
+                          _AdminActionCard(
+                            icon: Icons.casino_rounded,
+                            label: 'Mulai Kocok',
+                            color: AppColors.accent,
+                            onTap: () => activePeriodAsync.maybeWhen(
+                              data: (period) {
+                                if (period != null) {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRouter.draw,
+                                    arguments: period.id,
+                                  );
+                                } else {
+                                  AppSnackbar.show(
+                                      context, 'Tidak ada periode aktif.');
+                                }
+                              },
+                              orElse: () => AppSnackbar.show(
+                                  context, 'Tidak ada periode aktif.'),
+                            ),
                           ),
-                        ),
-                      ],
+                          _AdminActionCard(
+                            icon: Icons.history_rounded,
+                            label: 'Riwayat',
+                            color: Colors.purple,
+                            onTap: () =>
+                                Navigator.pushNamed(context, AppRouter.history),
+                          ),
+                          _AdminActionCard(
+                            icon: Icons.photo_library_rounded,
+                            label: 'Galeri',
+                            color: Colors.teal,
+                            onTap: () => activePeriodAsync.maybeWhen(
+                              data: (period) {
+                                if (period != null) {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRouter.gallery,
+                                    arguments: period.id,
+                                  );
+                                } else {
+                                  AppSnackbar.show(
+                                      context, 'Tidak ada periode aktif.');
+                                }
+                              },
+                              orElse: () => AppSnackbar.show(
+                                  context, 'Tidak ada periode aktif.'),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(child: Text(address)),
-                      ],
-                    ),
+                    const SizedBox(height: AppSpacing.lg),
                   ],
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          if (isAdmin) ...[
-            const AppSectionHeader(title: 'Aksi Cepat Admin'),
-            const SizedBox(height: AppSpacing.sm),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _AdminActionButton(
-                    icon: Icons.add_circle_outline,
-                    label: 'Periode Baru',
-                    onTap: () => PeriodFormDialog.show(context),
-                  ),
-                  _AdminActionButton(
-                    icon: Icons.payment_outlined,
-                    label: 'Catat Bayar',
-                    onTap: () => onNavigate(1),
-                  ),
-                  _AdminActionButton(
-                    icon: Icons.checklist_outlined,
-                    label: 'Agenda Acara',
-                    onTap: () => activePeriodAsync.maybeWhen(
-                      data: (period) {
-                        if (period != null) {
-                          Navigator.pushNamed(
-                            context,
-                            AppRouter.eventChecklist,
-                            arguments: period.id,
-                          );
-                        } else {
-                          AppSnackbar.show(
-                            context,
-                            'Tidak ada periode aktif.',
-                          );
-                        }
-                      },
-                      orElse: () => AppSnackbar.show(
-                        context,
-                        'Tidak ada periode aktif.',
-                      ),
-                    ),
-                  ),
-                  _AdminActionButton(
-                    icon: Icons.casino_outlined,
-                    label: 'Mulai Kocokan',
-                    onTap: () => activePeriodAsync.maybeWhen(
-                      data: (period) {
-                        if (period != null) {
-                          Navigator.pushNamed(
-                            context,
-                            AppRouter.draw,
-                            arguments: period.id,
-                          );
-                        } else {
-                          AppSnackbar.show(
-                            context,
-                            'Tidak ada periode aktif.',
-                          );
-                        }
-                      },
-                      orElse: () => AppSnackbar.show(
-                        context,
-                        'Tidak ada periode aktif.',
-                      ),
-                    ),
-                  ),
-                  _AdminActionButton(
-                    icon: Icons.history,
-                    label: 'Riwayat',
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      AppRouter.history,
-                    ),
-                  ),
-                  _AdminActionButton(
-                    icon: Icons.photo_library,
-                    label: 'Galeri',
-                    onTap: () => activePeriodAsync.maybeWhen(
-                      data: (period) {
-                        if (period != null) {
-                          Navigator.pushNamed(
-                            context,
-                            AppRouter.gallery,
-                            arguments: period.id,
-                          );
-                        } else {
-                          AppSnackbar.show(
-                            context,
-                            'Tidak ada periode aktif.',
-                          );
-                        }
-                      },
-                      orElse: () => AppSnackbar.show(
-                        context,
-                        'Tidak ada periode aktif.',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-          ],
-          AppSectionHeader(
-            title: 'Ringkasan keluarga',
-            actionLabel: 'Daftar Anggota',
-            onAction: () => Navigator.pushNamed(context, AppRouter.members),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          activePeriodAsync.maybeWhen(
-            data: (period) => _SummaryCard(
-              icon: Icons.receipt_long_outlined,
-              title: 'Iuran Saya',
-              value: 'Belum dibayar',
-              detail: period?.contributionAmount != null
-                  ? '${_formatCurrency(period!.contributionAmount!)} periode ini'
-                  : 'Rp100.000 periode ini',
-              color: AppColors.warning,
-              onTap: () => onNavigate(1),
-            ),
-            orElse: () => _SummaryCard(
-              icon: Icons.receipt_long_outlined,
-              title: 'Iuran Saya',
-              value: 'Belum dibayar',
-              detail: 'Rp100.000 periode ini',
-              color: AppColors.warning,
-              onTap: () => onNavigate(1),
-            ),
-          ),
-          _SummaryCard(
-            icon: Icons.savings_outlined,
-            title: 'Kas Gathering',
-            value: 'Rp4.250.000',
-            detail: '10% dari iuran dialokasikan',
-            color: AppColors.primary,
-            onTap: () => Navigator.pushNamed(context, AppRouter.gathering),
-          ),
-          activePeriodAsync.maybeWhen(
-            data: (period) => _SummaryCard(
-              icon: Icons.emoji_events_outlined,
-              title: 'Pemenang Terakhir',
-              value: period?.winner?.fullName ?? 'Belum ada',
-              detail: period != null
-                  ? 'Periode #${period.periodNumber} · tuan rumah berikutnya'
-                  : 'Belum ada data',
-              color: AppColors.accent,
-              onTap: () => onNavigate(2),
-            ),
-            orElse: () => _SummaryCard(
-              icon: Icons.emoji_events_outlined,
-              title: 'Pemenang Terakhir',
-              value: 'Budi Rasijan',
-              detail: 'Periode #9 · tuan rumah berikutnya',
-              color: AppColors.accent,
-              onTap: () => onNavigate(2),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          const AppSectionHeader(title: 'Untuk keluarga'),
-          const SizedBox(height: AppSpacing.sm),
-          AppCard(
-            child: InkWell(
-              onTap: () => Navigator.pushNamed(context, AppRouter.members),
-              child: const Row(
-                children: [
-                  Icon(Icons.people_outline, color: AppColors.primary),
-                  SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Daftar Anggota Keluarga',
-                          style: AppTypography.bodyMedium,
-                        ),
-                        SizedBox(height: AppSpacing.xs),
-                        Text(
-                          'Lihat semua anggota & kontak keluarga',
-                          style: AppTypography.caption,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(Icons.chevron_right),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  ),
-],
-);
-}
 
-  void _showLogoutDialog(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Keluar dari aplikasi?'),
-        content: const Text(
-          'Anda harus masuk kembali menggunakan email untuk mengakses aplikasi.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              onSignOut();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
+                  // Ringkasan Keluarga Section
+                  AppSectionHeader(
+                    title: 'Ringkasan Keluarga',
+                    actionLabel: 'Daftar Anggota',
+                    onAction: () =>
+                        Navigator.pushNamed(context, AppRouter.members),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  activePeriodAsync.maybeWhen(
+                    data: (period) => _SummaryCard(
+                      icon: Icons.receipt_long_rounded,
+                      title: 'Iuran Saya',
+                      value: 'Belum dibayar',
+                      detail: period?.contributionAmount != null
+                          ? '${_formatCurrency(period!.contributionAmount!)} periode ini'
+                          : 'Rp100.000 periode ini',
+                      color: AppColors.warning,
+                      onTap: () => onNavigate(1),
+                    ),
+                    orElse: () => _SummaryCard(
+                      icon: Icons.receipt_long_rounded,
+                      title: 'Iuran Saya',
+                      value: 'Belum dibayar',
+                      detail: 'Rp100.000 periode ini',
+                      color: AppColors.warning,
+                      onTap: () => onNavigate(1),
+                    ),
+                  ),
+                  _SummaryCard(
+                    icon: Icons.account_balance_wallet,
+                    title: 'Kas Gathering',
+                    value: 'Rp4.250.000',
+                    detail: '10% dari iuran dialokasikan',
+                    color: AppColors.primary,
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRouter.gathering),
+                  ),
+                  activePeriodAsync.maybeWhen(
+                    data: (period) => _SummaryCard(
+                      icon: Icons.emoji_events_rounded,
+                      title: 'Pemenang Terakhir',
+                      value: period?.winner?.fullName ?? 'Belum ada',
+                      detail: period != null
+                          ? 'Periode #${period.periodNumber} · Tuan Rumah Berikutnya'
+                          : 'Belum ada data',
+                      color: AppColors.accent,
+                      onTap: () => onNavigate(2),
+                    ),
+                    orElse: () => _SummaryCard(
+                      icon: Icons.emoji_events_rounded,
+                      title: 'Pemenang Terakhir',
+                      value: 'Budi Rasijan',
+                      detail: 'Periode #9 · Tuan Rumah Berikutnya',
+                      color: AppColors.accent,
+                      onTap: () => onNavigate(2),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Menu Pintasan Keluarga
+                  const AppSectionHeader(title: 'Untuk Keluarga'),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppCard(
+                    child: InkWell(
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRouter.members),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(AppSpacing.xs),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.people_alt_rounded,
+                                  color: AppColors.primary, size: 22),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Daftar Anggota Keluarga',
+                                    style: AppTypography.bodyMedium
+                                        .copyWith(fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    'Lihat seluruh kerabat, kontak, & silsilah',
+                                    style: AppTypography.caption,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right,
+                                color: AppColors.textSecondary),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: const Text('Keluar'),
           ),
         ],
       ),
     );
   }
+
+  void _showLogoutDialog(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 48,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Icon(Icons.logout_rounded, color: AppColors.error, size: 48),
+            const SizedBox(height: AppSpacing.md),
+            const Text(
+              'Keluar dari akun?',
+              style: AppTypography.h2,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Anda harus masuk kembali menggunakan akun Google untuk mengakses aplikasi.',
+              style:
+                  AppTypography.body.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      side: const BorderSide(color: AppColors.primary),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: const Text('Batal'),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      onSignOut();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white,
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                    child: const Text('Keluar'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _AdminActionButton extends StatelessWidget {
-  const _AdminActionButton({
+class _AdminActionCard extends StatelessWidget {
+  const _AdminActionCard({
     required this.icon,
     required this.label,
+    required this.color,
     required this.onTap,
   });
 
   final IconData icon;
   final String label;
+  final Color color;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: AppSpacing.sm),
-      child: ActionChip(
-        avatar: Icon(icon, size: 18, color: AppColors.primary),
-        label: Text(label, style: AppTypography.caption),
-        onPressed: onTap,
-        backgroundColor: AppColors.primary.withValues(alpha: 0.08),
-        side: BorderSide(color: AppColors.textSecondary.withValues(alpha: 0.2)),
+      padding: const EdgeInsets.only(right: AppSpacing.md),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: 82,
+          padding: const EdgeInsets.symmetric(
+              vertical: AppSpacing.sm, horizontal: AppSpacing.xs),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.xs),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 22),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                label,
+                style: AppTypography.caption.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -600,51 +852,408 @@ class _ProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentMember = ref.watch(currentMemberProfileProvider).valueOrNull;
+    final session = ref.watch(currentSessionProvider);
+    final googleName = session?.user.userMetadata?['full_name'] as String? ??
+        session?.user.userMetadata?['name'] as String?;
+    final googleAvatar = session?.user.userMetadata?['avatar_url'] as String? ??
+        session?.user.userMetadata?['picture'] as String?;
 
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    final displayName =
+        (currentMember?.fullName != null && currentMember!.fullName.isNotEmpty)
+            ? currentMember.fullName
+            : (googleName ?? 'Anggota Keluarga');
+
+    final displayPhoto =
+        (currentMember?.photoUrl != null && currentMember!.photoUrl!.isNotEmpty)
+            ? currentMember.photoUrl
+            : googleAvatar;
+
+    final email = session?.user.email ?? 'Keluarga Bani Rasijan';
+    final phone = currentMember?.phoneNumber ?? '-';
+    final address = currentMember?.address ?? '-';
+    final isAdmin = currentMember?.isAdmin ?? false;
+    final hasWon = currentMember?.hasWonBefore ?? false;
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) => Transform.translate(
+        offset: Offset(0, 20 * (1 - value)),
+        child: Opacity(
+          opacity: value,
+          child: child,
+        ),
+      ),
+      child: ListView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.lg,
+        ),
         children: [
-          if (currentMember?.photoUrl != null &&
-              currentMember!.photoUrl!.isNotEmpty)
-            CircleAvatar(
-              radius: 40,
-              backgroundImage: NetworkImage(currentMember.photoUrl!),
-            )
-          else
-            AppAvatar(name: currentMember?.fullName ?? 'A', radius: 40),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            currentMember?.fullName ?? 'Anggota Keluarga',
-            style: AppTypography.h2,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          AppBadge(
-            label: currentMember?.isAdmin == true ? 'Admin' : 'Anggota',
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.edit_outlined),
-            label: const Text('Edit Profil Saya'),
-            onPressed: () => Navigator.pushNamed(
-              context,
-              AppRouter.profileCompletion,
+          // Header Hero Profile Card
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.25),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Column(
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: 96,
+                      height: 96,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.accent,
+                          width: 3,
+                        ),
+                      ),
+                    ),
+                    if (displayPhoto != null && displayPhoto.isNotEmpty)
+                      CircleAvatar(
+                        radius: 42,
+                        backgroundImage: NetworkImage(displayPhoto),
+                      )
+                    else
+                      AppAvatar(name: displayName, radius: 42),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  displayName,
+                  style: AppTypography.h1.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  email,
+                  style: AppTypography.body.copyWith(
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isAdmin
+                            ? Icons.admin_panel_settings_rounded
+                            : Icons.family_restroom_rounded,
+                        size: 16,
+                        color: AppColors.accent,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        isAdmin ? 'Pengurus Arisan' : 'Anggota Keluarga',
+                        style: AppTypography.caption.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.people_outline),
-            label: const Text('Daftar Anggota Keluarga'),
-            onPressed: () => Navigator.pushNamed(context, AppRouter.members),
+          const SizedBox(height: AppSpacing.lg),
+
+          // Quick Stats Grid
+          Row(
+            children: [
+              Expanded(
+                child: _ProfileStatCard(
+                  icon: Icons.verified_user_outlined,
+                  title: 'Status',
+                  value:
+                      currentMember?.isActive == false ? 'Non-Aktif' : 'Aktif',
+                  color: currentMember?.isActive == false
+                      ? AppColors.error
+                      : AppColors.success,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: _ProfileStatCard(
+                  icon: Icons.emoji_events_outlined,
+                  title: 'Dapat Arisan',
+                  value: hasWon ? 'Sudah' : 'Belum',
+                  color: hasWon ? AppColors.accent : AppColors.info,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.xl),
-          AppButton(
-            label: 'Keluar dari Akun',
-            icon: Icons.logout,
+
+          // Section 1: Info Kontak & Detail
+          const AppSectionHeader(title: 'Detail Anggota'),
+          const SizedBox(height: AppSpacing.sm),
+          AppCard(
+            child: Column(
+              children: [
+                _ProfileInfoRow(
+                  icon: Icons.phone_outlined,
+                  label: 'Nomor Telepon',
+                  value: phone,
+                ),
+                const Divider(height: 1),
+                _ProfileInfoRow(
+                  icon: Icons.location_on_outlined,
+                  label: 'Alamat Rumah',
+                  value: address,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+
+          // Section 2: Navigasi Akun
+          const AppSectionHeader(title: 'Aksi & Navigasi'),
+          const SizedBox(height: AppSpacing.sm),
+          AppCard(
+            child: Column(
+              children: [
+                _ProfileMenuTile(
+                  icon: Icons.edit_outlined,
+                  title: 'Edit Profil Saya',
+                  subtitle: 'Ubah nama, nomor HP, alamat, & foto',
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.profileCompletion,
+                  ),
+                ),
+                const Divider(height: 1),
+                _ProfileMenuTile(
+                  icon: Icons.people_outline,
+                  title: 'Daftar Anggota Keluarga',
+                  subtitle: 'Lihat seluruh kerabat & pengurus',
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.members,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+
+          // Tombol Keluar dari Akun
+          OutlinedButton.icon(
+            icon: const Icon(Icons.logout_rounded, color: AppColors.error),
+            label: Text(
+              'Keluar dari Akun',
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.error,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              side: const BorderSide(color: AppColors.error),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
             onPressed: onSignOut,
           ),
+          const SizedBox(height: AppSpacing.lg),
+
+          // Footer Versi Aplikasi
+          Center(
+            child: Text(
+              'BANI RASIJAN v1.0.0 · Arisan Keluarga',
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textSecondary.withValues(alpha: 0.6),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
         ],
+      ),
+    );
+  }
+}
+
+class _ProfileStatCard extends StatelessWidget {
+  const _ProfileStatCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String title;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.xs),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileInfoRow extends StatelessWidget {
+  const _ProfileInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.primary, size: 20),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: AppTypography.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileMenuTile extends StatelessWidget {
+  const _ProfileMenuTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.xs),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: AppColors.primary, size: 20),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: AppTypography.caption,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              color: AppColors.textSecondary,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }

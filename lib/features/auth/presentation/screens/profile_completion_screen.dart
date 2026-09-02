@@ -144,6 +144,9 @@ class _ProfileCompletionScreenState
             .saveProfile(member, avatarFile: _selectedImage);
       }
 
+      ref.invalidate(currentMemberProfileProvider);
+      ref.invalidate(membersControllerProvider);
+
       if (mounted) {
         AppSnackbar.show(
           context,

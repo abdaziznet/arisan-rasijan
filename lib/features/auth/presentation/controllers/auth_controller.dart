@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../features/auth/data/auth_repository.dart';
 import '../../../../features/auth/domain/auth_state.dart';
+import '../../../../features/members/presentation/providers/members_providers.dart';
 import '../providers/auth_repository_provider.dart';
 
 class AuthController extends Notifier<AuthScreenState> {
@@ -102,9 +103,13 @@ class AuthController extends Notifier<AuthScreenState> {
     state = const AuthLoading();
     try {
       await _repo.signOut();
+      ref.invalidate(currentMemberProfileProvider);
+      ref.invalidate(membersControllerProvider);
       state = const AuthInitial();
     } catch (e) {
       log('signOut error: $e');
+      ref.invalidate(currentMemberProfileProvider);
+      ref.invalidate(membersControllerProvider);
       state = const AuthInitial(); // tetap logout dari perspektif UI
     }
   }
