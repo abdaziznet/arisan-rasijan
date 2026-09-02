@@ -79,3 +79,4 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+docs/google-Oauth2.md
