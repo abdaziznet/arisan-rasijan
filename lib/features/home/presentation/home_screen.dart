@@ -13,6 +13,7 @@ import '../../periods/presentation/providers/periods_providers.dart';
 import '../../periods/presentation/widgets/period_form_dialog.dart';
 import '../../payments/presentation/screens/payment_list_screen.dart';
 import '../../payments/presentation/providers/payments_providers.dart';
+import '../../gathering/presentation/providers/gathering_providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -114,6 +115,8 @@ class _HomeOverview extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final totalGatheringFund = ref.watch(totalGatheringFundProvider);
+
     final connectionStatus = ref.watch(connectionStatusProvider);
     final currentMember = ref.watch(currentMemberProfileProvider).valueOrNull;
     final session = ref.watch(currentSessionProvider);
@@ -165,6 +168,7 @@ class _HomeOverview extends ConsumerWidget {
                 ref.invalidate(activePeriodProvider);
                 ref.invalidate(currentMemberProfileProvider);
                 ref.invalidate(currentMemberHasPaidProvider);
+                ref.invalidate(totalGatheringFundProvider);
               },
               child: ListView(
                 padding: const EdgeInsets.symmetric(
@@ -569,8 +573,12 @@ class _HomeOverview extends ConsumerWidget {
                   _SummaryCard(
                     icon: Icons.account_balance_wallet,
                     title: 'Kas Gathering',
-                    value: 'Rp4.250.000',
-                    detail: '10% dari iuran dialokasikan',
+                    value: totalGatheringFund.when(
+                      data: (total) => _formatCurrency(total),
+                      loading: () => 'Memuat...',
+                      error: (_, __) => 'Rp0',
+                    ),
+                    detail: 'Total kas dari seluruh periode',
                     color: AppColors.primary,
                     onTap: () =>
                         Navigator.pushNamed(context, AppRouter.gathering),

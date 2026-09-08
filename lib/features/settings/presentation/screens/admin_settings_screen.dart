@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -15,39 +16,39 @@ class AdminSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
-  final _fundPercentageController = TextEditingController();
+  final _fundAmountController = TextEditingController();
   bool _initialized = false;
 
   @override
   void dispose() {
-    _fundPercentageController.dispose();
+    _fundAmountController.dispose();
     super.dispose();
   }
 
   void _initFromSettings(Map<String, String> settings) {
     if (!_initialized) {
-      final percentage = settings['gathering_fund_percentage'] ?? '0';
-      _fundPercentageController.text = percentage;
+      final amount = settings['gathering_fund_amount'] ?? '0';
+      _fundAmountController.text = amount;
       _initialized = true;
     }
   }
 
-  Future<void> _saveFundPercentage() async {
-    final value = double.tryParse(_fundPercentageController.text);
-    if (value == null || value < 0 || value > 100) {
+  Future<void> _saveFundAmount() async {
+    final value = double.tryParse(_fundAmountController.text);
+    if (value == null || value < 0) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Persentase harus antara 0 - 100')),
+          const SnackBar(content: Text('Nilai harus positif')),
         );
       }
       return;
     }
 
-    await ref.read(appSettingsNotifierProvider.notifier).updateGatheringFundPercentage(value);
+    await ref.read(appSettingsNotifierProvider.notifier).updateGatheringFundAmount(value);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Persentase kas gathering disimpan: $value%')),
+        SnackBar(content: Text('Nilai kas gathering disimpan: Rp${value.toInt().toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.')}')),
       );
     }
   }
@@ -86,7 +87,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
-                        'Persentase dari tiap iuran yang otomatis masuk ke kas gathering.',
+                        'Nilai tetap yang dipotong dari tiap iuran untuk kas gathering.',
                         style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: AppSpacing.md),
@@ -94,14 +95,14 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                         children: [
                           Expanded(
                             child: TextField(
-                              controller: _fundPercentageController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              controller: _fundAmountController,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: false),
                               inputFormatters: [
-                                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+                                FilteringTextInputFormatter.digitsOnly,
                               ],
                               decoration: InputDecoration(
-                                labelText: 'Persentase (%)',
-                                suffixText: '%',
+                                labelText: 'Nilai Kas Gathering (Rp)',
+                                prefixText: 'Rp ',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -112,7 +113,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                           ),
                           const SizedBox(width: AppSpacing.md),
                           ElevatedButton(
-                            onPressed: isSaving ? null : _saveFundPercentage,
+                            onPressed: isSaving ? null : _saveFundAmount,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
@@ -127,10 +128,10 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       // Preview
-                      if (_fundPercentageController.text.isNotEmpty) ...[
+                      if (_fundAmountController.text.isNotEmpty) ...[
                         const Divider(),
                         const SizedBox(height: AppSpacing.sm),
-                        _buildPreview(double.tryParse(_fundPercentageController.text) ?? 0),
+                        _buildPreview(double.tryParse(_fundAmountController.text) ?? 0),
                       ],
                     ],
                   ),
@@ -165,7 +166,8 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
     );
   }
 
-  Widget _buildPreview(double percentage) {
+  Widget _buildPreview(double fundAmount) {
+    final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -179,8 +181,8 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
         children: [
           Text('Contoh perhitungan:', style: AppTypography.caption.copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: AppSpacing.xs),
-          Text('Iuran Rp 200.000 → kas gathering: Rp ${(200000 * percentage / 100).toInt().toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.')}'),
-          Text('Iuran Rp 300.000 → kas gathering: Rp ${(300000 * percentage / 100).toInt().toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.')}'),
+          Text('Iuran Rp 120.000 → iuran bersih: ${formatter.format(120000 - fundAmount.toInt())}, kas gathering: ${formatter.format(fundAmount.toInt())}'),
+          Text('Iuran Rp 150.000 → iuran bersih: ${formatter.format(150000 - fundAmount.toInt())}, kas gathering: ${formatter.format(fundAmount.toInt())}'),
         ],
       ),
     );

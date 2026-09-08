@@ -7,6 +7,7 @@ import '../../domain/gathering_poll_option_model.dart';
 import '../../domain/gathering_vote_model.dart';
 import '../../domain/fund_ledger_model.dart';
 import '../../../members/presentation/providers/members_providers.dart';
+import '../../../payments/presentation/providers/payments_providers.dart';
 
 /// Provider for GatheringRepository instance.
 final gatheringRepositoryProvider = Provider<GatheringRepository>((ref) {
@@ -115,7 +116,7 @@ class AppSettingsNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<void> updateGatheringFundPercentage(double percentage) async {
+  Future<void> updateGatheringFundAmount(double amount) async {
     state = const AsyncValue.loading();
     try {
       final repo = ref.read(gatheringRepositoryProvider);
@@ -125,8 +126,8 @@ class AppSettingsNotifier extends StateNotifier<AsyncValue<void>> {
         return;
       }
       await repo.updateAppSetting(
-        key: 'gathering_fund_percentage',
-        value: percentage.toString(),
+        key: 'gathering_fund_amount',
+        value: amount.toString(),
         updatedBy: member.id,
       );
       ref.invalidate(appSettingsProvider);
@@ -141,6 +142,12 @@ class AppSettingsNotifier extends StateNotifier<AsyncValue<void>> {
 final appSettingsNotifierProvider =
     StateNotifierProvider<AppSettingsNotifier, AsyncValue<void>>((ref) {
   return AppSettingsNotifier(ref);
+});
+
+/// Total kas gathering dari seluruh periode (SUM allocated_to_fund di payments).
+final totalGatheringFundProvider = FutureProvider<double>((ref) async {
+  final repo = ref.watch(paymentsRepositoryProvider);
+  return repo.getTotalGatheringFund();
 });
 
 /// StreamProvider to listen for event changes for a specific event.

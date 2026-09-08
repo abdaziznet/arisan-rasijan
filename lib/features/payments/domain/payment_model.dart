@@ -67,11 +67,11 @@ class Payment {
       id: map['id'] as String,
       periodId: map['period_id'] as String,
       memberId: map['member_id'] as String,
-      amount: map['amount'] as double,
-      paymentMethod: PaymentMethod.values.byName(map['payment_method'] as String),
-      paidAt: DateTime.parse(map['paid_at'] as String),
-      recordedBy: map['recorded_by'] as String,
-      allocatedToFund: map['allocated_to_fund'] as double,
+      amount: (map['amount'] as num?)?.toDouble() ?? 0,
+      paymentMethod: PaymentMethod.values.byName(map['payment_method'] as String? ?? 'cash'),
+      paidAt: map['paid_at'] != null ? DateTime.parse(map['paid_at'] as String) : DateTime.now(),
+      recordedBy: map['recorded_by'] as String? ?? '',
+      allocatedToFund: (map['allocated_to_fund'] as num?)?.toDouble() ?? 0,
     );
   }
 
@@ -281,4 +281,25 @@ class FundLedgerEntry {
       amount.hashCode ^
       transactionDate.hashCode;
   }
+}
+
+/// Status pembayaran anggota untuk satu periode (gabungan data profiles + payments).
+class MemberPaymentStatus {
+  final String memberId;
+  final String fullName;
+  final String? photoUrl;
+  final bool isPaid;
+  final double? amount;
+  final String? paymentMethod;
+  final DateTime? paidAt;
+
+  const MemberPaymentStatus({
+    required this.memberId,
+    required this.fullName,
+    this.photoUrl,
+    required this.isPaid,
+    this.amount,
+    this.paymentMethod,
+    this.paidAt,
+  });
 }
