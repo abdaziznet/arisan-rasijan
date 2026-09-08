@@ -4,13 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_components.dart';
 import '../../../members/domain/member_model.dart';
 import '../../../members/presentation/providers/members_providers.dart';
 import '../../../periods/presentation/providers/periods_providers.dart';
 import '../controllers/payment_form_controller.dart';
 import '../providers/payments_providers.dart';
 import '../../domain/payment_model.dart';
+
+enum _InlineMessageType { error, success }
 
 class PaymentFormDialog extends ConsumerStatefulWidget {
   const PaymentFormDialog({super.key});
@@ -43,17 +44,45 @@ class PaymentFormDialog extends ConsumerStatefulWidget {
   ConsumerState<PaymentFormDialog> createState() => _PaymentFormDialogState();
 }
 
-class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog> {
+class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _amountController;
   MemberModel? _selectedMember;
   PaymentMethod _selectedMethod = PaymentMethod.cash;
   double? _contributionAmount;
 
+  // Inline message state (replaces snackbar)
+  String? _inlineMessage;
+  _InlineMessageType _inlineType = _InlineMessageType.error;
+  bool _showInline = false;
+
   @override
   void initState() {
     super.initState();
     _amountController = TextEditingController();
+    // Reset form state agar button tidak stuck disabled
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(paymentFormProvider.notifier).resetState();
+    });
+  }
+
+  void _showInlineMessage(String message, _InlineMessageType type) {
+    setState(() {
+      _inlineMessage = message;
+      _inlineType = type;
+      _showInline = true;
+    });
+    // Auto-clear success after 3 seconds
+    if (type == _InlineMessageType.success) {
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) setState(() => _showInline = false);
+      });
+    }
+  }
+
+  void _clearInlineMessage() {
+    if (mounted) setState(() => _showInline = false);
   }
 
   @override
@@ -63,17 +92,46 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog> {
   }
 
   Future<void> _submitPayment() async {
-    if (!_formKey.currentState!.validate()) return;
+    debugPrint('[PaymentForm] _submitPayment clicked');
+    _clearInlineMessage();
+
+    if (!_formKey.currentState!.validate()) {
+      debugPrint('[PaymentForm] Form validation FAILED');
+      _showInlineMessage('Form tidak valid — pastikan semua kolom terisi', _InlineMessageType.error);
+      return;
+    }
+
+    if (_selectedMember == null) {
+      debugPrint('[PaymentForm] _selectedMember is NULL');
+      _showInlineMessage('Silakan pilih anggota terlebih dahulu', _InlineMessageType.error);
+      return;
+    }
+
+    if (_contributionAmount == null) {
+      debugPrint('[PaymentForm] _contributionAmount is NULL');
+      _showInlineMessage('Gagal memuat nominal iuran dari periode aktif', _InlineMessageType.error);
+      return;
+    }
+
+    debugPrint('[PaymentForm] Submitting: memberId=${_selectedMember!.id}, amount=$_contributionAmount, method=${_selectedMethod.name}');
 
     final success = await ref.read(paymentFormProvider.notifier).submitPayment(
           memberId: _selectedMember!.id,
-          amount: _contributionAmount ?? double.parse(_amountController.text.replaceAll('.', '')),
+          amount: _contributionAmount!,
           method: _selectedMethod,
         );
 
+    debugPrint('[PaymentForm] submitPayment result: $success');
+
     if (success && mounted) {
-      AppSnackbar.show(context, 'Pembayaran berhasil dicatat!');
-      Navigator.pop(context);
+      _showInlineMessage('Pembayaran berhasil dicatat!', _InlineMessageType.success);
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) Navigator.pop(context);
+      });
+    } else if (!success && mounted) {
+      final errorMsg = ref.read(paymentFormProvider.notifier).errorMessage;
+      debugPrint('[PaymentForm] Submit FAILED: $errorMsg');
+      _showInlineMessage(errorMsg ?? 'Gagal menyimpan pembayaran', _InlineMessageType.error);
     }
   }
 
@@ -145,6 +203,69 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog> {
           ),
           const SizedBox(height: AppSpacing.md),
           const Divider(height: 1),
+          // Inline animated message banner
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: _showInline ? 1.0 : 0.0,
+              child: _showInline && _inlineMessage != null
+                  ? Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _inlineType == _InlineMessageType.error
+                            ? AppColors.error.withValues(alpha: 0.08)
+                            : AppColors.success.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _inlineType == _InlineMessageType.error
+                              ? AppColors.error.withValues(alpha: 0.3)
+                              : AppColors.success.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _inlineType == _InlineMessageType.error
+                                ? Icons.error_outline_rounded
+                                : Icons.check_circle_outline_rounded,
+                            color: _inlineType == _InlineMessageType.error
+                                ? AppColors.error
+                                : AppColors.success,
+                            size: 20,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              _inlineMessage!,
+                              style: AppTypography.caption.copyWith(
+                                color: _inlineType == _InlineMessageType.error
+                                    ? AppColors.error
+                                    : AppColors.success,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: _clearInlineMessage,
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 18,
+                              color: (_inlineType == _InlineMessageType.error
+                                      ? AppColors.error
+                                      : AppColors.success)
+                                  .withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ),
           // Form content
           Flexible(
             child: SingleChildScrollView(
@@ -270,6 +391,7 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog> {
                                   value: method,
                                   contentPadding: EdgeInsets.zero,
                                   dense: true,
+                                  tileColor: AppColors.background,
                                 ),
                               ),
                             )

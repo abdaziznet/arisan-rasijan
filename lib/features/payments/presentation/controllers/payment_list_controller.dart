@@ -12,11 +12,13 @@ final activePeriodIdProvider = Provider<String>((ref) {
 final paymentListProvider = FutureProvider<List<Payment>>((ref) async {
   final repository = ref.watch(paymentsRepositoryProvider);
   final periodId = ref.watch(activePeriodIdProvider);
+  if (periodId.isEmpty) return [];
   return repository.getPaymentsForPeriod(periodId);
 });
 
 final donationListProvider = FutureProvider<List<Donation>>((ref) async {
   final repository = ref.watch(paymentsRepositoryProvider);
   final periodId = ref.watch(activePeriodIdProvider);
+  if (periodId.isEmpty) return [];
   return repository.getDonationsForPeriod(periodId);
 });

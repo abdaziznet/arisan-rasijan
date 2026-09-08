@@ -12,6 +12,7 @@ import '../../members/presentation/providers/members_providers.dart';
 import '../../periods/presentation/providers/periods_providers.dart';
 import '../../periods/presentation/widgets/period_form_dialog.dart';
 import '../../payments/presentation/screens/payment_list_screen.dart';
+import '../../payments/presentation/providers/payments_providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -163,6 +164,7 @@ class _HomeOverview extends ConsumerWidget {
               onRefresh: () async {
                 ref.invalidate(activePeriodProvider);
                 ref.invalidate(currentMemberProfileProvider);
+                ref.invalidate(currentMemberHasPaidProvider);
               },
               child: ListView(
                 padding: const EdgeInsets.symmetric(
@@ -508,6 +510,15 @@ class _HomeOverview extends ConsumerWidget {
                                   context, 'Tidak ada periode aktif.'),
                             ),
                           ),
+                          _AdminActionCard(
+                            icon: Icons.settings_rounded,
+                            label: 'Pengaturan',
+                            color: AppColors.textSecondary,
+                            onTap: () => Navigator.pushNamed(
+                              context,
+                              AppRouter.adminSettings,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -522,25 +533,38 @@ class _HomeOverview extends ConsumerWidget {
                         Navigator.pushNamed(context, AppRouter.members),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  activePeriodAsync.maybeWhen(
-                    data: (period) => _SummaryCard(
-                      icon: Icons.receipt_long_rounded,
-                      title: 'Iuran Saya',
-                      value: 'Belum dibayar',
-                      detail: period?.contributionAmount != null
-                          ? '${_formatCurrency(period!.contributionAmount!)} periode ini'
-                          : 'Rp100.000 periode ini',
-                      color: AppColors.warning,
-                      onTap: () => onNavigate(1),
-                    ),
-                    orElse: () => _SummaryCard(
-                      icon: Icons.receipt_long_rounded,
-                      title: 'Iuran Saya',
-                      value: 'Belum dibayar',
-                      detail: 'Rp100.000 periode ini',
-                      color: AppColors.warning,
-                      onTap: () => onNavigate(1),
-                    ),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final hasPaid = ref.watch(currentMemberHasPaidProvider);
+                      return activePeriodAsync.maybeWhen(
+                        data: (period) => _SummaryCard(
+                          icon: Icons.receipt_long_rounded,
+                          title: 'Iuran Saya',
+                          value: hasPaid.valueOrNull == true
+                              ? 'Sudah lunas ✓'
+                              : 'Belum dibayar',
+                          detail: period?.contributionAmount != null
+                              ? '${_formatCurrency(period!.contributionAmount!)} periode ini'
+                              : 'Rp100.000 periode ini',
+                          color: hasPaid.valueOrNull == true
+                              ? AppColors.success
+                              : AppColors.warning,
+                          onTap: () => onNavigate(1),
+                        ),
+                        orElse: () => _SummaryCard(
+                          icon: Icons.receipt_long_rounded,
+                          title: 'Iuran Saya',
+                          value: hasPaid.valueOrNull == true
+                              ? 'Sudah lunas ✓'
+                              : 'Belum dibayar',
+                          detail: 'Rp100.000 periode ini',
+                          color: hasPaid.valueOrNull == true
+                              ? AppColors.success
+                              : AppColors.warning,
+                          onTap: () => onNavigate(1),
+                        ),
+                      );
+                    },
                   ),
                   _SummaryCard(
                     icon: Icons.account_balance_wallet,
@@ -1061,6 +1085,18 @@ class _ProfilePage extends ConsumerWidget {
                     AppRouter.members,
                   ),
                 ),
+                if (isAdmin) ...[
+                  const Divider(height: 1),
+                  _ProfileMenuTile(
+                    icon: Icons.admin_panel_settings_outlined,
+                    title: 'Pengaturan Admin',
+                    subtitle: 'Atur persentase kas gathering & visibilitas voting',
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      AppRouter.adminSettings,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

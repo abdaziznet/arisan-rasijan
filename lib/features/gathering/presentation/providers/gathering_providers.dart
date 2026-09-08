@@ -114,6 +114,28 @@ class AppSettingsNotifier extends StateNotifier<AsyncValue<void>> {
       rethrow;
     }
   }
+
+  Future<void> updateGatheringFundPercentage(double percentage) async {
+    state = const AsyncValue.loading();
+    try {
+      final repo = ref.read(gatheringRepositoryProvider);
+      final member = ref.watch(currentMemberProfileProvider).valueOrNull;
+      if (member == null) {
+        state = AsyncValue.error('Member not found', StackTrace.current);
+        return;
+      }
+      await repo.updateAppSetting(
+        key: 'gathering_fund_percentage',
+        value: percentage.toString(),
+        updatedBy: member.id,
+      );
+      ref.invalidate(appSettingsProvider);
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
 }
 
 final appSettingsNotifierProvider =

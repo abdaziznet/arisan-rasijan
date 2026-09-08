@@ -143,6 +143,21 @@ class GatheringRepository {
     });
   }
 
+  /// Insert a contribution allocation entry into fund_ledger.
+  Future<void> addFundAllocation({
+    required double amount,
+    required String periodId,
+    required String createdBy,
+  }) async {
+    await _client.from('fund_ledger').insert({
+      'type': 'contribution_allocation',
+      'amount': amount,
+      'period_id': periodId,
+      'description': 'Alokasi iuran anggota ke kas gathering',
+      'created_by': createdBy,
+    });
+  }
+
   Future<Map<String, num>> getGatheringTally(String eventId) async {
     final response = await _client.rpc(
       'get_gathering_vote_tally',

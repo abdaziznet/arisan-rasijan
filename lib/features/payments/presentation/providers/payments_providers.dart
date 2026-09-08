@@ -11,3 +11,10 @@ final paymentFormProvider =
     StateNotifierProvider<PaymentFormController, PaymentFormState>((ref) {
   return PaymentFormController(ref);
 });
+
+/// Check if current member has paid for the active period.
+final currentMemberHasPaidProvider = FutureProvider<bool>((ref) async {
+  final repo = ref.watch(paymentsRepositoryProvider);
+  final payments = await repo.getCurrentMemberPayments();
+  return payments.isNotEmpty;
+});

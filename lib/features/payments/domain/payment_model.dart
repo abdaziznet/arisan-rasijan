@@ -14,6 +14,8 @@ class Payment {
   final PaymentMethod paymentMethod;
   final DateTime paidAt;
   final String recordedBy;
+  final double allocatedToFund; // Amount allocated to fund gathering
+
   Payment({
     required this.id,
     required this.periodId,
@@ -22,6 +24,7 @@ class Payment {
     required this.paymentMethod,
     required this.paidAt,
     required this.recordedBy,
+    required this.allocatedToFund,
   });
 
   Payment copyWith({
@@ -32,6 +35,7 @@ class Payment {
     PaymentMethod? paymentMethod,
     DateTime? paidAt,
     String? recordedBy,
+    double? allocatedToFund,
   }) {
     return Payment(
       id: id ?? this.id,
@@ -41,10 +45,11 @@ class Payment {
       paymentMethod: paymentMethod ?? this.paymentMethod,
       paidAt: paidAt ?? this.paidAt,
       recordedBy: recordedBy ?? this.recordedBy,
+      allocatedToFund: allocatedToFund ?? this.allocatedToFund,
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toMap({String? recordedBy}) {
     return <String, dynamic>{
       'id': id,
       'period_id': periodId,
@@ -52,7 +57,8 @@ class Payment {
       'amount': amount,
       'payment_method': paymentMethod.name,
       'paid_at': paidAt.toIso8601String(),
-      'recorded_by': recordedBy,
+      'allocated_to_fund': allocatedToFund,
+      if (recordedBy != null) 'recorded_by': recordedBy,
     };
   }
 
@@ -65,6 +71,7 @@ class Payment {
       paymentMethod: PaymentMethod.values.byName(map['payment_method'] as String),
       paidAt: DateTime.parse(map['paid_at'] as String),
       recordedBy: map['recorded_by'] as String,
+      allocatedToFund: map['allocated_to_fund'] as double,
     );
   }
 
@@ -74,7 +81,7 @@ class Payment {
 
   @override
   String toString() {
-    return 'Payment(id: $id, periodId: $periodId, memberId: $memberId, amount: $amount, paymentMethod: $paymentMethod, paidAt: $paidAt, recordedBy: $recordedBy)';
+    return 'Payment(id: $id, periodId: $periodId, memberId: $memberId, amount: $amount, paymentMethod: $paymentMethod, paidAt: $paidAt, recordedBy: $recordedBy, allocatedToFund: $allocatedToFund)';
   }
 
   @override
@@ -88,7 +95,8 @@ class Payment {
       other.amount == amount &&
       other.paymentMethod == paymentMethod &&
       other.paidAt == paidAt &&
-      other.recordedBy == recordedBy;
+      other.recordedBy == recordedBy &&
+      other.allocatedToFund == allocatedToFund;
   }
 
   @override
@@ -99,7 +107,8 @@ class Payment {
       amount.hashCode ^
       paymentMethod.hashCode ^
       paidAt.hashCode ^
-      recordedBy.hashCode;
+      recordedBy.hashCode ^
+      allocatedToFund.hashCode;
   }
 }
 

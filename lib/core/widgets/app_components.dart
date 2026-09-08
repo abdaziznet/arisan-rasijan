@@ -183,9 +183,15 @@ class AppSectionHeader extends StatelessWidget {
 }
 
 class AppEmptyState extends StatelessWidget {
-  const AppEmptyState({super.key, required this.title, required this.message});
+  const AppEmptyState({
+    super.key,
+    required this.title,
+    required this.message,
+    this.icon = Icons.family_restroom_outlined,
+  });
   final String title;
   final String message;
+  final IconData icon;
   @override
   Widget build(BuildContext context) => Center(
     child: Padding(
@@ -193,8 +199,8 @@ class AppEmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.family_restroom_outlined,
+          Icon(
+            icon,
             size: 48,
             color: AppColors.textSecondary,
           ),

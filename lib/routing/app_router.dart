@@ -11,6 +11,7 @@ import '../features/gathering/presentation/screens/gathering_event_detail_screen
 import '../features/gathering/presentation/screens/gathering_screen.dart';
 import '../features/history/presentation/screens/history_screen.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/settings/presentation/screens/admin_settings_screen.dart';
 import '../features/members/domain/member_model.dart';
 import '../features/members/presentation/screens/member_detail_screen.dart';
 import '../features/members/presentation/screens/members_list_screen.dart';
@@ -33,6 +34,7 @@ abstract final class AppRouter {
   static const gallery = '/gallery';
   static const gathering = '/gathering';
   static const gatheringEventDetail = '/gathering-event-detail';
+  static const adminSettings = '/admin-settings';
 
   static Route<void> onGenerateRoute(RouteSettings settings) =>
       MaterialPageRoute<void>(
@@ -63,6 +65,7 @@ abstract final class AppRouter {
           gatheringEventDetail => GatheringEventDetailScreen(
             eventId: settings.arguments as String,
           ),
+          adminSettings => const AdminSettingsScreen(),
           _ => const SplashScreen(),
         },
         settings: settings,
