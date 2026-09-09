@@ -32,7 +32,7 @@ void main() {
   Widget buildWidget() => ProviderScope(
         overrides: [
           authRepositoryProvider.overrideWithValue(mockAuthRepo),
-          currentSessionProvider.overrideWithValue(mockSession),
+          currentSessionProvider.overrideWith((ref) => Stream.value(mockSession)),
           currentMemberProfileProvider.overrideWith((ref) => null),
         ],
         child: const MaterialApp(

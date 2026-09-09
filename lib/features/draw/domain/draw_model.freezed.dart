@@ -24,6 +24,8 @@ mixin _$DrawModel {
   String get periodId => throw _privateConstructorUsedError;
   String get winnerId => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
+  String? get winnerName => throw _privateConstructorUsedError;
+  double? get totalCollected => throw _privateConstructorUsedError;
 
   /// Serializes this DrawModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -40,7 +42,13 @@ abstract class $DrawModelCopyWith<$Res> {
   factory $DrawModelCopyWith(DrawModel value, $Res Function(DrawModel) then) =
       _$DrawModelCopyWithImpl<$Res, DrawModel>;
   @useResult
-  $Res call({String id, String periodId, String winnerId, DateTime createdAt});
+  $Res call(
+      {String id,
+      String periodId,
+      String winnerId,
+      DateTime createdAt,
+      String? winnerName,
+      double? totalCollected});
 }
 
 /// @nodoc
@@ -62,6 +70,8 @@ class _$DrawModelCopyWithImpl<$Res, $Val extends DrawModel>
     Object? periodId = null,
     Object? winnerId = null,
     Object? createdAt = null,
+    Object? winnerName = freezed,
+    Object? totalCollected = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -80,6 +90,14 @@ class _$DrawModelCopyWithImpl<$Res, $Val extends DrawModel>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      winnerName: freezed == winnerName
+          ? _value.winnerName
+          : winnerName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      totalCollected: freezed == totalCollected
+          ? _value.totalCollected
+          : totalCollected // ignore: cast_nullable_to_non_nullable
+              as double?,
     ) as $Val);
   }
 }
@@ -92,7 +110,13 @@ abstract class _$$DrawModelImplCopyWith<$Res>
       __$$DrawModelImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String id, String periodId, String winnerId, DateTime createdAt});
+  $Res call(
+      {String id,
+      String periodId,
+      String winnerId,
+      DateTime createdAt,
+      String? winnerName,
+      double? totalCollected});
 }
 
 /// @nodoc
@@ -112,6 +136,8 @@ class __$$DrawModelImplCopyWithImpl<$Res>
     Object? periodId = null,
     Object? winnerId = null,
     Object? createdAt = null,
+    Object? winnerName = freezed,
+    Object? totalCollected = freezed,
   }) {
     return _then(_$DrawModelImpl(
       id: null == id
@@ -130,6 +156,14 @@ class __$$DrawModelImplCopyWithImpl<$Res>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      winnerName: freezed == winnerName
+          ? _value.winnerName
+          : winnerName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      totalCollected: freezed == totalCollected
+          ? _value.totalCollected
+          : totalCollected // ignore: cast_nullable_to_non_nullable
+              as double?,
     ));
   }
 }
@@ -141,7 +175,9 @@ class _$DrawModelImpl implements _DrawModel {
       {required this.id,
       required this.periodId,
       required this.winnerId,
-      required this.createdAt});
+      required this.createdAt,
+      this.winnerName,
+      this.totalCollected});
 
   factory _$DrawModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$DrawModelImplFromJson(json);
@@ -154,10 +190,14 @@ class _$DrawModelImpl implements _DrawModel {
   final String winnerId;
   @override
   final DateTime createdAt;
+  @override
+  final String? winnerName;
+  @override
+  final double? totalCollected;
 
   @override
   String toString() {
-    return 'DrawModel(id: $id, periodId: $periodId, winnerId: $winnerId, createdAt: $createdAt)';
+    return 'DrawModel(id: $id, periodId: $periodId, winnerId: $winnerId, createdAt: $createdAt, winnerName: $winnerName, totalCollected: $totalCollected)';
   }
 
   @override
@@ -171,13 +211,17 @@ class _$DrawModelImpl implements _DrawModel {
             (identical(other.winnerId, winnerId) ||
                 other.winnerId == winnerId) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.winnerName, winnerName) ||
+                other.winnerName == winnerName) &&
+            (identical(other.totalCollected, totalCollected) ||
+                other.totalCollected == totalCollected));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, periodId, winnerId, createdAt);
+  int get hashCode => Object.hash(runtimeType, id, periodId, winnerId,
+      createdAt, winnerName, totalCollected);
 
   /// Create a copy of DrawModel
   /// with the given fields replaced by the non-null parameter values.
@@ -200,7 +244,9 @@ abstract class _DrawModel implements DrawModel {
       {required final String id,
       required final String periodId,
       required final String winnerId,
-      required final DateTime createdAt}) = _$DrawModelImpl;
+      required final DateTime createdAt,
+      final String? winnerName,
+      final double? totalCollected}) = _$DrawModelImpl;
 
   factory _DrawModel.fromJson(Map<String, dynamic> json) =
       _$DrawModelImpl.fromJson;
@@ -213,6 +259,10 @@ abstract class _DrawModel implements DrawModel {
   String get winnerId;
   @override
   DateTime get createdAt;
+  @override
+  String? get winnerName;
+  @override
+  double? get totalCollected;
 
   /// Create a copy of DrawModel
   /// with the given fields replaced by the non-null parameter values.

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../features/members/domain/member_model.dart';
@@ -13,13 +15,13 @@ class DrawRepository {
   Future<List<MemberModel>> getCandidates(String periodId) async {
     // Get active members
     final activeMembersResp = await _client
-        .from('members')
+        .from('profiles')
         .select('*')
         .eq('is_active', true);
 
     // Get past winners
     final pastWinnersResp = await _client
-        .from('periods')
+        .from('arisan_periods')
         .select('winner_id')
         .not('winner_id', 'is', null);
 
@@ -70,14 +72,14 @@ class DrawRepository {
           id,
           period_id,
           winner_id,
-          created_at,
-          periods!inner(period_number),
-          winner:members!winner_id(full_name)
+          conducted_at,
+          arisan_periods!inner(period_number),
+          winner:profiles!winner_id(full_name)
         ''')
-        .order('created_at', ascending: false);
+        .order('conducted_at', ascending: false);
 
     return (response as List).map((json) {
-      final period = json['periods'] as Map<String, dynamic>;
+      final period = json['arisan_periods'] as Map<String, dynamic>;
       final winner = json['winner'] as Map<String, dynamic>;
       return DrawHistoryModel(
         id: json['id'] as String,
@@ -85,28 +87,64 @@ class DrawRepository {
         periodNumber: period['period_number'] as int,
         winnerId: json['winner_id'] as String,
         winnerName: winner['full_name'] as String,
-        createdAt: DateTime.parse(json['created_at'] as String),
+        createdAt: DateTime.parse(json['conducted_at'] as String),
       );
     }).toList();
   }
 
   /// Subscribes to realtime draw updates
   Stream<List<DrawHistoryModel>> watchDrawHistory() {
-    return _client
-        .from('draws')
-        .stream(primaryKey: ['id'])
-        .order('created_at', ascending: false)
-        .map((data) => data.map((json) {
-              final period = json['periods'] as Map<String, dynamic>;
-              final winner = json['winner'] as Map<String, dynamic>;
-              return DrawHistoryModel(
-                id: json['id'] as String,
-                periodId: json['period_id'] as String,
-                periodNumber: period['period_number'] as int,
-                winnerId: json['winner_id'] as String,
-                winnerName: winner['full_name'] as String,
-                createdAt: DateTime.parse(json['created_at'] as String),
-              );
-            }).toList());
+    // Realtime stream doesn't support joins natively, so we just
+    // emit when a change happens and let the provider re-fetch
+    // getDrawHistory(), OR we can use the provider to re-fetch.
+    // For now, this stream is just an event emitter that triggers a refetch
+    // But since the current provider expects List<DrawHistoryModel>, we'll map it
+    // Wait, the current draw_providers.dart expects `watchDrawHistory()` to return a stream of data
+    // We should change `drawHistoryStreamProvider` to poll or use this stream as a trigger.
+    // Let's implement it with a query to getDrawHistory() whenever a realtime event comes.
+
+    // Create a stream controller that fetches history when it receives an event
+    late final StreamController<List<DrawHistoryModel>> controller;
+    RealtimeChannel? channel;
+
+    controller = StreamController<List<DrawHistoryModel>>(
+      onListen: () async {
+        // Initial fetch
+        try {
+          final history = await getDrawHistory();
+          controller.add(history);
+        } catch (e) {
+          controller.addError(e);
+        }
+
+        // Subscribe to changes
+        channel = _client
+            .channel('public:draws')
+            .onPostgresChanges(
+              event: PostgresChangeEvent.all,
+              schema: 'public',
+              table: 'draws',
+              callback: (payload) async {
+                try {
+                  final history = await getDrawHistory();
+                  if (!controller.isClosed) {
+                    controller.add(history);
+                  }
+                } catch (e) {
+                  if (!controller.isClosed) {
+                    controller.addError(e);
+                  }
+                }
+              },
+            )
+            .subscribe();
+      },
+      onCancel: () {
+        channel?.unsubscribe();
+        controller.close();
+      },
+    );
+
+    return controller.stream;
   }
 }

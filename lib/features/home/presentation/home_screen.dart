@@ -5,11 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_components.dart';
 import '../../../routing/app_router.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../members/presentation/providers/members_providers.dart';
 import '../../periods/presentation/providers/periods_providers.dart';
+import '../../periods/presentation/screens/arisan_screen.dart';
 import '../../periods/presentation/widgets/period_form_dialog.dart';
 import '../../payments/presentation/screens/payment_list_screen.dart';
 import '../../payments/presentation/providers/payments_providers.dart';
@@ -42,7 +44,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 onSignOut: _signOut,
               ),
               const PaymentListScreen(),
-              const _PlaceholderPage(title: 'Arisan'),
+              const ArisanScreen(),
               _ProfilePage(onSignOut: _signOut),
             ],
           ),
@@ -80,38 +82,6 @@ class _HomeOverview extends ConsumerWidget {
   const _HomeOverview({required this.onNavigate, required this.onSignOut});
   final ValueChanged<int> onNavigate;
   final VoidCallback onSignOut;
-
-  String _formatDate(DateTime date) {
-    const months = [
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
-    ];
-    const days = [
-      'Senin',
-      'Selasa',
-      'Rabu',
-      'Kamis',
-      'Jumat',
-      'Sabtu',
-      'Minggu',
-    ];
-    final dayName = days[date.weekday - 1];
-    return '$dayName, ${date.day} ${months[date.month - 1]} ${date.year}';
-  }
-
-  String _formatCurrency(double amount) {
-    return 'Rp${amount.toInt().toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (match) => '.')}';
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -342,7 +312,7 @@ class _HomeOverview extends ConsumerWidget {
                             ),
                             const SizedBox(height: AppSpacing.md),
                             Text(
-                              _formatDate(period.eventDate),
+                              Formatters.formatDate(period.eventDate),
                               style: AppTypography.h2.copyWith(
                                 color: AppColors.textPrimary,
                                 fontWeight: FontWeight.bold,
@@ -548,7 +518,7 @@ class _HomeOverview extends ConsumerWidget {
                               ? 'Sudah lunas ✓'
                               : 'Belum dibayar',
                           detail: period?.contributionAmount != null
-                              ? '${_formatCurrency(period!.contributionAmount!)} periode ini'
+                              ? '${Formatters.formatCurrency(period!.contributionAmount!)} periode ini'
                               : 'Rp100.000 periode ini',
                           color: hasPaid.valueOrNull == true
                               ? AppColors.success
@@ -574,7 +544,7 @@ class _HomeOverview extends ConsumerWidget {
                     icon: Icons.account_balance_wallet,
                     title: 'Kas Gathering',
                     value: totalGatheringFund.when(
-                      data: (total) => _formatCurrency(total),
+                      data: (total) => Formatters.formatCurrency(total),
                       loading: () => 'Memuat...',
                       error: (_, __) => 'Rp0',
                     ),
@@ -864,16 +834,6 @@ class _SummaryCard extends StatelessWidget {
             ),
           ),
         ),
-      );
-}
-
-class _PlaceholderPage extends StatelessWidget {
-  const _PlaceholderPage({required this.title});
-  final String title;
-  @override
-  Widget build(BuildContext context) => AppEmptyState(
-        title: title,
-        message: 'Fitur ini akan dibangun pada tahap berikutnya.',
       );
 }
 

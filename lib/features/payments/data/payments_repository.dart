@@ -51,7 +51,10 @@ class PaymentsRepository {
       debugPrint('[PaymentsRepo] allocated_to_fund: $allocatedToFund');
       debugPrint('[PaymentsRepo] netAmount (stored): $netAmount');
 
-      // Insert pembayaran dengan alokasi
+      // Data pembayaran: amount = iuran − alokasi kas gathering.
+      // Baris fund_ledger dibuat oleh trigger di DB
+      // (fn_allocate_payment_to_fund, migration 013) — jangan insert
+      // manual di sini supaya tidak dobel.
       final paymentData = payment.toMap();
       paymentData.remove('id'); // Biarkan Supabase generate UUID
       paymentData['amount'] = netAmount; // Simpan nilai bersih
@@ -64,24 +67,6 @@ class PaymentsRepository {
 
       await _client.from('payments').insert(paymentData);
       debugPrint('[PaymentsRepo] Payment inserted to payments table');
-
-      // Insert ke fund_ledger jika ada alokasi
-      if (allocatedToFund > 0) {
-        final ledgerData = <String, dynamic>{
-          'type': 'contribution_allocation',
-          'amount': allocatedToFund,
-          'period_id': payment.periodId,
-          'description': 'Alokasi kas gathering dari iuran anggota',
-        };
-        if (recordedBy != null && recordedBy.isNotEmpty) {
-          ledgerData['created_by'] = recordedBy;
-        }
-        debugPrint('[PaymentsRepo] Inserting fund_ledger: $ledgerData');
-        await _client.from('fund_ledger').insert(ledgerData);
-        debugPrint('[PaymentsRepo] Fund ledger entry inserted');
-      } else {
-        debugPrint('[PaymentsRepo] No fund allocation (amount is 0)');
-      }
     } catch (e, st) {
       debugPrint('[PaymentsRepo] ERROR: $e');
       debugPrint('[PaymentsRepo] Stack: $st');

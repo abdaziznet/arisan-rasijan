@@ -7,6 +7,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_components.dart';
 import '../../domain/draw_model.dart';
+import '../../../periods/presentation/providers/periods_providers.dart';
 
 class WinnerRevealDialog extends ConsumerStatefulWidget {
   const WinnerRevealDialog({super.key, required this.draw});
@@ -44,8 +45,15 @@ class _WinnerRevealDialogState extends ConsumerState<WinnerRevealDialog>
     super.dispose();
   }
 
+  String _formatCurrency(double amount) {
+    return 'Rp${amount.toInt().toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (match) => '.')}';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final periodAsync = ref.watch(activePeriodProvider);
+    final periodNumber = periodAsync.valueOrNull?.periodNumber ?? 0;
+
     return Dialog(
       backgroundColor: Colors.transparent,
       child: ScaleTransition(
@@ -84,12 +92,11 @@ class _WinnerRevealDialogState extends ConsumerState<WinnerRevealDialog>
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 Text(
-                  'Pemenang Arisan!',
+                  '🎉 SELAMAT! 🎉',
                   style: AppTypography.h2.copyWith(color: AppColors.primary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.md),
-                // Winner name would need to be fetched
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
@@ -98,35 +105,59 @@ class _WinnerRevealDialogState extends ConsumerState<WinnerRevealDialog>
                   ),
                   child: Column(
                     children: [
+                      AppAvatar(name: widget.draw.winnerName ?? 'Pemenang', radius: 32),
+                      const SizedBox(height: AppSpacing.md),
                       Text(
-                        'Pemenang',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        'Memuat nama...',
-                        style: AppTypography.h3.copyWith(
+                        widget.draw.winnerName ?? 'Nama Tidak Diketahui',
+                        style: AppTypography.h2.copyWith(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,
                         ),
+                        textAlign: TextAlign.center,
                       ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Pemenang Periode #${periodNumber}',
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.primaryDark,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (widget.draw.totalCollected != null && widget.draw.totalCollected! > 0) ...[
+                         const SizedBox(height: AppSpacing.md),
+                         Text(
+                           _formatCurrency(widget.draw.totalCollected!),
+                           style: AppTypography.h1.copyWith(
+                             color: AppColors.accent,
+                             fontWeight: FontWeight.w800,
+                           ),
+                         ),
+                      ],
                     ],
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                Text(
-                  'Periode berikutnya akan dibuat otomatis dengan pemenang sebagai tuan rumah.',
-                  style: AppTypography.body.copyWith(color: AppColors.textSecondary),
-                  textAlign: TextAlign.center,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.home_rounded, color: AppColors.accent),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      'Tuan Rumah Berikutnya (Periode #${periodNumber + 1})',
+                      style: AppTypography.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                AppButton(
-                  label: 'Tutup',
-                  icon: Icons.check,
-                  onPressed: () => Navigator.of(context).pop(),
+                SizedBox(
+                  width: double.infinity,
+                  child: AppButton(
+                    label: 'Tutup',
+                    icon: Icons.check,
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
                 ),
               ],
             ),

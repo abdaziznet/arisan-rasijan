@@ -2,6 +2,11 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CacheService {
+  Future<void> removeData(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(key);
+  }
+
   Future<void> saveData(String key, Map<String, dynamic> data) async {
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now().toIso8601String();

@@ -12,6 +12,8 @@ _$DrawModelImpl _$$DrawModelImplFromJson(Map<String, dynamic> json) =>
       periodId: json['periodId'] as String,
       winnerId: json['winnerId'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      winnerName: json['winnerName'] as String?,
+      totalCollected: (json['totalCollected'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$$DrawModelImplToJson(_$DrawModelImpl instance) =>
@@ -20,4 +22,6 @@ Map<String, dynamic> _$$DrawModelImplToJson(_$DrawModelImpl instance) =>
       'periodId': instance.periodId,
       'winnerId': instance.winnerId,
       'createdAt': instance.createdAt.toIso8601String(),
+      'winnerName': instance.winnerName,
+      'totalCollected': instance.totalCollected,
     };

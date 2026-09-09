@@ -5,6 +5,8 @@ import '../controllers/draw_controller.dart';
 import '../../data/draw_repository.dart';
 import '../../../members/domain/member_model.dart';
 import '../../../members/presentation/providers/members_providers.dart';
+import '../../../payments/presentation/providers/payments_providers.dart';
+import '../../../periods/presentation/providers/periods_providers.dart';
 import '../../domain/draw_model.dart';
 
 final _supabase = Provider((ref) => Supabase.instance.client);
@@ -42,3 +44,33 @@ final drawHistoryStreamProvider = StreamProvider<List<DrawHistoryModel>>((ref) {
   final repo = ref.watch(drawRepositoryProvider);
   return repo.watchDrawHistory();
 });
+
+// --- Validations ---
+
+/// True jika semua anggota aktif di periode aktif sudah berstatus 'paid'
+final allMembersPaidProvider = FutureProvider<bool>((ref) async {
+  final paymentStatuses = await ref.watch(memberPaymentStatusListProvider.future);
+  if (paymentStatuses.isEmpty) return false;
+  return paymentStatuses.every((s) => s.isPaid);
+});
+
+/// True jika event_date periode aktif == tanggal hari ini
+final isDrawDayProvider = Provider<bool>((ref) {
+  final period = ref.watch(activePeriodProvider).valueOrNull;
+  if (period == null) return false;
+
+  final today = DateTime.now();
+  final eventDate = period.eventDate;
+
+  return eventDate.year == today.year &&
+      eventDate.month == today.month &&
+      eventDate.day == today.day;
+});
+
+/// True jika periode ini belum pernah di-draw
+final isDrawAlreadyDoneProvider = FutureProvider<bool>((ref) async {
+  final period = ref.watch(activePeriodProvider).valueOrNull;
+  if (period == null) return false;
+  return period.winnerId != null;
+});
+

@@ -10,6 +10,8 @@ class DrawModel with _$DrawModel {
     required String periodId,
     required String winnerId,
     required DateTime createdAt,
+    String? winnerName,
+    double? totalCollected,
   }) = _DrawModel;
 
   factory DrawModel.fromJson(Map<String, dynamic> json) =>

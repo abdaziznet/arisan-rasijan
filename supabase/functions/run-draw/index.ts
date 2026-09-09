@@ -35,9 +35,9 @@ serve(async (req) => {
       throw new Error('Invalid authentication');
     }
 
-    // Check if user is admin
+    // Check if user is admin (role stored in 'profiles', not 'members')
     const { data: member, error: memberError } = await supabaseAdmin
-      .from('members')
+      .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single();
@@ -52,9 +52,27 @@ serve(async (req) => {
       throw new Error('periodId is required.');
     }
 
+    // 3.5. Validate all active members have paid for this period
+    const { count: activeCount } = await supabaseAdmin
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_active', true);
+
+    const { count: paidCount } = await supabaseAdmin
+      .from('payments')
+      .select('*', { count: 'exact', head: true })
+      .eq('period_id', periodId)
+      .eq('status', 'paid');
+
+    if (paidCount === null || activeCount === null || paidCount < activeCount) {
+      throw new Error(`Belum semua anggota membayar iuran. ${paidCount ?? 0}/${activeCount ?? 0} sudah bayar.`);
+    }
+
     // 4. Call the database function to run the draw (idempotent)
+    //    Pass the authenticated admin's id as conducted_by (auth.uid() is null
+    //    inside the RPC when called via service_role).
     const { data: draw, error: drawError } = await supabaseAdmin
-      .rpc('run_draw', { p_period_id: periodId });
+      .rpc('run_draw', { p_period_id: periodId, p_conducted_by: user.id });
 
     if (drawError) {
       throw new Error(drawError.message);
