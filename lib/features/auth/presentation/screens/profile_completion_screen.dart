@@ -53,7 +53,7 @@ class _ProfileCompletionScreenState
       }
     } else {
       // User baru dari Google OAuth metadata jika ada
-      final session = ref.read(currentSessionProvider);
+      final session = ref.read(currentSessionProvider).valueOrNull;
       final metaName = session?.user.userMetadata?['full_name'] as String?;
       if (metaName != null && metaName.isNotEmpty && mounted) {
         _fullNameController.text = metaName;
@@ -89,7 +89,7 @@ class _ProfileCompletionScreenState
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final session = ref.read(currentSessionProvider);
+    final session = ref.read(currentSessionProvider).valueOrNull;
     if (session == null) {
       AppSnackbar.show(context, 'Sesi pengguna tidak ditemukan.');
       return;

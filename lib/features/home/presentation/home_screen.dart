@@ -119,7 +119,7 @@ class _HomeOverview extends ConsumerWidget {
 
     final connectionStatus = ref.watch(connectionStatusProvider);
     final currentMember = ref.watch(currentMemberProfileProvider).valueOrNull;
-    final session = ref.watch(currentSessionProvider);
+    final session = ref.watch(currentSessionProvider).valueOrNull;
     final googleName = session?.user.userMetadata?['full_name'] as String? ??
         session?.user.userMetadata?['name'] as String?;
     final googleAvatar = session?.user.userMetadata?['avatar_url'] as String? ??
@@ -884,7 +884,7 @@ class _ProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentMember = ref.watch(currentMemberProfileProvider).valueOrNull;
-    final session = ref.watch(currentSessionProvider);
+    final session = ref.watch(currentSessionProvider).valueOrNull;
     final googleName = session?.user.userMetadata?['full_name'] as String? ??
         session?.user.userMetadata?['name'] as String?;
     final googleAvatar = session?.user.userMetadata?['avatar_url'] as String? ??

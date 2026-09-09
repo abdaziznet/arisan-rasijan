@@ -7,7 +7,7 @@ import '../../../../core/utils/validators.dart';
 import '../../../../features/auth/data/auth_repository.dart';
 import '../../../../features/auth/domain/auth_state.dart';
 import '../../../../features/members/presentation/providers/members_providers.dart';
-import '../providers/auth_repository_provider.dart';
+import '../providers/auth_providers.dart';
 
 class AuthController extends Notifier<AuthScreenState> {
   @override
@@ -103,11 +103,15 @@ class AuthController extends Notifier<AuthScreenState> {
     state = const AuthLoading();
     try {
       await _repo.signOut();
+      ref.invalidate(currentSessionProvider);
       ref.invalidate(currentMemberProfileProvider);
       ref.invalidate(membersControllerProvider);
       state = const AuthInitial();
     } catch (e) {
       log('signOut error: $e');
+      // Tetap bersihkan state lokal walau Supabase signOut gagal —
+      // jangan biarkan user lama tersangkut di UI.
+      ref.invalidate(currentSessionProvider);
       ref.invalidate(currentMemberProfileProvider);
       ref.invalidate(membersControllerProvider);
       state = const AuthInitial(); // tetap logout dari perspektif UI

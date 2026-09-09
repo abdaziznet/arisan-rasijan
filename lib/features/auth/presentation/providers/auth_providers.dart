@@ -24,9 +24,11 @@ final authStateChangesProvider = StreamProvider<AuthState>((ref) {
 });
 
 // ---------------------------------------------------------------------------
-// Session saat ini
+// Session saat ini (reactive — listens to Supabase auth state stream)
 // ---------------------------------------------------------------------------
 
-final currentSessionProvider = Provider<Session?>((ref) {
-  return ref.read(authRepositoryProvider).currentSession;
+final currentSessionProvider = StreamProvider<Session?>((ref) {
+  return ref.read(authRepositoryProvider).onAuthStateChange.map(
+        (state) => state.session,
+      );
 });

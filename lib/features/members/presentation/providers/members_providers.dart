@@ -15,7 +15,7 @@ final membersControllerProvider =
 
 /// Provider untuk profil pengguna yang sedang login.
 final currentMemberProfileProvider = FutureProvider<MemberModel?>((ref) async {
-  final session = ref.watch(currentSessionProvider);
+  final session = ref.watch(currentSessionProvider).valueOrNull;
   if (session == null) return null;
 
   final repo = ref.watch(membersRepositoryProvider);
