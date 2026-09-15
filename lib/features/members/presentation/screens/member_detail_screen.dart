@@ -133,12 +133,6 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                     ),
                     const Divider(height: AppSpacing.lg),
                     _DetailRow(
-                      icon: Icons.home_outlined,
-                      label: 'Alamat',
-                      value: widget.member.address ?? 'Belum diisi',
-                    ),
-                    const Divider(height: AppSpacing.lg),
-                    _DetailRow(
                       icon: Icons.emoji_events_outlined,
                       label: 'Pernah Menang Arisan',
                       value: widget.member.hasWonBefore ? 'Sudah' : 'Belum',
@@ -185,7 +179,8 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Status Keanggotaan', style: AppTypography.body),
+                          const Text('Status Keanggotaan',
+                              style: AppTypography.body),
                           Switch(
                             value: _isActive,
                             onChanged: (val) => setState(() => _isActive = val),

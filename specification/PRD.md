@@ -124,6 +124,28 @@ Aplikasi ini bersifat **privat**, hanya digunakan oleh anggota satu keluarga bes
 - Tidak ada fitur chat internal (memanfaatkan grup WhatsApp keluarga yang sudah ada)
 - Tidak menangani pembayaran online/payment gateway di versi awal (pencatatan manual status bayar)
 
+### 5.4 Lokasi & Navigasi Rumah (terintegrasi ke MVP)
+
+Untuk mendukung koordinasi arisan yang lebih praktis, aplikasi perlu menyimpan data lokasi rumah anggota dan rumah tuan rumah secara terstruktur. Fitur ini tidak menggantikan fungsi utama arisan, tetapi menjadi pendukung yang penting agar anggota lebih mudah mengecek jadwal, arah keberangkatan, dan lokasi acara.
+
+**Fitur utama**
+- Profil anggota memiliki field alamat rumah, kota, latitude, longitude, dan last updated
+- User dapat mengambil lokasi saat ini dari perangkat untuk mengisi koordinat rumah
+- Home screen menampilkan info lokasi rumah tuan rumah periode aktif
+- Tombol direction memandu user ke Google Maps secara cepat
+- Jika lokasi tidak tersedia, sistem tetap menampilkan alamat teks dan fallback manual
+
+**Aturan bisnis**
+- Data lokasi bersifat keluarga/private dan hanya digunakan untuk kebutuhan arisan
+- User hanya dapat mengubah data lokasi dirinya sendiri, kecuali admin mendapat otorisasi khusus
+- Tombol arah hanya aktif jika koordinat tujuan valid
+- Jika izin lokasi ditolak, user tetap bisa mengisi alamat secara manual
+
+**Manfaat**
+- Mengurangi kebingungan saat mencari lokasi rumah tuan rumah
+- Menyederhanakan koordinasi sebelum acara dimulai
+- Membuat profil keluarga lebih lengkap dan siap digunakan untuk kebutuhan event
+
 ---
 
 ## 6. Alur Pengguna (User Flow)
@@ -152,9 +174,72 @@ Aplikasi ini bersifat **privat**, hanya digunakan oleh anggota satu keluarga bes
 7. Admin menetapkan tanggal pelaksanaan & mencatat nominal kas yang terpakai untuk event tersebut
 8. Saldo kas gathering otomatis berkurang sesuai nominal yang dipakai
 
+### Alur Fitur Lokasi & Navigasi
+
+1. Anggota membuka halaman profil dan memilih menu "Alamat Rumah"
+2. Sistem menampilkan field alamat lengkap, kota, latitude, longitude, dan tombol "Ambil Lokasi Saat Ini"
+3. Jika user memberi izin lokasi, aplikasi menyimpan koordinat otomatis dari perangkat
+4. Jika user menolak izin, sistem tetap memberi opsi input manual untuk alamat dan koordinat yang bisa diisi nanti
+5. Pada home screen, card periode aktif menampilkan alamat rumah tuan rumah dan tombol direction
+6. User tap tombol arah, aplikasi membuka Google Maps menuju lokasi tujuan
+7. Jika Google Maps tidak terpasang, aplikasi membuka browser sebagai fallback
+
 ---
 
-## 7. Kebutuhan Non-Fungsional
+## 7. Roadmap Implementasi per Modul
+
+### Modul 1: Profil & Data Alamat
+- Tujuan: menyimpan lokasi rumah anggota secara terstruktur dan siap dipakai di home screen
+- Scope:
+  - menambahkan field `address`, `city`, `latitude`, `longitude`, `updated_at` di `profiles`
+  - form edit profil dengan section `Alamat Rumah`
+  - tombol `Ambil Lokasi Saat Ini`
+  - validasi koordinat dan fallback manual
+- Deliverable:
+  - profil bisa diisi dan diperbarui tanpa error
+  - koordinat tersimpan sesuai device user
+
+### Modul 2: Home Screen & Informasi Tuan Rumah
+- Tujuan: menampilkan lokasi arisan aktif dengan jelas di halaman utama
+- Scope:
+  - card periode berjalan dengan alamat dan nama tuan rumah
+  - tombol arah (icon direction) yang terlihat jelas
+  - status jika lokasi tidak tersedia atau belum diisi
+- Deliverable:
+  - anggota langsung melihat informasi lokasi acara dari home screen
+
+### Modul 3: Integrasi Maps & Navigasi
+- Tujuan: membuka Google Maps langsung dengan arah dari lokasi user ke tujuan
+- Scope:
+  - deep link ke `google.navigation:q=...` atau `maps.google.com` fallback
+  - pengecekan ketersediaan aplikasi Google Maps
+  - pesan error jika koordinat tujuan invalid
+- Deliverable:
+  - satu tap membuka navigasi ke rumah tuan rumah
+
+### Modul 4: Permission & Privasi
+- Tujuan: menjaga keamanan data lokasi keluarga tanpa mengganggu pengalaman user
+- Scope:
+  - minta izin lokasi hanya saat user memilih `Ambil Lokasi Saat Ini`
+  - tampilkan penjelasan penggunaan lokasi dengan bahasa yang jelas
+  - bila izin ditolak, tetap lanjutkan dengan mode manual
+  - data hanya diakses untuk kebutuhan arisan keluarga
+- Deliverable:
+  - permission flow aman, jelas, bisa dipahami oleh user dengan berbagai tingkat teknis
+
+### Modul 5: Observability & QA
+- Tujuan: memastikan fitur lokasinya stabil pada perangkat nyata
+- Scope:
+  - test validasi latitude/longitude
+  - test fallback saat maps tidak tersedia
+  - test kondisi izin lokasi ditolak
+  - test card home pada perangkat kecil / layar sempit
+- Deliverable:
+  - release safe untuk internal testing
+
+---
+
+## 8. Kebutuhan Non-Fungsional
 
 - **Privasi & Keamanan**: data keuangan keluarga harus terproteksi — hanya anggota grup yang bisa mengakses (Row Level Security)
 - **Ketersediaan**: harus tetap bisa dibuka meski sinyal internet lemah di lokasi acara (idealnya ada caching data periode berjalan)
@@ -163,7 +248,7 @@ Aplikasi ini bersifat **privat**, hanya digunakan oleh anggota satu keluarga bes
 
 ---
 
-## 8. Metrik Keberhasilan
+## 9. Metrik Keberhasilan
 
 - Seluruh anggota aktif menggunakan app untuk cek jadwal & histori
 - Tidak ada lagi selisih pencatatan iuran/kas
@@ -172,14 +257,14 @@ Aplikasi ini bersifat **privat**, hanya digunakan oleh anggota satu keluarga bes
 
 ---
 
-## 9. Rencana Rilis
+## 10. Rencana Rilis
 
 - **Fase 1 (MVP)**: fitur must-have di atas, dirilis via Google Play Console — **Internal Testing / Closed Testing** (bukan publik, karena app privat keluarga)
 - **Fase 2**: fitur nice-to-have berdasarkan feedback pemakaian riil
 
 ---
 
-## 10. Referensi Dokumen Terkait
+## 11. Referensi Dokumen Terkait
 
 - Struktur database: lihat `DATABASE_SCHEMA.md`
 - Arsitektur teknis & stack: lihat `ARCHITECTURE.md`

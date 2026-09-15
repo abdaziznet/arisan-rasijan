@@ -13,3 +13,8 @@ final activePeriodProvider = FutureProvider<PeriodModel?>((ref) async {
   final repo = ref.watch(periodsRepositoryProvider);
   return repo.getActivePeriod();
 });
+
+final latestCompletedPeriodProvider = FutureProvider<PeriodModel?>((ref) async {
+  final repo = ref.watch(periodsRepositoryProvider);
+  return repo.getLatestCompletedPeriod();
+});

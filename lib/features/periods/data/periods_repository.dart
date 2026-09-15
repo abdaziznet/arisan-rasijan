@@ -54,6 +54,20 @@ class PeriodsRepository {
         .toList();
   }
 
+  Future<PeriodModel?> getLatestCompletedPeriod() async {
+    final response = await _client
+        .from('arisan_periods')
+        .select('*, host:profiles!host_id(*), winner:profiles!winner_id(*)')
+        .eq('status', 'completed')
+        .not('winner_id', 'is', null)
+        .order('event_date', ascending: false)
+        .limit(1)
+        .maybeSingle();
+
+    if (response == null) return null;
+    return PeriodModel.fromJson(response);
+  }
+
   Future<PeriodModel> createPeriod(PeriodModel period) async {
     final payload = period.toJson();
     payload.remove('id');

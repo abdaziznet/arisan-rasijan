@@ -40,11 +40,15 @@ Menyimpan data tambahan anggota, terhubung 1:1 ke `auth.users` (yang menangani e
 | `full_name` | `text` | Nama lengkap |
 | `phone_number` | `text`, nullable | No HP (opsional, bukan untuk auth) |
 | `address` | `text`, nullable | Alamat rumah (berguna saat jadi tuan rumah) |
+| `city` | `text`, nullable | Kota/kecamatan alamat rumah |
+| `latitude` | `double precision`, nullable | Latitude lokasi rumah, rentang `-90..90` |
+| `longitude` | `double precision`, nullable | Longitude lokasi rumah, rentang `-180..180` |
 | `photo_url` | `text`, nullable | URL foto profil (Supabase Storage) |
 | `role` | `text`, default `'member'` | `'admin'` atau `'member'` |
 | `is_active` | `boolean`, default `true` | Status keanggotaan aktif |
 | `has_won_before` | `boolean`, default `false` | Penanda pernah menang (untuk opsi exclude) |
 | `created_at` | `timestamptz`, default `now()` | Waktu bergabung |
+| `updated_at` | `timestamptz`, default `now()` | Waktu terakhir profil/lokasi diperbarui |
 
 **RLS Policy:**
 - `SELECT`: semua user yang sudah login (`auth.uid() IS NOT NULL`) boleh melihat semua profil dalam grup

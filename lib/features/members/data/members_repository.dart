@@ -25,11 +25,8 @@ class MembersRepository {
 
   /// Ambil detail profil anggota berdasarkan [id].
   Future<MemberModel?> getMemberById(String id) async {
-    final response = await _client
-        .from('profiles')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
+    final response =
+        await _client.from('profiles').select('*').eq('id', id).maybeSingle();
 
     if (response == null) return null;
     return MemberModel.fromJson(response);
@@ -40,6 +37,29 @@ class MembersRepository {
     final response = await _client
         .from('profiles')
         .upsert(member.toJson())
+        .select()
+        .single();
+
+    return MemberModel.fromJson(response);
+  }
+
+  /// Perbarui data lokasi profil milik user yang sedang login.
+  Future<MemberModel> updateProfileLocation({
+    required String memberId,
+    required String? address,
+    required String? city,
+    required double? latitude,
+    required double? longitude,
+  }) async {
+    final response = await _client
+        .from('profiles')
+        .update({
+          'address': address,
+          'city': city,
+          'latitude': latitude,
+          'longitude': longitude,
+        })
+        .eq('id', memberId)
         .select()
         .single();
 
@@ -68,7 +88,8 @@ class MembersRepository {
     required File imageFile,
   }) async {
     final fileExt = imageFile.path.split('.').last;
-    final fileName = '$userId-${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final fileName =
+        '$userId-${DateTime.now().millisecondsSinceEpoch}.$fileExt';
     final filePath = '$userId/$fileName';
 
     await _client.storage.from('avatars').upload(

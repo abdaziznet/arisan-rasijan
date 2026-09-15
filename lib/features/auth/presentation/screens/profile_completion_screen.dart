@@ -133,10 +133,14 @@ class _ProfileCompletionScreenState
           address: _addressController.text.trim().isEmpty
               ? null
               : _addressController.text.trim(),
+          city: existingProfile?.city,
+          latitude: existingProfile?.latitude,
+          longitude: existingProfile?.longitude,
           photoUrl: existingProfile?.photoUrl,
           role: existingProfile?.role ?? 'member',
           isActive: existingProfile?.isActive ?? true,
           hasWonBefore: existingProfile?.hasWonBefore ?? false,
+          updatedAt: existingProfile?.updatedAt,
         );
 
         await ref
@@ -253,9 +257,8 @@ class _ProfileCompletionScreenState
                               backgroundImage: _selectedImage != null
                                   ? FileImage(_selectedImage!)
                                   : (existingProfile?.photoUrl != null
-                                          ? NetworkImage(
-                                              existingProfile!.photoUrl!)
-                                          : null) as ImageProvider?,
+                                      ? NetworkImage(existingProfile!.photoUrl!)
+                                      : null) as ImageProvider?,
                               child: _selectedImage == null &&
                                       existingProfile?.photoUrl == null
                                   ? const Icon(
@@ -318,17 +321,6 @@ class _ProfileCompletionScreenState
                         prefixIcon: Icon(Icons.phone_rounded),
                       ),
                       textInputAction: TextInputAction.next,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    TextFormField(
-                      controller: _addressController,
-                      maxLines: 2,
-                      decoration: const InputDecoration(
-                        labelText: 'Alamat',
-                        hintText: 'Alamat tempat tinggal (opsional)',
-                        prefixIcon: Icon(Icons.home_rounded),
-                      ),
-                      textInputAction: TextInputAction.done,
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     AppButton(

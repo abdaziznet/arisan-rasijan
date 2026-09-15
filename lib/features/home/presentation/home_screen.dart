@@ -16,6 +16,8 @@ import '../../periods/presentation/widgets/period_form_dialog.dart';
 import '../../payments/presentation/screens/payment_list_screen.dart';
 import '../../payments/presentation/providers/payments_providers.dart';
 import '../../gathering/presentation/providers/gathering_providers.dart';
+import '../../maps/domain/navigation_destination.dart' as maps_domain;
+import '../../maps/presentation/providers/maps_providers.dart';
 
 final _adminQuickActionsExpandedProvider = StateProvider<bool>((ref) => false);
 
@@ -110,6 +112,7 @@ class _HomeOverview extends ConsumerWidget {
             : googleAvatar;
 
     final activePeriodAsync = ref.watch(activePeriodProvider);
+    final latestCompletedPeriodAsync = ref.watch(latestCompletedPeriodProvider);
     final isAdmin = currentMember?.isAdmin ?? false;
 
     return TweenAnimationBuilder<double>(
@@ -142,6 +145,7 @@ class _HomeOverview extends ConsumerWidget {
                 ref.read(_adminQuickActionsExpandedProvider.notifier).state =
                     false;
                 ref.invalidate(activePeriodProvider);
+                ref.invalidate(latestCompletedPeriodProvider);
                 ref.invalidate(currentMemberProfileProvider);
                 ref.invalidate(currentMemberHasPaidProvider);
                 ref.invalidate(fundLedgerProvider);
@@ -291,9 +295,15 @@ class _HomeOverview extends ConsumerWidget {
 
                       final hostName =
                           period.host?.fullName ?? 'Belum ditentukan';
-                      final address = period.hostAddress ??
-                          period.host?.address ??
-                          'Rumah Tuan Rumah';
+                      final hostAddress =
+                          period.hostAddress ?? period.host?.address;
+                      final address = hostAddress ?? 'Rumah Tuan Rumah';
+                      final destination = maps_domain.NavigationDestination(
+                        latitude: period.host?.latitude,
+                        longitude: period.host?.longitude,
+                        address: hostAddress,
+                        label: hostName,
+                      );
 
                       return Container(
                         clipBehavior: Clip.antiAlias,
@@ -418,6 +428,56 @@ class _HomeOverview extends ConsumerWidget {
                                     icon: Icons.location_on_rounded,
                                     label: 'Lokasi Acara',
                                     value: address,
+                                    trailing: TextButton(
+                                      style: TextButton.styleFrom(
+                                        foregroundColor:
+                                            destination.hasLaunchTarget
+                                                ? Colors.white
+                                                : AppColors.textSecondary,
+                                        backgroundColor:
+                                            destination.hasLaunchTarget
+                                                ? AppColors.accent
+                                                : AppColors.accent.withValues(
+                                                    alpha: 0.35,
+                                                  ),
+                                        disabledForegroundColor:
+                                            AppColors.textSecondary,
+                                        disabledBackgroundColor:
+                                            AppColors.accent.withValues(
+                                          alpha: 0.35,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.sm,
+                                        ),
+                                        minimumSize: const Size(0, 44),
+                                      ),
+                                      onPressed: destination.hasLaunchTarget
+                                          ? () async {
+                                              final result = await ref
+                                                  .read(mapsLauncherProvider)
+                                                  .open(destination);
+                                              if (!context.mounted) return;
+                                              if (!result.launched) {
+                                                AppSnackbar.show(
+                                                  context,
+                                                  'Google Maps tidak dapat dibuka.',
+                                                );
+                                              }
+                                            }
+                                          : null,
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text('Petunjuk arah'),
+                                          SizedBox(width: AppSpacing.xs),
+                                          Icon(Icons.directions_outlined),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -634,22 +694,22 @@ class _HomeOverview extends ConsumerWidget {
                     onTap: () =>
                         Navigator.pushNamed(context, AppRouter.gathering),
                   ),
-                  activePeriodAsync.maybeWhen(
+                  latestCompletedPeriodAsync.maybeWhen(
                     data: (period) => _SummaryCard(
                       icon: Icons.emoji_events_rounded,
                       title: 'Pemenang Terakhir',
-                      value: period?.winner?.fullName ?? 'Belum ada',
+                      value: period?.winner?.fullName ?? 'Belum ada pemenang',
                       detail: period != null
-                          ? 'Periode #${period.periodNumber} · Tuan Rumah Berikutnya'
-                          : 'Belum ada data',
+                          ? 'Periode #${period.periodNumber} · Hasil kocokan terakhir'
+                          : 'Belum ada hasil kocokan',
                       color: AppColors.accent,
                       onTap: () => onNavigate(2),
                     ),
                     orElse: () => _SummaryCard(
                       icon: Icons.emoji_events_rounded,
                       title: 'Pemenang Terakhir',
-                      value: 'Budi Rasijan',
-                      detail: 'Periode #9 · Tuan Rumah Berikutnya',
+                      value: 'Memuat...',
+                      detail: 'Mengambil hasil kocokan terakhir',
                       color: AppColors.accent,
                       onTap: () => onNavigate(2),
                     ),
@@ -796,11 +856,13 @@ class _PeriodDetailRow extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    this.trailing,
   });
 
   final IconData icon;
   final String label;
   final String value;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -838,6 +900,7 @@ class _PeriodDetailRow extends StatelessWidget {
               ],
             ),
           ),
+          if (trailing != null) trailing!,
         ],
       );
 }
@@ -913,6 +976,7 @@ class _AdminActionCard extends StatelessWidget {
                 Text(
                   label,
                   style: AppTypography.caption.copyWith(
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                     height: 1.15,
@@ -1028,7 +1092,11 @@ class _ProfilePage extends ConsumerWidget {
 
     final email = session?.user.email ?? 'Keluarga Bani Rasijan';
     final phone = currentMember?.phoneNumber ?? '-';
-    final address = currentMember?.address ?? '-';
+    final addressParts = [currentMember?.address, currentMember?.city]
+        .whereType<String>()
+        .where((value) => value.trim().isNotEmpty)
+        .toList();
+    final address = addressParts.isEmpty ? '-' : addressParts.join(', ');
     final isAdmin = currentMember?.isAdmin ?? false;
     final hasWon = currentMember?.hasWonBefore ?? false;
 
@@ -1208,6 +1276,20 @@ class _ProfilePage extends ConsumerWidget {
                     context,
                     AppRouter.profileCompletion,
                   ),
+                ),
+                const Divider(height: 1),
+                _ProfileMenuTile(
+                  icon: Icons.location_on_outlined,
+                  title: 'Alamat Rumah & Maps',
+                  subtitle: 'Simpan lokasi rumah dan buka arah ke tuan rumah',
+                  onTap: () async {
+                    await Navigator.pushNamed(
+                      context,
+                      AppRouter.profileLocation,
+                    );
+                    ref.invalidate(currentMemberProfileProvider);
+                    ref.invalidate(activePeriodProvider);
+                  },
                 ),
                 const Divider(height: 1),
                 _ProfileMenuTile(
