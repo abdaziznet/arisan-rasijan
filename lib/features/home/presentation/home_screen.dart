@@ -17,6 +17,8 @@ import '../../payments/presentation/screens/payment_list_screen.dart';
 import '../../payments/presentation/providers/payments_providers.dart';
 import '../../gathering/presentation/providers/gathering_providers.dart';
 
+final _adminQuickActionsExpandedProvider = StateProvider<bool>((ref) => false);
+
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
   @override
@@ -85,7 +87,9 @@ class _HomeOverview extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final totalGatheringFund = ref.watch(totalGatheringFundProvider);
+    final totalGatheringFund = ref.watch(fundBalanceProvider);
+    final areAdminQuickActionsExpanded =
+        ref.watch(_adminQuickActionsExpandedProvider);
 
     final connectionStatus = ref.watch(connectionStatusProvider);
     final currentMember = ref.watch(currentMemberProfileProvider).valueOrNull;
@@ -135,10 +139,11 @@ class _HomeOverview extends ConsumerWidget {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
+                ref.read(_adminQuickActionsExpandedProvider.notifier).state = false;
                 ref.invalidate(activePeriodProvider);
                 ref.invalidate(currentMemberProfileProvider);
                 ref.invalidate(currentMemberHasPaidProvider);
-                ref.invalidate(totalGatheringFundProvider);
+                ref.invalidate(fundLedgerProvider);
               },
               child: ListView(
                 padding: const EdgeInsets.symmetric(
@@ -274,117 +279,125 @@ class _HomeOverview extends ConsumerWidget {
                           'Rumah Tuan Rumah';
 
                       return Container(
+                        clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.primaryDark,
+                              AppColors.primary,
+                            ],
+                          ),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.15),
+                            color: AppColors.primaryDark,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                              color: AppColors.primary.withValues(alpha: 0.22),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
                             ),
                           ],
                         ),
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Stack(
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                AppBadge(
-                                  label:
-                                      'ARISAN PERIODE #${period.periodNumber}',
+                            Positioned(
+                              top: -54,
+                              right: -34,
+                              child: Container(
+                                width: 160,
+                                height: 160,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.07),
+                                  shape: BoxShape.circle,
                                 ),
-                                if (isAdmin)
-                                  IconButton(
-                                    icon: const Icon(Icons.edit_outlined,
-                                        size: 20, color: AppColors.primary),
-                                    onPressed: () => PeriodFormDialog.show(
-                                      context,
-                                      period: period,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                            Text(
-                              Formatters.formatDate(period.eventDate),
-                              style: AppTypography.h2.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: AppSpacing.md),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(AppSpacing.xs),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary
-                                        .withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(Icons.home_rounded,
-                                      color: AppColors.primary, size: 20),
+                            Positioned(
+                              bottom: -72,
+                              left: -36,
+                              child: Container(
+                                width: 150,
+                                height: 150,
+                                decoration: BoxDecoration(
+                                  color: AppColors.accent.withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
                                 ),
-                                const SizedBox(width: AppSpacing.md),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Tuan Rumah',
-                                        style: AppTypography.caption.copyWith(
-                                            color: AppColors.textSecondary),
-                                      ),
-                                      Text(
-                                        'Di rumah $hostName',
-                                        style: AppTypography.bodyMedium
-                                            .copyWith(
-                                                fontWeight: FontWeight.w600),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                            const SizedBox(height: AppSpacing.sm),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(AppSpacing.xs),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.accent
-                                        .withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(Icons.location_on_rounded,
-                                      color: AppColors.accent, size: 20),
-                                ),
-                                const SizedBox(width: AppSpacing.md),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                            Padding(
+                              padding: const EdgeInsets.all(AppSpacing.lg),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        'Lokasi Acara',
-                                        style: AppTypography.caption.copyWith(
-                                            color: AppColors.textSecondary),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.sm,
+                                          vertical: AppSpacing.xs,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(alpha: 0.14),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: Colors.white
+                                                .withValues(alpha: 0.18),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'ARISAN PERIODE #${period.periodNumber}',
+                                          style: AppTypography.caption.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
                                       ),
-                                      Text(
-                                        address,
-                                        style: AppTypography.bodyMedium,
-                                      ),
+                                      if (isAdmin)
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.white
+                                                .withValues(alpha: 0.14),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: IconButton(
+                                            tooltip: 'Ubah periode arisan',
+                                            icon: const Icon(Icons.edit_outlined,
+                                                size: 20, color: Colors.white),
+                                            onPressed: () => PeriodFormDialog.show(
+                                              context,
+                                              period: period,
+                                            ),
+                                          ),
+                                        ),
                                     ],
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: AppSpacing.md),
+                                  Text(
+                                    Formatters.formatDate(period.eventDate),
+                                    style: AppTypography.h2.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.md),
+                                  _PeriodDetailRow(
+                                    icon: Icons.home_rounded,
+                                    label: 'Tuan Rumah',
+                                    value: 'Di rumah $hostName',
+                                  ),
+                                  const SizedBox(height: AppSpacing.sm),
+                                  _PeriodDetailRow(
+                                    icon: Icons.location_on_rounded,
+                                    label: 'Lokasi Acara',
+                                    value: address,
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -397,27 +410,48 @@ class _HomeOverview extends ConsumerWidget {
                   if (isAdmin) ...[
                     const AppSectionHeader(title: 'Aksi Cepat Admin'),
                     const SizedBox(height: AppSpacing.sm),
-                    SizedBox(
-                      height: 90,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
+                    AnimatedSize(
+                      duration: MediaQuery.disableAnimationsOf(context)
+                          ? Duration.zero
+                          : const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      alignment: Alignment.topCenter,
+                      child: LayoutBuilder(builder: (context, constraints) {
+                      final crossAxisCount = constraints.maxWidth < 360
+                          ? 3
+                          : constraints.maxWidth >= 600
+                              ? 5
+                              : 4;
+                      final childAspectRatio = crossAxisCount == 3
+                          ? 0.78
+                          : crossAxisCount == 4
+                              ? 0.62
+                              : 0.82;
+
+                      return GridView.count(
+                        crossAxisCount: crossAxisCount,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        mainAxisSpacing: AppSpacing.mdSm,
+                        crossAxisSpacing: AppSpacing.mdSm,
+                        childAspectRatio: childAspectRatio,
                         children: [
                           _AdminActionCard(
-                            icon: Icons.add_circle_outline_rounded,
+                            icon: Icons.calendar_month_rounded,
                             label: 'Periode Baru',
                             color: AppColors.primary,
                             onTap: () => PeriodFormDialog.show(context),
                           ),
                           _AdminActionCard(
-                            icon: Icons.payment_rounded,
-                            label: 'Catat Bayar',
-                            color: AppColors.success,
+                            icon: Icons.receipt_long_rounded,
+                            label: 'Catat Iuran',
+                            color: AppColors.info,
                             onTap: () => onNavigate(1),
                           ),
                           _AdminActionCard(
-                            icon: Icons.checklist_rounded,
+                            icon: Icons.event_note_rounded,
                             label: 'Agenda Acara',
-                            color: AppColors.info,
+                            color: AppColors.primaryDark,
                             onTap: () => activePeriodAsync.maybeWhen(
                               data: (period) {
                                 if (period != null) {
@@ -435,66 +469,86 @@ class _HomeOverview extends ConsumerWidget {
                                   context, 'Tidak ada periode aktif.'),
                             ),
                           ),
-                          _AdminActionCard(
-                            icon: Icons.casino_rounded,
-                            label: 'Mulai Kocok',
-                            color: AppColors.accent,
-                            onTap: () => activePeriodAsync.maybeWhen(
-                              data: (period) {
-                                if (period != null) {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRouter.draw,
-                                    arguments: period.id,
-                                  );
-                                } else {
-                                  AppSnackbar.show(
-                                      context, 'Tidak ada periode aktif.');
-                                }
-                              },
-                              orElse: () => AppSnackbar.show(
-                                  context, 'Tidak ada periode aktif.'),
+                          if (!areAdminQuickActionsExpanded)
+                            _AdminActionCard(
+                              icon: Icons.grid_view_rounded,
+                              label: 'Semua Menu',
+                              color: AppColors.textSecondary,
+                              onTap: () => ref
+                                  .read(_adminQuickActionsExpandedProvider.notifier)
+                                  .state = true,
                             ),
-                          ),
-                          _AdminActionCard(
-                            icon: Icons.history_rounded,
-                            label: 'Riwayat',
-                            color: Colors.purple,
-                            onTap: () =>
-                                Navigator.pushNamed(context, AppRouter.history),
-                          ),
-                          _AdminActionCard(
-                            icon: Icons.photo_library_rounded,
-                            label: 'Galeri',
-                            color: Colors.teal,
-                            onTap: () => activePeriodAsync.maybeWhen(
-                              data: (period) {
-                                if (period != null) {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRouter.gallery,
-                                    arguments: period.id,
-                                  );
-                                } else {
-                                  AppSnackbar.show(
-                                      context, 'Tidak ada periode aktif.');
-                                }
-                              },
-                              orElse: () => AppSnackbar.show(
-                                  context, 'Tidak ada periode aktif.'),
+                          if (areAdminQuickActionsExpanded) ...[
+                            _AdminActionCard(
+                              icon: Icons.celebration_rounded,
+                              label: 'Kocokan',
+                              color: AppColors.accent,
+                              onTap: () => activePeriodAsync.maybeWhen(
+                                data: (period) {
+                                  if (period != null) {
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRouter.draw,
+                                      arguments: period.id,
+                                    );
+                                  } else {
+                                    AppSnackbar.show(
+                                        context, 'Tidak ada periode aktif.');
+                                  }
+                                },
+                                orElse: () => AppSnackbar.show(
+                                    context, 'Tidak ada periode aktif.'),
+                              ),
                             ),
-                          ),
-                          _AdminActionCard(
-                            icon: Icons.settings_rounded,
-                            label: 'Pengaturan',
-                            color: AppColors.textSecondary,
-                            onTap: () => Navigator.pushNamed(
-                              context,
-                              AppRouter.adminSettings,
+                            _AdminActionCard(
+                              icon: Icons.timeline_rounded,
+                              label: 'Riwayat',
+                              color: AppColors.orange,
+                              onTap: () => Navigator.pushNamed(
+                                  context, AppRouter.history),
                             ),
-                          ),
+                            _AdminActionCard(
+                              icon: Icons.photo_outlined,
+                              label: 'Galeri',
+                              color: AppColors.success,
+                              onTap: () => activePeriodAsync.maybeWhen(
+                                data: (period) {
+                                  if (period != null) {
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRouter.gallery,
+                                      arguments: period.id,
+                                    );
+                                  } else {
+                                    AppSnackbar.show(
+                                        context, 'Tidak ada periode aktif.');
+                                  }
+                                },
+                                orElse: () => AppSnackbar.show(
+                                    context, 'Tidak ada periode aktif.'),
+                              ),
+                            ),
+                            _AdminActionCard(
+                              icon: Icons.tune_rounded,
+                              label: 'Pengaturan',
+                              color: AppColors.textSecondary,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                AppRouter.adminSettings,
+                              ),
+                            ),
+                            _AdminActionCard(
+                              icon: Icons.keyboard_arrow_up_rounded,
+                              label: 'Ringkas',
+                              color: AppColors.textSecondary,
+                              onTap: () => ref
+                                  .read(_adminQuickActionsExpandedProvider.notifier)
+                                  .state = false,
+                            ),
+                          ],
                         ],
-                      ),
+                      );
+                    }),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                   ],
@@ -710,6 +764,57 @@ class _HomeOverview extends ConsumerWidget {
   }
 }
 
+class _PeriodDetailRow extends StatelessWidget {
+  const _PeriodDetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: AppSpacing.mdSm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTypography.caption.copyWith(
+                    color: Colors.white.withValues(alpha: 0.72),
+                  ),
+                ),
+                Text(
+                  value,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+}
+
 class _AdminActionCard extends StatelessWidget {
   const _AdminActionCard({
     required this.icon,
@@ -725,50 +830,72 @@ class _AdminActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: AppSpacing.md),
-      child: InkWell(
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: 82,
-          padding: const EdgeInsets.symmetric(
-              vertical: AppSpacing.sm, horizontal: AppSpacing.xs),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: 0.2)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+          borderRadius: BorderRadius.circular(18),
+          child: Ink(
+            padding: const EdgeInsets.symmetric(
+              vertical: AppSpacing.sm,
+              horizontal: AppSpacing.xs,
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  color.withValues(alpha: 0.14),
+                  color.withValues(alpha: 0.055),
+                ],
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.xs),
-                decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: color.withValues(alpha: 0.2)),
+              boxShadow: [
+                BoxShadow(
                   color: color.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
+                  blurRadius: 16,
+                  offset: const Offset(0, 7),
                 ),
-                child: Icon(icon, color: color, size: 22),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                label,
-                style: AppTypography.caption.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface.withValues(alpha: 0.88),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: color.withValues(alpha: 0.12)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: color, size: 24),
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  label,
+                  style: AppTypography.caption.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    height: 1.15,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ),
       ),

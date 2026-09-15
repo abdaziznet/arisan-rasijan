@@ -150,18 +150,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       color: AppColors.surface,
                                     ),
                                   )
-                                : const FittedBox(
+                                : FittedBox(
                                     fit: BoxFit.scaleDown,
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        Icon(Icons.g_mobiledata_rounded, size: 28),
-                                        SizedBox(width: AppSpacing.xs),
+                                        const Icon(Icons.g_mobiledata_rounded, size: 28),
+                                        const SizedBox(width: AppSpacing.xs),
                                         Text(
                                           'Lanjut dengan Google',
-                                          style: TextStyle(
-                                            fontSize: 15,
+                                          style: AppTypography.button.copyWith(
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),

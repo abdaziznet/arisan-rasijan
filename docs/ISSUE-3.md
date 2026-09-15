@@ -580,7 +580,7 @@ Gunakan di `DrawAnimationScreen` untuk mendeteksi kapan Edge Function selesai & 
 ## 10. Verifikasi & Testing
 
 ### A. Database
-- [ ] Jalankan migration `011_run_draw_rpc.sql` di Supabase
+- [x] Jalankan migration `011_run_draw_rpc.sql` di Supabase
 - [ ] Test RPC `run_draw` langsung via Supabase SQL Editor dengan period_id yang valid
 - [ ] Pastikan RLS tidak memblokir service_role (grant sudah benar)
 - [ ] Verifikasi idempoten: panggil `run_draw` dua kali dengan period_id sama → hasil sama, tidak insert 2x
@@ -615,7 +615,7 @@ Gunakan di `DrawAnimationScreen` untuk mendeteksi kapan Edge Function selesai & 
 ### A. Database
 
 - [x] Buat `supabase/migrations/011_run_draw_rpc.sql` dengan RPC `run_draw`
-- [ ] Jalankan migration di Supabase project
+- [x] Jalankan migration di Supabase project
 - [ ] Verifikasi grant permission hanya untuk service_role
 - [ ] Test idempoten RPC
 

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/supabase_config.dart';
 import '../domain/gathering_event_model.dart';
@@ -80,9 +81,18 @@ class GatheringRepository {
         .order('created_at', ascending: false);
 
     final list = response as List<dynamic>;
-    return list
+    print('[GatheringRepo] getFundLedger: fetched ${list.length} entries');
+    for (final entry in list) {
+      final json = entry as Map<String, dynamic>;
+      print('[GatheringRepo]   entry: id=${json['id']}, type=${json['type']}, '
+          'amount=${json['amount']}, period_id=${json['period_id']}, '
+          'created_by=${json['created_by']}, description=${json['description']}');
+    }
+    final result = list
         .map((json) => FundLedgerModel.fromJson(json as Map<String, dynamic>))
         .toList();
+    print('[GatheringRepo] getFundLedger: returning ${result.length} FundLedgerModels');
+    return result;
   }
 
   Future<void> addPollOption(GatheringPollOptionModel option) async {

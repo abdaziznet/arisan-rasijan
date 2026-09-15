@@ -10,6 +10,28 @@ class PaymentsRepository {
 
   final SupabaseClient _client;
 
+  /// Payment status may only be changed on the arisan event day.
+  Future<void> _ensurePaymentUpdateIsAllowed(String periodId) async {
+    final periodData = await _client
+        .from('arisan_periods')
+        .select('event_date')
+        .eq('id', periodId)
+        .maybeSingle();
+    if (periodData == null) {
+      throw Exception('Periode arisan tidak ditemukan.');
+    }
+
+    final eventDate = DateTime.parse(periodData['event_date'] as String);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final eventDay = DateTime(eventDate.year, eventDate.month, eventDate.day);
+    if (today.year != eventDay.year ||
+        today.month != eventDay.month ||
+        today.day != eventDay.day) {
+      throw Exception('Status pembayaran hanya dapat diubah pada hari acara.');
+    }
+  }
+
   /// Mengambil nilai tetap alokasi kas gathering dari app_settings (rupiah).
   Future<double> _getGatheringFundAmount() async {
     try {
@@ -39,6 +61,7 @@ class PaymentsRepository {
   /// Menyimpan pembayaran baru ke database beserta alokasi ke fund_ledger.
   Future<void> addPayment(Payment payment) async {
     try {
+      await _ensurePaymentUpdateIsAllowed(payment.periodId);
       final session = _client.auth.currentSession;
       final recordedBy = session?.user.id;
       debugPrint('[PaymentsRepo] recordedBy: $recordedBy');
@@ -200,6 +223,7 @@ class PaymentsRepository {
     required bool markAsPaid,
   }) async {
     try {
+      await _ensurePaymentUpdateIsAllowed(periodId);
       final session = _client.auth.currentSession;
       final recordedBy = session?.user.id;
 
@@ -233,6 +257,7 @@ class PaymentsRepository {
           'amount': netAmount,
           'status': 'paid',
           'paid_at': DateTime.now().toIso8601String(),
+          'allocated_to_fund': allocatedToFund,
           if (recordedBy != null && recordedBy.isNotEmpty)
             'recorded_by': recordedBy,
         };
@@ -254,13 +279,7 @@ class PaymentsRepository {
           recordId = inserted['id'] as String;
           debugPrint('[PaymentsRepo] Payment INSERTED as PAID for member=$memberId');
         }
-
-        // Step 2: Update allocated_to_fund terpisah (workaround jika trigger mereset)
-        await _client
-            .from('payments')
-            .update({'allocated_to_fund': allocatedToFund})
-            .eq('id', recordId);
-        debugPrint('[PaymentsRepo] allocated_to_fund set to $allocatedToFund for record=$recordId');
+        debugPrint('[PaymentsRepo] allocated_to_fund=$allocatedToFund included in payment record=$recordId');
       } else {
         // Update status jadi unpaid + reset allocated_to_fund
         await _client

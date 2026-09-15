@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:bani_rasijan/features/auth/data/auth_repository.dart';
 import 'package:bani_rasijan/features/auth/presentation/providers/auth_providers.dart';
 import 'package:bani_rasijan/features/home/presentation/home_screen.dart';
+import 'package:bani_rasijan/features/gathering/data/gathering_repository.dart';
+import 'package:bani_rasijan/features/gathering/domain/fund_ledger_model.dart';
+import 'package:bani_rasijan/features/gathering/presentation/providers/gathering_providers.dart';
 import 'package:bani_rasijan/features/members/data/members_repository.dart';
 import 'package:bani_rasijan/features/members/domain/member_model.dart';
 import 'package:bani_rasijan/features/members/presentation/providers/members_providers.dart';
@@ -21,12 +24,14 @@ class MockMembersRepository extends Mock implements MembersRepository {}
 class MockAuthRepository extends Mock implements AuthRepository {}
 class MockPeriodsRepository extends Mock implements PeriodsRepository {}
 class MockConnectivityService extends Mock implements ConnectivityService {}
+class MockGatheringRepository extends Mock implements GatheringRepository {}
 
 void main() {
   late MockMembersRepository mockMembersRepo;
   late MockAuthRepository mockAuthRepo;
   late MockPeriodsRepository mockPeriodsRepo;
   late MockConnectivityService mockConnectivityService;
+  late MockGatheringRepository mockGatheringRepo;
 
   const sampleAdmin = MemberModel(
     id: 'm-1',
@@ -49,6 +54,7 @@ void main() {
     mockAuthRepo = MockAuthRepository();
     mockPeriodsRepo = MockPeriodsRepository();
     mockConnectivityService = MockConnectivityService();
+    mockGatheringRepo = MockGatheringRepository();
 
     final controller = StreamController<ConnectionStatus>();
 
@@ -64,6 +70,24 @@ void main() {
     when(() => mockConnectivityService.checkInitialConnection())
         .thenAnswer((_) async => ConnectionStatus.online);
     when(() => mockConnectivityService.connectionStatusController).thenReturn(controller);
+    when(() => mockGatheringRepo.getFundLedger()).thenAnswer(
+      (_) async => [
+        FundLedgerModel(
+          id: 'ledger-income',
+          type: 'contribution_allocation',
+          amount: 150000,
+          createdBy: 'm-1',
+          createdAt: DateTime(2026, 10, 15),
+        ),
+        FundLedgerModel(
+          id: 'ledger-expense',
+          type: 'gathering_expense',
+          amount: -25000,
+          createdBy: 'm-1',
+          createdAt: DateTime(2026, 10, 16),
+        ),
+      ],
+    );
 
     // Start with an online status
     controller.add(ConnectionStatus.online);
@@ -77,6 +101,7 @@ void main() {
           currentMemberProfileProvider.overrideWith((ref) async => sampleAdmin),
           connectivityServiceProvider.overrideWithValue(mockConnectivityService),
           connectionStatusProvider.overrideWith((ref) => Stream.value(ConnectionStatus.online)),
+          gatheringRepositoryProvider.overrideWithValue(mockGatheringRepo),
         ],
         child: const MaterialApp(
           onGenerateRoute: AppRouter.onGenerateRoute,
@@ -95,6 +120,7 @@ void main() {
     expect(find.text('Di rumah Ahmad Rasijan'), findsOneWidget);
     expect(find.text('Aksi Cepat Admin'), findsOneWidget);
     expect(find.text('Periode Baru'), findsOneWidget);
+    expect(find.text('Rp125.000'), findsOneWidget);
   });
 
   testWidgets('shows offline banner when internet is disconnected', (tester) async {
@@ -107,6 +133,7 @@ void main() {
         currentMemberProfileProvider.overrideWith((ref) async => sampleAdmin),
         connectivityServiceProvider.overrideWithValue(mockConnectivityService),
         connectionStatusProvider.overrideWith((ref) => Stream.value(ConnectionStatus.offline)),
+        gatheringRepositoryProvider.overrideWithValue(mockGatheringRepo),
       ],
       child: const MaterialApp(
         onGenerateRoute: AppRouter.onGenerateRoute,
@@ -120,4 +147,3 @@ void main() {
     expect(find.text('Anda sedang offline. Data mungkin tidak terbaru.'), findsOneWidget);
   });
 }
-

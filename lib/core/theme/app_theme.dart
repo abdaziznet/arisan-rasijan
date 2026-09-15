@@ -23,9 +23,31 @@ abstract final class AppTheme {
       headlineMedium: AppTypography.h1,
       titleLarge: AppTypography.h2,
       titleMedium: AppTypography.h3,
+      titleSmall: AppTypography.bodyMedium,
       bodyLarge: AppTypography.bodyLarge,
       bodyMedium: AppTypography.body,
+      bodySmall: AppTypography.caption,
       labelLarge: AppTypography.button,
+      labelMedium: AppTypography.bodyMedium,
+      labelSmall: AppTypography.caption,
+    ),
+    appBarTheme: AppBarTheme(
+      titleTextStyle: AppTypography.h3.copyWith(color: AppColors.surface),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      labelTextStyle: WidgetStatePropertyAll(
+        AppTypography.caption.copyWith(
+          color: AppColors.textSecondary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+    tabBarTheme: TabBarThemeData(
+      labelStyle: AppTypography.button,
+      unselectedLabelStyle: AppTypography.bodyMedium,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(textStyle: AppTypography.button),
     ),
     inputDecorationTheme: const InputDecorationTheme(
       filled: true,

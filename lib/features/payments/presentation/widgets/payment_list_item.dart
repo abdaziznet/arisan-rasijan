@@ -172,7 +172,6 @@ class PaymentListItem extends StatelessWidget {
                       style: AppTypography.caption.copyWith(
                         color: isPaid ? AppColors.success : AppColors.error,
                         fontWeight: FontWeight.w600,
-                        fontSize: 11,
                       ),
                     ),
                   ],

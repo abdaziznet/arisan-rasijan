@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_components.dart';
 import '../../../members/presentation/providers/members_providers.dart';
 import '../controllers/payment_list_controller.dart';
@@ -80,6 +81,8 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
         ref.watch(currentMemberProfileProvider).valueOrNull?.isAdmin ?? false;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    final canUpdatePayment = activePeriod != null &&
+        _isSameDay(activePeriod.eventDate, today);
     final isBeforeEvent = activePeriod != null &&
         activePeriod.eventDate.isAfter(today);
 
@@ -216,6 +219,9 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
               ),
             ),
 
+            if (!canUpdatePayment && activePeriod != null)
+              _PaymentUpdateLockedNotice(eventDate: activePeriod.eventDate),
+
             // Search bar
             Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -289,7 +295,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
                   ref.invalidate(memberPaymentStatusListProvider);
                   ref.invalidate(currentMemberHasPaidProvider);
                   ref.invalidate(paymentListProvider);
-                  ref.invalidate(totalGatheringFundProvider);
+                  ref.invalidate(fundLedgerProvider);
                 },
                 child: filtered.isEmpty
                     ? ListView(
@@ -315,8 +321,11 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
                           return _MemberPaymentTile(
                             member: member,
                             isAdmin: isAdmin,
+                            canUpdatePayment: canUpdatePayment,
                             initials: _getInitials(member.fullName),
-                            onTap: isAdmin
+                            onTap: isAdmin &&
+                                    canUpdatePayment &&
+                                    !member.isPaid
                                 ? () => _toggleStatus(member)
                                 : null,
                           );
@@ -337,17 +346,40 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
   }
 
   void _toggleStatus(MemberPaymentStatus member) async {
+    if (member.isPaid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pembayaran sudah lunas dan tidak dapat diubah.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final activePeriod = ref.read(activePeriodProvider).valueOrNull;
+    final now = DateTime.now();
+    if (activePeriod == null ||
+        !_isSameDay(activePeriod.eventDate, DateTime(now.year, now.month, now.day))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Status iuran hanya dapat diubah pada hari acara.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     final newStatus = !member.isPaid;
     try {
       await ref.read(paymentsRepositoryProvider).togglePaymentStatus(
             memberId: member.memberId,
-            periodId: ref.read(activePeriodProvider).valueOrNull!.id,
+            periodId: activePeriod.id,
             markAsPaid: newStatus,
           );
       ref.invalidate(memberPaymentStatusListProvider);
       ref.invalidate(currentMemberHasPaidProvider);
       ref.invalidate(paymentListProvider);
-      ref.invalidate(totalGatheringFundProvider);
+      ref.invalidate(fundLedgerProvider);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -356,6 +388,11 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
       }
     }
   }
+
+  bool _isSameDay(DateTime first, DateTime second) =>
+      first.year == second.year &&
+      first.month == second.month &&
+      first.day == second.day;
 
   void _copyReminderMessage(
       List<MemberPaymentStatus> unpaidMembers, dynamic period) {
@@ -397,17 +434,20 @@ class _MemberPaymentTile extends StatelessWidget {
   const _MemberPaymentTile({
     required this.member,
     required this.isAdmin,
+    required this.canUpdatePayment,
     required this.initials,
     this.onTap,
   });
 
   final MemberPaymentStatus member;
   final bool isAdmin;
+  final bool canUpdatePayment;
   final String initials;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final canMarkAsPaid = isAdmin && canUpdatePayment && !member.isPaid;
     final currencyFormatter = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
@@ -415,13 +455,15 @@ class _MemberPaymentTile extends StatelessWidget {
     );
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: canMarkAsPaid ? onTap : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: canUpdatePayment || !isAdmin
+              ? AppColors.surface
+              : AppColors.background,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: member.isPaid
@@ -543,8 +585,16 @@ class _MemberPaymentTile extends StatelessWidget {
             if (isAdmin) ...[
               const SizedBox(width: AppSpacing.sm),
               Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textSecondary.withValues(alpha: 0.5),
+                canUpdatePayment
+                    ? member.isPaid
+                        ? Icons.verified_rounded
+                        : Icons.chevron_right_rounded
+                    : Icons.lock_outline_rounded,
+                color: member.isPaid
+                    ? AppColors.success
+                    : AppColors.textSecondary.withValues(
+                        alpha: canMarkAsPaid ? 0.5 : 0.7,
+                      ),
                 size: 20,
               ),
             ],
@@ -553,6 +603,54 @@ class _MemberPaymentTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class _PaymentUpdateLockedNotice extends StatelessWidget {
+  const _PaymentUpdateLockedNotice({required this.eventDate});
+
+  final DateTime eventDate;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.sm,
+          AppSpacing.md,
+          0,
+        ),
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.warning.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.warning.withValues(alpha: 0.35),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.lock_outline_rounded, color: AppColors.warning),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Pembaruan iuran dikunci', style: AppTypography.bodyMedium),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Status pembayaran dapat diubah pada hari acara: '
+                    '${Formatters.formatDate(eventDate)}.',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
 class _DonationsTab extends ConsumerWidget {
