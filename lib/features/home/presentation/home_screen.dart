@@ -139,7 +139,8 @@ class _HomeOverview extends ConsumerWidget {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
-                ref.read(_adminQuickActionsExpandedProvider.notifier).state = false;
+                ref.read(_adminQuickActionsExpandedProvider.notifier).state =
+                    false;
                 ref.invalidate(activePeriodProvider);
                 ref.invalidate(currentMemberProfileProvider);
                 ref.invalidate(currentMemberHasPaidProvider);
@@ -151,48 +152,58 @@ class _HomeOverview extends ConsumerWidget {
                   vertical: AppSpacing.lg,
                 ),
                 children: [
-                  // Hero Greeting Card (Emerald Gradient)
+                  // Hero Greeting Header
                   Container(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.primary, AppColors.primaryDark],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.25),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
                     ),
-                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                     child: Row(
                       children: [
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Container(
-                              width: 54,
-                              height: 54,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppColors.accent,
-                                  width: 2.5,
-                                ),
-                              ),
+                        Container(
+                          width: 58,
+                          height: 58,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.accent.withValues(alpha: 0.2),
+                                AppColors.primary.withValues(alpha: 0.12),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                            if (displayPhoto != null && displayPhoto.isNotEmpty)
-                              CircleAvatar(
-                                radius: 24,
-                                backgroundImage: NetworkImage(displayPhoto),
-                              )
-                            else
-                              AppAvatar(name: displayName, radius: 24),
-                          ],
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.25),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.10),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(2),
+                            child: ClipOval(
+                              child: (displayPhoto != null &&
+                                      displayPhoto.isNotEmpty)
+                                  ? Image.network(
+                                      displayPhoto,
+                                      fit: BoxFit.cover,
+                                      width: 52,
+                                      height: 52,
+                                    )
+                                  : AppAvatar(name: displayName, radius: 24),
+                            ),
+                          ),
                         ),
                         const SizedBox(width: AppSpacing.md),
                         Expanded(
@@ -202,14 +213,15 @@ class _HomeOverview extends ConsumerWidget {
                               Text(
                                 'Assalamu’alaikum,',
                                 style: AppTypography.caption.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.8),
+                                  color: AppColors.textSecondary,
+                                  letterSpacing: 0.2,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 displayName,
                                 style: AppTypography.h2.copyWith(
-                                  color: Colors.white,
+                                  color: AppColors.textPrimary,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -217,14 +229,19 @@ class _HomeOverview extends ConsumerWidget {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.all(4),
+                          width: 40,
+                          height: 40,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
+                            color: AppColors.primary.withValues(alpha: 0.06),
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.18),
+                              width: 1.2,
+                            ),
                           ),
                           child: IconButton(
                             icon: const Icon(Icons.logout_rounded,
-                                color: Colors.white, size: 20),
+                                color: AppColors.primaryDark, size: 19),
                             tooltip: 'Keluar',
                             constraints: const BoxConstraints(),
                             padding: EdgeInsets.zero,
@@ -234,7 +251,7 @@ class _HomeOverview extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.md),
 
                   // Active Period Card
                   activePeriodAsync.when(
@@ -322,7 +339,8 @@ class _HomeOverview extends ConsumerWidget {
                                 width: 150,
                                 height: 150,
                                 decoration: BoxDecoration(
-                                  color: AppColors.accent.withValues(alpha: 0.1),
+                                  color:
+                                      AppColors.accent.withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -342,8 +360,10 @@ class _HomeOverview extends ConsumerWidget {
                                           vertical: AppSpacing.xs,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withValues(alpha: 0.14),
-                                          borderRadius: BorderRadius.circular(20),
+                                          color: Colors.white
+                                              .withValues(alpha: 0.14),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
                                           border: Border.all(
                                             color: Colors.white
                                                 .withValues(alpha: 0.18),
@@ -366,9 +386,12 @@ class _HomeOverview extends ConsumerWidget {
                                           ),
                                           child: IconButton(
                                             tooltip: 'Ubah periode arisan',
-                                            icon: const Icon(Icons.edit_outlined,
-                                                size: 20, color: Colors.white),
-                                            onPressed: () => PeriodFormDialog.show(
+                                            icon: const Icon(
+                                                Icons.edit_outlined,
+                                                size: 20,
+                                                color: Colors.white),
+                                            onPressed: () =>
+                                                PeriodFormDialog.show(
                                               context,
                                               period: period,
                                             ),
@@ -417,78 +440,47 @@ class _HomeOverview extends ConsumerWidget {
                       curve: Curves.easeOutCubic,
                       alignment: Alignment.topCenter,
                       child: LayoutBuilder(builder: (context, constraints) {
-                      final crossAxisCount = constraints.maxWidth < 360
-                          ? 3
-                          : constraints.maxWidth >= 600
-                              ? 5
-                              : 4;
-                      final childAspectRatio = crossAxisCount == 3
-                          ? 0.78
-                          : crossAxisCount == 4
-                              ? 0.62
-                              : 0.82;
+                        final crossAxisCount = constraints.maxWidth < 360
+                            ? 3
+                            : constraints.maxWidth >= 600
+                                ? 5
+                                : 4;
+                        final childAspectRatio = crossAxisCount == 3
+                            ? 0.78
+                            : crossAxisCount == 4
+                                ? 0.62
+                                : 0.82;
 
-                      return GridView.count(
-                        crossAxisCount: crossAxisCount,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        mainAxisSpacing: AppSpacing.mdSm,
-                        crossAxisSpacing: AppSpacing.mdSm,
-                        childAspectRatio: childAspectRatio,
-                        children: [
-                          _AdminActionCard(
-                            icon: Icons.calendar_month_rounded,
-                            label: 'Periode Baru',
-                            color: AppColors.primary,
-                            onTap: () => PeriodFormDialog.show(context),
-                          ),
-                          _AdminActionCard(
-                            icon: Icons.receipt_long_rounded,
-                            label: 'Catat Iuran',
-                            color: AppColors.info,
-                            onTap: () => onNavigate(1),
-                          ),
-                          _AdminActionCard(
-                            icon: Icons.event_note_rounded,
-                            label: 'Agenda Acara',
-                            color: AppColors.primaryDark,
-                            onTap: () => activePeriodAsync.maybeWhen(
-                              data: (period) {
-                                if (period != null) {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRouter.eventChecklist,
-                                    arguments: period.id,
-                                  );
-                                } else {
-                                  AppSnackbar.show(
-                                      context, 'Tidak ada periode aktif.');
-                                }
-                              },
-                              orElse: () => AppSnackbar.show(
-                                  context, 'Tidak ada periode aktif.'),
-                            ),
-                          ),
-                          if (!areAdminQuickActionsExpanded)
+                        return GridView.count(
+                          crossAxisCount: crossAxisCount,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          mainAxisSpacing: AppSpacing.mdSm,
+                          crossAxisSpacing: AppSpacing.mdSm,
+                          childAspectRatio: childAspectRatio,
+                          children: [
                             _AdminActionCard(
-                              icon: Icons.grid_view_rounded,
-                              label: 'Semua Menu',
-                              color: AppColors.textSecondary,
-                              onTap: () => ref
-                                  .read(_adminQuickActionsExpandedProvider.notifier)
-                                  .state = true,
+                              icon: Icons.calendar_month_rounded,
+                              label: 'Periode Baru',
+                              color: AppColors.primary,
+                              onTap: () => PeriodFormDialog.show(context),
                             ),
-                          if (areAdminQuickActionsExpanded) ...[
                             _AdminActionCard(
-                              icon: Icons.celebration_rounded,
-                              label: 'Kocokan',
-                              color: AppColors.accent,
+                              icon: Icons.receipt_long_rounded,
+                              label: 'Catat Iuran',
+                              color: AppColors.info,
+                              onTap: () => onNavigate(1),
+                            ),
+                            _AdminActionCard(
+                              icon: Icons.event_note_rounded,
+                              label: 'Agenda Acara',
+                              color: AppColors.primaryDark,
                               onTap: () => activePeriodAsync.maybeWhen(
                                 data: (period) {
                                   if (period != null) {
                                     Navigator.pushNamed(
                                       context,
-                                      AppRouter.draw,
+                                      AppRouter.eventChecklist,
                                       arguments: period.id,
                                     );
                                   } else {
@@ -500,55 +492,88 @@ class _HomeOverview extends ConsumerWidget {
                                     context, 'Tidak ada periode aktif.'),
                               ),
                             ),
-                            _AdminActionCard(
-                              icon: Icons.timeline_rounded,
-                              label: 'Riwayat',
-                              color: AppColors.orange,
-                              onTap: () => Navigator.pushNamed(
-                                  context, AppRouter.history),
-                            ),
-                            _AdminActionCard(
-                              icon: Icons.photo_outlined,
-                              label: 'Galeri',
-                              color: AppColors.success,
-                              onTap: () => activePeriodAsync.maybeWhen(
-                                data: (period) {
-                                  if (period != null) {
-                                    Navigator.pushNamed(
-                                      context,
-                                      AppRouter.gallery,
-                                      arguments: period.id,
-                                    );
-                                  } else {
-                                    AppSnackbar.show(
-                                        context, 'Tidak ada periode aktif.');
-                                  }
-                                },
-                                orElse: () => AppSnackbar.show(
-                                    context, 'Tidak ada periode aktif.'),
+                            if (!areAdminQuickActionsExpanded)
+                              _AdminActionCard(
+                                icon: Icons.grid_view_rounded,
+                                label: 'Semua Menu',
+                                color: AppColors.textSecondary,
+                                onTap: () => ref
+                                    .read(_adminQuickActionsExpandedProvider
+                                        .notifier)
+                                    .state = true,
                               ),
-                            ),
-                            _AdminActionCard(
-                              icon: Icons.tune_rounded,
-                              label: 'Pengaturan',
-                              color: AppColors.textSecondary,
-                              onTap: () => Navigator.pushNamed(
-                                context,
-                                AppRouter.adminSettings,
+                            if (areAdminQuickActionsExpanded) ...[
+                              _AdminActionCard(
+                                icon: Icons.celebration_rounded,
+                                label: 'Kocokan',
+                                color: AppColors.accent,
+                                onTap: () => activePeriodAsync.maybeWhen(
+                                  data: (period) {
+                                    if (period != null) {
+                                      Navigator.pushNamed(
+                                        context,
+                                        AppRouter.draw,
+                                        arguments: period.id,
+                                      );
+                                    } else {
+                                      AppSnackbar.show(
+                                          context, 'Tidak ada periode aktif.');
+                                    }
+                                  },
+                                  orElse: () => AppSnackbar.show(
+                                      context, 'Tidak ada periode aktif.'),
+                                ),
                               ),
-                            ),
-                            _AdminActionCard(
-                              icon: Icons.keyboard_arrow_up_rounded,
-                              label: 'Ringkas',
-                              color: AppColors.textSecondary,
-                              onTap: () => ref
-                                  .read(_adminQuickActionsExpandedProvider.notifier)
-                                  .state = false,
-                            ),
+                              _AdminActionCard(
+                                icon: Icons.timeline_rounded,
+                                label: 'Riwayat',
+                                color: AppColors.orange,
+                                onTap: () => Navigator.pushNamed(
+                                    context, AppRouter.history),
+                              ),
+                              _AdminActionCard(
+                                icon: Icons.photo_outlined,
+                                label: 'Galeri',
+                                color: AppColors.success,
+                                onTap: () => activePeriodAsync.maybeWhen(
+                                  data: (period) {
+                                    if (period != null) {
+                                      Navigator.pushNamed(
+                                        context,
+                                        AppRouter.gallery,
+                                        arguments: period.id,
+                                      );
+                                    } else {
+                                      AppSnackbar.show(
+                                          context, 'Tidak ada periode aktif.');
+                                    }
+                                  },
+                                  orElse: () => AppSnackbar.show(
+                                      context, 'Tidak ada periode aktif.'),
+                                ),
+                              ),
+                              _AdminActionCard(
+                                icon: Icons.tune_rounded,
+                                label: 'Pengaturan',
+                                color: AppColors.textSecondary,
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  AppRouter.adminSettings,
+                                ),
+                              ),
+                              _AdminActionCard(
+                                icon: Icons.keyboard_arrow_up_rounded,
+                                label: 'Ringkas',
+                                color: AppColors.textSecondary,
+                                onTap: () => ref
+                                    .read(_adminQuickActionsExpandedProvider
+                                        .notifier)
+                                    .state = false,
+                              ),
+                            ],
                           ],
-                        ],
-                      );
-                    }),
+                        );
+                      }),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                   ],
@@ -564,31 +589,33 @@ class _HomeOverview extends ConsumerWidget {
                   Consumer(
                     builder: (context, ref, _) {
                       final hasPaid = ref.watch(currentMemberHasPaidProvider);
+                      final isPaid = hasPaid.valueOrNull == true;
+                      final paidIcon = Icon(
+                        isPaid
+                            ? Icons.verified_rounded
+                            : Icons.info_outline_rounded,
+                        size: 18,
+                        color: isPaid ? AppColors.success : AppColors.warning,
+                      );
                       return activePeriodAsync.maybeWhen(
                         data: (period) => _SummaryCard(
                           icon: Icons.receipt_long_rounded,
                           title: 'Iuran Saya',
-                          value: hasPaid.valueOrNull == true
-                              ? 'Sudah lunas ✓'
-                              : 'Belum dibayar',
+                          value: isPaid ? 'Sudah lunas' : 'Belum dibayar',
+                          valueIcon: paidIcon,
                           detail: period?.contributionAmount != null
                               ? '${Formatters.formatCurrency(period!.contributionAmount!)} periode ini'
                               : 'Rp100.000 periode ini',
-                          color: hasPaid.valueOrNull == true
-                              ? AppColors.success
-                              : AppColors.warning,
+                          color: isPaid ? AppColors.success : AppColors.warning,
                           onTap: () => onNavigate(1),
                         ),
                         orElse: () => _SummaryCard(
                           icon: Icons.receipt_long_rounded,
                           title: 'Iuran Saya',
-                          value: hasPaid.valueOrNull == true
-                              ? 'Sudah lunas ✓'
-                              : 'Belum dibayar',
+                          value: isPaid ? 'Sudah lunas' : 'Belum dibayar',
+                          valueIcon: paidIcon,
                           detail: 'Rp100.000 periode ini',
-                          color: hasPaid.valueOrNull == true
-                              ? AppColors.success
-                              : AppColors.warning,
+                          color: isPaid ? AppColors.success : AppColors.warning,
                           onTap: () => onNavigate(1),
                         ),
                       );
@@ -836,7 +863,7 @@ class _AdminActionCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-        onTap: onTap,
+          onTap: onTap,
           borderRadius: BorderRadius.circular(18),
           child: Ink(
             padding: const EdgeInsets.symmetric(
@@ -908,6 +935,7 @@ class _SummaryCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.value,
+    this.valueIcon,
     required this.detail,
     required this.color,
     required this.onTap,
@@ -915,6 +943,7 @@ class _SummaryCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String value;
+  final Widget? valueIcon;
   final String detail;
   final Color color;
   final VoidCallback onTap;
@@ -946,7 +975,17 @@ class _SummaryCard extends StatelessWidget {
                       children: [
                         Text(title, style: AppTypography.bodyMedium),
                         const SizedBox(height: AppSpacing.xs),
-                        Text(value, style: AppTypography.h3),
+                        //Text(value, style: AppTypography.h3),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(value, style: AppTypography.h3),
+                            if (valueIcon != null) ...[
+                              const SizedBox(width: 6),
+                              valueIcon!,
+                            ],
+                          ],
+                        ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(detail, style: AppTypography.caption),
                       ],
@@ -1185,7 +1224,8 @@ class _ProfilePage extends ConsumerWidget {
                   _ProfileMenuTile(
                     icon: Icons.admin_panel_settings_outlined,
                     title: 'Pengaturan Admin',
-                    subtitle: 'Atur persentase kas gathering & visibilitas voting',
+                    subtitle:
+                        'Atur persentase kas gathering & visibilitas voting',
                     onTap: () => Navigator.pushNamed(
                       context,
                       AppRouter.adminSettings,

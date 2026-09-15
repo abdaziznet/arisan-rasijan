@@ -14,8 +14,26 @@ class DrawModel with _$DrawModel {
     double? totalCollected,
   }) = _DrawModel;
 
-  factory DrawModel.fromJson(Map<String, dynamic> json) =>
-      _$DrawModelFromJson(json);
+  factory DrawModel.fromJson(Map<String, dynamic> json) {
+    final rawPeriodId = json['period_id'] ?? json['periodId'];
+    final rawWinnerId = json['winner_id'] ?? json['winnerId'];
+    final rawWinnerName = json['winner_name'] ?? json['winnerName'];
+    final rawCreatedAt = json['created_at'] ?? json['createdAt'];
+    final rawTotalCollected = json['total_collected'] ?? json['totalCollected'];
+
+    return DrawModel(
+      id: json['id'] as String? ?? '',
+      periodId: rawPeriodId as String? ?? '',
+      winnerId: rawWinnerId as String? ?? '',
+      createdAt: rawCreatedAt is String
+          ? DateTime.tryParse(rawCreatedAt) ?? DateTime.now()
+          : DateTime.now(),
+      winnerName: rawWinnerName as String?,
+      totalCollected: rawTotalCollected == null
+          ? null
+          : (rawTotalCollected as num).toDouble(),
+    );
+  }
 }
 
 class DrawHistoryModel {
