@@ -37,6 +37,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Lokasi digunakan satu kali untuk mengisi koordinat alamat rumah Anda.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Aplikasi BANI RASIJAN membutuhkan akses Face ID untuk mengamankan dan membuka kunci aplikasi Anda.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

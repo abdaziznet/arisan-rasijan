@@ -1,5 +1,6 @@
 import 'package:bani_rasijan/core/services/connectivity_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -38,16 +39,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     Navigator.pushReplacementNamed(context, AppRouter.login);
   }
 
-  Future<bool> _onWillPop() async {
+  Future<void> _handlePop() async {
     final now = DateTime.now();
-    if (_lastBackPress == null || now.difference(_lastBackPress!) > const Duration(seconds: 2)) {
+    if (_lastBackPress == null ||
+        now.difference(_lastBackPress!) > const Duration(seconds: 2)) {
       _lastBackPress = now;
       if (mounted) {
         AppSnackbar.show(context, 'Tekan sekali lagi untuk keluar');
       }
-      return false;
+    } else {
+      await SystemNavigator.pop();
     }
-    return true;
   }
 
   @override
@@ -55,7 +57,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
           if (!didPop) {
-            _onWillPop();
+            _handlePop();
           }
         },
         child: Scaffold(

@@ -8,6 +8,10 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_components.dart';
 import '../../../../features/auth/domain/auth_state.dart';
 import '../../../../routing/app_router.dart';
+import '../../../biometric/domain/biometric_state.dart';
+import '../../../biometric/domain/biometric_type.dart';
+import '../../../biometric/presentation/providers/biometric_providers.dart';
+import '../../../biometric/presentation/widgets/biometric_activation_sheet.dart';
 import '../providers/auth_providers.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -22,9 +26,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.read(authControllerProvider.notifier).signInWithGoogle();
   }
 
+  Future<void> _signInWithBiometric() async {
+    final session = ref.read(authRepositoryProvider).currentSession;
+    if (session == null) {
+      AppSnackbar.show(
+        context,
+        'Sesi login telah berakhir. Silakan masuk kembali dengan Google.',
+      );
+      return;
+    }
+
+    final bioController = ref.read(biometricControllerProvider.notifier);
+    await bioController.authenticateForLockScreen();
+    final bioState = ref.read(biometricControllerProvider);
+
+    if (bioState is BiometricAuthenticated && mounted) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRouter.home,
+        (route) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
+    final isBioEnabledAsync = ref.watch(isBiometricEnabledProvider);
+    final isCapableAsync = ref.watch(biometricCapabilityProvider);
+    final primaryTypeAsync = ref.watch(biometricPrimaryTypeProvider);
+
+    final isBioActive = (isBioEnabledAsync.valueOrNull ?? false) &&
+        (isCapableAsync.valueOrNull ?? false);
+    final primaryType =
+        primaryTypeAsync.valueOrNull ?? AppBiometricType.fingerprint;
 
     ref.listen<AuthScreenState>(authControllerProvider, (_, state) async {
       if (state is AuthSuccess) {
@@ -32,18 +67,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         final hasProfile = await repo.hasProfile();
         if (!context.mounted) return;
 
-        if (hasProfile) {
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRouter.home,
-            (route) => false,
-          );
-        } else {
+        if (!hasProfile) {
           Navigator.pushReplacementNamed(
             context,
             AppRouter.profileCompletion,
           );
+          return;
         }
+
+        // Tawarkan aktivasi biometrik jika perangkat mendukung dan belum pernah ditawarkan
+        final bioController = ref.read(biometricControllerProvider.notifier);
+        final isCapable = await bioController.isDeviceCapable();
+        final isOffered = await bioController.isPromptOffered();
+
+        if (context.mounted && isCapable && !isOffered) {
+          await BiometricActivationSheet.show(context);
+        }
+
+        if (!context.mounted) return;
+
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRouter.home,
+          (route) => false,
+        );
       } else if (state is AuthError) {
         AppSnackbar.show(context, state.message);
       }
@@ -169,6 +216,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ),
                           ),
                         ),
+                        if (isBioActive) ...[
+                          const SizedBox(height: AppSpacing.md),
+                          SizedBox(
+                            height: 48,
+                            child: OutlinedButton.icon(
+                              onPressed: isLoading ? null : _signInWithBiometric,
+                              icon: Icon(
+                                primaryType == AppBiometricType.face
+                                    ? Icons.face_rounded
+                                    : Icons.fingerprint_rounded,
+                                size: 22,
+                                color: AppColors.primary,
+                              ),
+                              label: Text(
+                                'Buka dengan ${primaryType.displayName}',
+                                style: AppTypography.button.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: AppColors.primary),
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: AppRadii.button,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

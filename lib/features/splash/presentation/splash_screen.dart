@@ -6,6 +6,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../routing/app_router.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../biometric/presentation/providers/biometric_providers.dart';
 
 class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
@@ -38,10 +39,32 @@ class SplashScreen extends ConsumerWidget {
     if (session != null) {
       // Session valid — cek apakah profil sudah ada
       final hasProfile = await ref.read(authRepositoryProvider).hasProfile();
-      if (context.mounted) {
+      if (!context.mounted) return;
+
+      if (!hasProfile) {
         Navigator.pushReplacementNamed(
           context,
-          hasProfile ? AppRouter.home : AppRouter.profileCompletion,
+          AppRouter.profileCompletion,
+        );
+        return;
+      }
+
+      // Cek apakah kunci biometrik aktif
+      final isBioEnabled =
+          await ref.read(biometricControllerProvider.notifier).isBiometricEnabled();
+      if (!context.mounted) return;
+
+      if (isBioEnabled) {
+        await ref.read(biometricControllerProvider.notifier).clearBackgroundTime();
+        if (!context.mounted) return;
+        Navigator.pushReplacementNamed(
+          context,
+          AppRouter.biometricLock,
+        );
+      } else {
+        Navigator.pushReplacementNamed(
+          context,
+          AppRouter.home,
         );
       }
     } else {

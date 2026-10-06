@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../biometric/presentation/widgets/biometric_settings_tile.dart';
 import '../../../gathering/presentation/providers/gathering_providers.dart';
 
 class AdminSettingsScreen extends ConsumerStatefulWidget {
@@ -157,6 +158,10 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
                 ),
               ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // Biometric Settings
+              const BiometricSettingsTile(),
             ],
           );
         },

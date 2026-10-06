@@ -4,6 +4,7 @@ import '../features/auth/presentation/screens/invite_code_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/magic_link_sent_screen.dart';
 import '../features/auth/presentation/screens/profile_completion_screen.dart';
+import '../features/biometric/presentation/screens/biometric_lock_screen.dart';
 import '../features/draw/presentation/screens/draw_screen.dart';
 import '../features/events/presentation/screens/event_checklist_screen.dart';
 import '../features/gallery/presentation/screens/gallery_screen.dart';
@@ -37,6 +38,7 @@ abstract final class AppRouter {
   static const gatheringEventDetail = '/gathering-event-detail';
   static const adminSettings = '/admin-settings';
   static const profileLocation = '/profile-location';
+  static const biometricLock = '/biometric-lock';
 
   static Route<void> onGenerateRoute(RouteSettings settings) =>
       MaterialPageRoute<void>(
@@ -71,6 +73,7 @@ abstract final class AppRouter {
             ),
           adminSettings => const AdminSettingsScreen(),
           profileLocation => const ProfileLocationScreen(),
+          biometricLock => const BiometricLockScreen(),
           _ => const SplashScreen(),
         },
         settings: settings,
