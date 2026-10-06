@@ -341,9 +341,17 @@ class _PeriodFormContentState extends ConsumerState<_PeriodFormContent> {
                     if (val != null) {
                       final selectedMember =
                           members.firstWhere((m) => m.id == val);
+                      final parts = <String>[];
                       if (selectedMember.address != null &&
                           selectedMember.address!.isNotEmpty) {
-                        _addressController.text = selectedMember.address!;
+                        parts.add(selectedMember.address!);
+                      }
+                      if (selectedMember.city != null &&
+                          selectedMember.city!.isNotEmpty) {
+                        parts.add(selectedMember.city!);
+                      }
+                      if (parts.isNotEmpty) {
+                        _addressController.text = parts.join(', ');
                       }
                     }
                   });

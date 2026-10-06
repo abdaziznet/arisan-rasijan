@@ -59,7 +59,9 @@ abstract final class AppRouter {
           draw => DrawScreen(
               periodId: settings.arguments as String,
             ),
-          history => const HistoryScreen(),
+          history => HistoryScreen(
+              initialPeriodId: settings.arguments as String?,
+            ),
           gallery => GalleryScreen(
               periodId: settings.arguments as String,
             ),

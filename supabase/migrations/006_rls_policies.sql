@@ -5,6 +5,16 @@
 -- section 4 for the overall principles.
 -- ============================================================
 
+-- Helper: Drop policy if exists
+do $$
+declare
+  r record;
+begin
+  for r in select policyname, tablename from pg_policies where schemaname = 'public' loop
+    execute format('drop policy if exists %I on public.%I', r.policyname, r.tablename);
+  end loop;
+end $$;
+
 -- 2.1 profiles ---------------------------------------------------
 alter table public.profiles enable row level security;
 

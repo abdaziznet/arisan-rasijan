@@ -65,15 +65,15 @@ class ArisanScreen extends ConsumerWidget {
           }
 
           // Sorted: periode terbaru (period_number terbesar) di atas.
+          // Riwayat = periode completed saja; preview dibatasi 5 terbaru.
           final sorted = [...periods]
             ..sort((a, b) => b.periodNumber.compareTo(a.periodNumber));
-          final active = sorted.firstWhere(
-            (p) => p.status != 'completed',
-            orElse: () => sorted.first,
-          );
-          final history = sorted
-              .where((p) => p.id != active.id)
-              .toList();
+          final active = sorted
+              .where((p) => p.status != 'completed')
+              .firstOrNull;
+          final completed =
+              sorted.where((p) => p.status == 'completed').toList();
+          final history = completed.take(5).toList();
 
           return ListView(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -108,7 +108,13 @@ class ArisanScreen extends ConsumerWidget {
                     : null,
               ),
               const SizedBox(height: AppSpacing.sm),
-              _ActivePeriodCard(period: active, isAdmin: isAdmin),
+              if (active != null)
+                _ActivePeriodCard(period: active, isAdmin: isAdmin)
+              else
+                const AppEmptyState(
+                  title: 'Tidak ada periode berjalan',
+                  message: 'Semua periode sudah selesai.',
+                ),
               const SizedBox(height: AppSpacing.lg),
 
               // ===== Riwayat Periode =====
@@ -130,6 +136,7 @@ class ArisanScreen extends ConsumerWidget {
                     onTap: () => Navigator.pushNamed(
                       context,
                       AppRouter.history,
+                      arguments: p.id,
                     ),
                   ),
                 ),

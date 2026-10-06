@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/event_checklist_model.dart';
@@ -18,12 +20,29 @@ class EventChecklistController extends AsyncNotifier<List<EventChecklistModel>> 
     });
   }
 
-  Future<void> createDefaultChecklistForPeriod(String periodId) async {
+  Future<void> createDefaultChecklistForPeriod(String periodId, {BuildContext? context}) async {
+    debugPrint('[EventChecklistController] Creating default checklist for period: $periodId');
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard(() async {
       final repo = ref.read(eventChecklistRepositoryProvider);
       return repo.createDefaultChecklistForPeriod(periodId);
     });
+    debugPrint('[EventChecklistController] Result: ${result.value?.length ?? 'error'} items');
+    state = result;
+
+    // Show error if failed
+    if (result.hasError && context != null) {
+      debugPrint('[EventChecklistController] Error: ${result.error}');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal membuat agenda: ${result.error}')),
+        );
+      }
+    }
+
+    // Invalidate the stream provider to trigger a refresh
+    ref.invalidate(eventChecklistStreamProvider(periodId));
+    debugPrint('[EventChecklistController] Stream provider invalidated');
   }
 
   Future<void> toggleChecklistItem(EventChecklistModel item) async {

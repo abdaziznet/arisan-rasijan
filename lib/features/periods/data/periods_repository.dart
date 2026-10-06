@@ -61,6 +61,7 @@ class PeriodsRepository {
         .eq('status', 'completed')
         .not('winner_id', 'is', null)
         .order('event_date', ascending: false)
+        .order('period_number', ascending: false)
         .limit(1)
         .maybeSingle();
 

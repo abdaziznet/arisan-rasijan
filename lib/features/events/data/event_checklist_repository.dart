@@ -39,7 +39,11 @@ class EventChecklistRepository {
 
   Future<List<EventChecklistModel>> createDefaultChecklistForPeriod(String periodId) async {
     final steps = EventChecklistSteps.createDefaultForPeriod(periodId);
-    final payload = steps.map((s) => s.toJson()).toList();
+    final payload = steps.map((s) {
+      final json = s.toJson();
+      json.remove('id'); // Let database generate UUID
+      return json;
+    }).toList();
 
     final response = await _client
         .from('event_checklist')

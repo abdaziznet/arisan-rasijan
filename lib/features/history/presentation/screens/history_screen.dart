@@ -10,13 +10,22 @@ import 'package:bani_rasijan/core/theme/app_radii.dart';
 import 'package:bani_rasijan/features/history/domain/period_history_model.dart';
 import 'package:bani_rasijan/features/history/presentation/providers/history_providers.dart';
 
-class HistoryScreen extends ConsumerWidget {
-  const HistoryScreen({super.key});
+class HistoryScreen extends ConsumerStatefulWidget {
+  const HistoryScreen({super.key, this.initialPeriodId});
+
+  /// Periode yang di-highlight saat dibuka dari tap tile riwayat Arisan.
+  /// null = dibuka via "Lihat Semua", tampilkan daftar penuh tanpa highlight.
+  final String? initialPeriodId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final historyAsync = ref.watch(historyStreamProvider);
-    final controller = ref.watch(historyControllerProvider.notifier);
+  ConsumerState<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends ConsumerState<HistoryScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final historyAsync = ref.watch(historyListProvider);
+    final controller = ref.read(historyControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -31,7 +40,35 @@ class HistoryScreen extends ConsumerWidget {
       ),
       body: historyAsync.when(
         loading: () => const AppLoading(),
-        error: (err, _) => AppErrorState(onRetry: () => controller.refreshHistory()),
+        error: (err, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: AppColors.textSecondary,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                const Text('Gagal memuat riwayat', style: AppTypography.h3),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  '$err',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.body
+                      .copyWith(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                AppButton(
+                  label: 'Coba Lagi',
+                  onPressed: () => ref.invalidate(historyListProvider),
+                ),
+              ],
+            ),
+          ),
+        ),
         data: (history) {
           if (history.isEmpty) {
             return const Center(
@@ -48,7 +85,7 @@ class HistoryScreen extends ConsumerWidget {
 
           return RefreshIndicator(
             onRefresh: () async {
-              ref.invalidate(historyStreamProvider);
+              ref.invalidate(historyListProvider);
             },
             child: ListView.separated(
               padding: const EdgeInsets.all(AppSpacing.md),
@@ -56,7 +93,30 @@ class HistoryScreen extends ConsumerWidget {
               separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
               itemBuilder: (context, index) {
                 final item = history[index];
-                return _PeriodHistoryCard(item: item);
+                final delay = Duration(milliseconds: 100 * index);
+                return FutureBuilder(
+                  future: Future.delayed(delay),
+                  builder: (context, snapshot) {
+                    final started = snapshot.connectionState == ConnectionState.done;
+                    return TweenAnimationBuilder<Offset>(
+                      tween: Tween(begin: const Offset(0, 0.2), end: Offset.zero),
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                      builder: (context, offset, child) => Opacity(
+                        opacity: started ? 1 - offset.dy : 0,
+                        child: Transform.translate(
+                          offset: Offset(0, offset.dy * 20),
+                          child: child,
+                        ),
+                      ),
+                      child: _PeriodHistoryCard(
+                        item: item,
+                        highlighted:
+                            item.periodId == widget.initialPeriodId,
+                      ),
+                    );
+                  },
+                );
               },
             ),
           );
@@ -67,8 +127,9 @@ class HistoryScreen extends ConsumerWidget {
 }
 
 class _PeriodHistoryCard extends StatelessWidget {
-  const _PeriodHistoryCard({required this.item});
+  const _PeriodHistoryCard({required this.item, this.highlighted = false});
   final PeriodHistoryModel item;
+  final bool highlighted;
 
   String _formatDate(DateTime date) {
     final formatter = DateFormat('dd MMM yyyy');
@@ -77,7 +138,14 @@ class _PeriodHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
+    return Container(
+      decoration: highlighted
+          ? BoxDecoration(
+              border: Border.all(color: AppColors.primary, width: 2),
+              borderRadius: BorderRadius.circular(12),
+            )
+          : null,
+      child: AppCard(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,7 +198,8 @@ class _PeriodHistoryCard extends StatelessWidget {
               ],
             ),
           ],
-        ],
+          ],
+        ),
       ),
     );
   }

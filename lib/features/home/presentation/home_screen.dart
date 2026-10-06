@@ -29,6 +29,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _index = 0;
+  DateTime? _lastBackPress;
 
   Future<void> _signOut() async {
     await ref.read(authControllerProvider.notifier).signOut();
@@ -37,47 +38,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     Navigator.pushReplacementNamed(context, AppRouter.login);
   }
 
+  Future<bool> _onWillPop() async {
+    final now = DateTime.now();
+    if (_lastBackPress == null || now.difference(_lastBackPress!) > const Duration(seconds: 2)) {
+      _lastBackPress = now;
+      if (mounted) {
+        AppSnackbar.show(context, 'Tekan sekali lagi untuk keluar');
+      }
+      return false;
+    }
+    return true;
+  }
+
   @override
-  Widget build(BuildContext context) => Scaffold(
-        body: SafeArea(
-          child: IndexedStack(
-            index: _index,
-            children: [
-              _HomeOverview(
-                onNavigate: (index) => setState(() => _index = index),
-                onSignOut: _signOut,
+  Widget build(BuildContext context) => PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) {
+            _onWillPop();
+          }
+        },
+        child: Scaffold(
+          body: SafeArea(
+            child: IndexedStack(
+              index: _index,
+              children: [
+                _HomeOverview(
+                  onNavigate: (index) => setState(() => _index = index),
+                  onSignOut: _signOut,
+                ),
+                const PaymentListScreen(),
+                const ArisanScreen(),
+                _ProfilePage(onSignOut: _signOut),
+              ],
+            ),
+          ),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _index,
+            onDestinationSelected: (index) => setState(() => _index = index),
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home),
+                label: 'Beranda',
               ),
-              const PaymentListScreen(),
-              const ArisanScreen(),
-              _ProfilePage(onSignOut: _signOut),
+              NavigationDestination(
+                icon: Icon(Icons.receipt_long_outlined),
+                selectedIcon: Icon(Icons.receipt_long),
+                label: 'Iuran',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.card_giftcard_outlined),
+                selectedIcon: Icon(Icons.card_giftcard),
+                label: 'Arisan',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.person_outline),
+                selectedIcon: Icon(Icons.person),
+                label: 'Profil',
+              ),
             ],
           ),
-        ),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: (index) => setState(() => _index = index),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Beranda',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.receipt_long_outlined),
-              selectedIcon: Icon(Icons.receipt_long),
-              label: 'Iuran',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.card_giftcard_outlined),
-              selectedIcon: Icon(Icons.card_giftcard),
-              label: 'Arisan',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person),
-              label: 'Profil',
-            ),
-          ],
         ),
       );
 }
@@ -472,9 +493,7 @@ class _HomeOverview extends ConsumerWidget {
                                       child: const Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text('Petunjuk arah'),
-                                          SizedBox(width: AppSpacing.xs),
-                                          Icon(Icons.directions_outlined),
+                                          Icon(Icons.directions_outlined, size: 20),
                                         ],
                                       ),
                                     ),
