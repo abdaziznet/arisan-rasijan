@@ -30,6 +30,6 @@ abstract final class EnvConfig {
     if (kIsWeb) {
       return 'http://localhost:3000';
     }
-    return 'com.example.banirasijan://login-callback';
+    return 'net.abdaziz.arisanbanirasijan://login-callback';
   }
 }

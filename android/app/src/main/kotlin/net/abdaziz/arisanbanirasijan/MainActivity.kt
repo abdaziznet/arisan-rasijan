@@ -1,4 +1,4 @@
-package com.example.bani_rasijan
+package net.abdaziz.arisanbanirasijan
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

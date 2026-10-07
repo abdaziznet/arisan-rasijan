@@ -34,7 +34,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
-                    android:scheme="com.example.banirasijan"
+                    android:scheme="net.abdaziz.arisanbanirasijan"
                     android:host="login-callback" />
             </intent-filter>
         </activity>

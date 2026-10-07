@@ -36,48 +36,57 @@ class AuthRepository {
   /// Sign-in menggunakan Google Native OAuth
   Future<AuthResponse> signInWithGoogle() async {
     try {
-      log('--- [AUTH] Memulai Google Sign-In...');
+      log('--- [AUTH REPO] Starting Google Sign-In...');
+      log('--- [AUTH REPO] Google Web Client ID: ${EnvConfig.googleWebClientId}');
+      log('--- [AUTH REPO] Supabase URL: ${EnvConfig.supabaseUrl}');
+
       // Reset state Google lokal (disconnect + signOut) agar account chooser dialog selalu dipaksa tampil
       try {
         await _googleSignIn.disconnect();
+        log('--- [AUTH REPO] Google disconnect OK');
       } catch (e) {
-        log('--- [AUTH] Warning saat pre-signIn disconnect: $e');
+        log('--- [AUTH REPO] Warning saat pre-signIn disconnect: $e');
       }
       try {
         await _googleSignIn.signOut();
+        log('--- [AUTH REPO] Google signOut OK');
       } catch (e) {
-        log('--- [AUTH] Warning saat pre-signIn signOut: $e');
+        log('--- [AUTH REPO] Warning saat pre-signIn signOut: $e');
       }
 
+      log('--- [AUTH REPO] Calling _googleSignIn.signIn()...');
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        log('--- [AUTH] Login Google dibatalkan oleh pengguna.');
+        log('--- [AUTH REPO] Login Google dibatalkan oleh pengguna (googleUser == null).');
         throw const AuthException('Login Google dibatalkan');
       }
 
-      log('--- [AUTH] Akun Google terpilih: ${googleUser.email} (ID: ${googleUser.id})');
+      log('--- [AUTH REPO] Google user selected: ${googleUser.email} (ID: ${googleUser.id})');
+      log('--- [AUTH REPO] Requesting Google authentication tokens...');
       final googleAuth = await googleUser.authentication;
       final idToken = googleAuth.idToken;
       final accessToken = googleAuth.accessToken;
 
-      log('--- [AUTH] ID Token exists: ${idToken != null}, AccessToken exists: ${accessToken != null}');
+      log('--- [AUTH REPO] ID Token exists: ${idToken != null}');
+      log('--- [AUTH REPO] Access Token exists: ${accessToken != null}');
       if (idToken == null) {
-        log('--- [AUTH ERROR] ID Token null dari Google SDK. Periksa Google Web Client ID.');
+        log('--- [AUTH REPO ERROR] ID Token null dari Google SDK. Periksa Google Web Client ID di Google Cloud Console & .env');
         throw const AuthException('ID Token Google tidak ditemukan');
       }
+      log('--- [AUTH REPO] ID Token (first 50 chars): ${idToken.substring(0, idToken.length > 50 ? 50 : idToken.length)}...');
 
-      log('--- [AUTH] Mengirim ID Token ke Supabase auth.signInWithIdToken...');
+      log('--- [AUTH REPO] Sending ID Token to Supabase auth.signInWithIdToken...');
       final res = await _client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
         accessToken: accessToken,
       );
 
-      log('--- [AUTH SUCCESS] Berhasil login Supabase! User ID: ${res.user?.id}, Email: ${res.user?.email}');
+      log('--- [AUTH REPO SUCCESS] Supabase login successful! User ID: ${res.user?.id}, Email: ${res.user?.email}, Session: ${res.session != null}');
       return res;
     } catch (e, st) {
-      log('--- [AUTH ERROR DETAIL] Google Sign-In Exception: $e');
-      log('--- [AUTH STACKTRACE] $st');
+      log('--- [AUTH REPO ERROR DETAIL] Google Sign-In Exception: $e');
+      log('--- [AUTH REPO STACKTRACE] $st');
       rethrow;
     }
   }

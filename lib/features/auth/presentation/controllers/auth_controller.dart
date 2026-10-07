@@ -22,7 +22,9 @@ class AuthController extends Notifier<AuthScreenState> {
   Future<void> signInWithGoogle() async {
     state = const AuthLoading();
     try {
+      log('--- [AUTH CONTROLLER] Starting Google Sign-In flow...');
       await _repo.signInWithGoogle();
+      log('--- [AUTH CONTROLLER] Google Sign-In completed successfully');
       state = const AuthSuccess();
     } on AuthException catch (e) {
       log('--- [AUTH CONTROLLER] AuthException: ${e.message} (Status: ${e.statusCode})');
