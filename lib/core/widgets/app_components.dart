@@ -5,6 +5,8 @@ import '../theme/app_radii.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 
+export 'app_logo.dart';
+
 class AppButton extends StatelessWidget {
   const AppButton({
     super.key,

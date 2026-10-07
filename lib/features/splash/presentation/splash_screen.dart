@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/app_components.dart';
 import '../../../routing/app_router.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../biometric/presentation/providers/biometric_providers.dart';
@@ -75,28 +77,35 @@ class SplashScreen extends ConsumerWidget {
 
   Widget _buildSplashScreenUI(BuildContext context, {bool withLoading = false}) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: Center(
         child: Semantics(
           label: 'BANI RASIJAN, Arisan Keluarga',
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (withLoading)
-                const CircularProgressIndicator()
-              else
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Icon(Icons.home_rounded, color: Colors.white, size: 42),
-                ),
-              const SizedBox(height: AppSpacing.lg),
+              const AppLogo(
+                size: AppLogoSize.hero,
+              ),
+              const SizedBox(height: AppSpacing.xl),
               const Text('BANI RASIJAN', style: AppTypography.h1),
               const SizedBox(height: AppSpacing.xs),
-              const Text('Arisan Keluarga', style: AppTypography.bodyLarge),
+              Text(
+                'Arisan Keluarga',
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              if (withLoading) ...[
+                const SizedBox(height: AppSpacing.xl),
+                const SizedBox.square(
+                  dimension: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

@@ -130,19 +130,9 @@ class _BiometricLockScreenState extends ConsumerState<BiometricLockScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Center(
-                      child: Container(
-                        width: 76,
-                        height: 76,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: AppRadii.hero,
-                        ),
-                        child: const Icon(
-                          Icons.lock_rounded,
-                          size: 38,
-                          color: AppColors.primary,
-                        ),
+                    const Center(
+                      child: AppLogo(
+                        size: AppLogoSize.large,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),

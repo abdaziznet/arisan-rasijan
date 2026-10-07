@@ -113,19 +113,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: AppRadii.hero,
-                      ),
-                      child: const Icon(
-                        Icons.family_restroom_rounded,
-                        size: 44,
-                        color: AppColors.primary,
-                      ),
+                  const Center(
+                    child: AppLogo(
+                      size: AppLogoSize.large,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),

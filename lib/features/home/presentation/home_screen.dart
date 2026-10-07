@@ -1363,11 +1363,18 @@ class _ProfilePage extends ConsumerWidget {
 
           // Footer Versi Aplikasi
           Center(
-            child: Text(
-              'BANI RASIJAN v1.0.0 · Arisan Keluarga',
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textSecondary.withValues(alpha: 0.6),
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AppLogo(size: AppLogoSize.small),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'BANI RASIJAN v1.0.0 · Arisan Keluarga',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: AppSpacing.md),
