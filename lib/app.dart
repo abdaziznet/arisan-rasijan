@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/widgets/app_components.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/providers/auth_providers.dart';
 import 'features/biometric/presentation/providers/biometric_providers.dart';
@@ -101,6 +102,7 @@ class _BaniRasijanAppState extends ConsumerState<BaniRasijanApp>
   @override
   Widget build(BuildContext context) => MaterialApp(
         navigatorKey: _navigatorKey,
+        scaffoldMessengerKey: AppSnackbar.messengerKey,
         navigatorObservers: [_lockScreenObserver],
         title: 'BANI RASIJAN',
         debugShowCheckedModeBanner: false,

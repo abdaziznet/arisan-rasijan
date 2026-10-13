@@ -7,10 +7,12 @@ part 'gathering_poll_option_model.g.dart';
 class GatheringPollOptionModel with _$GatheringPollOptionModel {
   const factory GatheringPollOptionModel({
     required String id,
-    required String gatheringEventId,
-    required String optionLabel,
+    @JsonKey(name: 'gathering_event_id') required String gatheringEventId,
+    @JsonKey(name: 'option_label') required String optionLabel,
     @JsonKey(name: 'created_at') required DateTime createdAt,
-    @Default(0) int voteCount,
+    @JsonKey(includeFromJson: false, includeToJson: false)
+    @Default(0)
+    int voteCount,
   }) = _GatheringPollOptionModel;
 
   factory GatheringPollOptionModel.fromJson(Map<String, dynamic> json) =>

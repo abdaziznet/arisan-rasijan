@@ -21,8 +21,11 @@ PhotoModel _$PhotoModelFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$PhotoModel {
   String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'period_id')
   String get periodId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'photo_url')
   String get photoUrl => throw _privateConstructorUsedError;
+  @JsonKey(name: 'uploaded_by')
   String get uploadedBy => throw _privateConstructorUsedError;
   @JsonKey(name: 'uploaded_at')
   DateTime? get uploadedAt => throw _privateConstructorUsedError;
@@ -45,9 +48,9 @@ abstract class $PhotoModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String periodId,
-      String photoUrl,
-      String uploadedBy,
+      @JsonKey(name: 'period_id') String periodId,
+      @JsonKey(name: 'photo_url') String photoUrl,
+      @JsonKey(name: 'uploaded_by') String uploadedBy,
       @JsonKey(name: 'uploaded_at') DateTime? uploadedAt});
 }
 
@@ -107,9 +110,9 @@ abstract class _$$PhotoModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
-      String periodId,
-      String photoUrl,
-      String uploadedBy,
+      @JsonKey(name: 'period_id') String periodId,
+      @JsonKey(name: 'photo_url') String photoUrl,
+      @JsonKey(name: 'uploaded_by') String uploadedBy,
       @JsonKey(name: 'uploaded_at') DateTime? uploadedAt});
 }
 
@@ -162,9 +165,9 @@ class __$$PhotoModelImplCopyWithImpl<$Res>
 class _$PhotoModelImpl implements _PhotoModel {
   const _$PhotoModelImpl(
       {required this.id,
-      required this.periodId,
-      required this.photoUrl,
-      required this.uploadedBy,
+      @JsonKey(name: 'period_id') required this.periodId,
+      @JsonKey(name: 'photo_url') required this.photoUrl,
+      @JsonKey(name: 'uploaded_by') required this.uploadedBy,
       @JsonKey(name: 'uploaded_at') this.uploadedAt});
 
   factory _$PhotoModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -173,10 +176,13 @@ class _$PhotoModelImpl implements _PhotoModel {
   @override
   final String id;
   @override
+  @JsonKey(name: 'period_id')
   final String periodId;
   @override
+  @JsonKey(name: 'photo_url')
   final String photoUrl;
   @override
+  @JsonKey(name: 'uploaded_by')
   final String uploadedBy;
   @override
   @JsonKey(name: 'uploaded_at')
@@ -227,9 +233,9 @@ class _$PhotoModelImpl implements _PhotoModel {
 abstract class _PhotoModel implements PhotoModel {
   const factory _PhotoModel(
           {required final String id,
-          required final String periodId,
-          required final String photoUrl,
-          required final String uploadedBy,
+          @JsonKey(name: 'period_id') required final String periodId,
+          @JsonKey(name: 'photo_url') required final String photoUrl,
+          @JsonKey(name: 'uploaded_by') required final String uploadedBy,
           @JsonKey(name: 'uploaded_at') final DateTime? uploadedAt}) =
       _$PhotoModelImpl;
 
@@ -239,10 +245,13 @@ abstract class _PhotoModel implements PhotoModel {
   @override
   String get id;
   @override
+  @JsonKey(name: 'period_id')
   String get periodId;
   @override
+  @JsonKey(name: 'photo_url')
   String get photoUrl;
   @override
+  @JsonKey(name: 'uploaded_by')
   String get uploadedBy;
   @override
   @JsonKey(name: 'uploaded_at')

@@ -17,12 +17,5 @@ class FundLedgerModel with _$FundLedgerModel {
   }) = _FundLedgerModel;
 
   factory FundLedgerModel.fromJson(Map<String, dynamic> json) =>
-      _$FundLedgerModelFromJson({
-        ...json,
-        // Supabase returns PostgreSQL column names in snake_case, while the
-        // generated model currently expects Dart field names in camelCase.
-        'periodId': json['period_id'],
-        'gatheringEventId': json['gathering_event_id'],
-        'createdBy': json['created_by'],
-      });
+      _$FundLedgerModelFromJson(json);
 }

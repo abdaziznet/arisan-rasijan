@@ -137,18 +137,16 @@ Histori hasil kocokan — inti transparansi aplikasi.
 ---
 
 ### 2.6 `event_checklist`
-Rundown acara yang bisa dicentang real-time.
+Daftar agenda acara arisan (urut berdasarkan timeline). Admin bisa tambah/hapus/sort item.
 
 | Kolom | Tipe | Keterangan |
 |---|---|---|
 | `id` | `uuid` (PK) | |
 | `period_id` | `uuid` (FK → `arisan_periods.id`) | |
-| `step_name` | `text` | Contoh: `'Kumpul'`, `'Yasin & Sholawat'`, `'Makan'`, `'Kocokan'`, `'Serah Terima Uang'`, `'Foto Bersama'`, `'Penutupan'` |
-| `step_order` | `integer` | Urutan tahap |
-| `is_completed` | `boolean`, default `false` | |
-| `completed_at` | `timestamptz`, nullable | |
+| `step_name` | `text` | Nama agenda, bebas (misal: `'Kumpul'`, `'Yasin & Sholawat'`, `'Makan'`, `'Kocokan'`, `'Serah Terima Uang'`, `'Foto Bersama'`, `'Penutupan'`) |
+| `step_order` | `integer` | Urutan tampil (1, 2, 3, ...) |
 
-**RLS Policy:** `SELECT` semua anggota; `UPDATE` hanya admin.
+**RLS Policy:** `SELECT` semua anggota; `INSERT`/`UPDATE`/`DELETE` hanya admin.
 
 ---
 

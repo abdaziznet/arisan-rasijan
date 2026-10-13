@@ -22,3 +22,8 @@ spesifikasinya sebgai berikut:
 11. baca kembali file DESIGN.md untuk warna yang harus di terapkan agar konsisten.
 12. lakukan test terlebih  dahulu , pastikan tidak ada fungsi yang berdampak pada penambahan feature ini
 13. pastikan gunakan dependency yang cocok dan support dengan device modern.
+
+
+buatkan saya file issue-6.md untuk melanjutkan pengembangan aplikasi ini
+spesifikasinya sebagai berikut:
+    1. pada 

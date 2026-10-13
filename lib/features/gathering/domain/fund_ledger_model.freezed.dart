@@ -23,9 +23,12 @@ mixin _$FundLedgerModel {
   String get id => throw _privateConstructorUsedError;
   String get type => throw _privateConstructorUsedError;
   double get amount => throw _privateConstructorUsedError;
+  @JsonKey(name: 'period_id')
   String? get periodId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'gathering_event_id')
   String? get gatheringEventId => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
+  @JsonKey(name: 'created_by')
   String get createdBy => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   DateTime get createdAt => throw _privateConstructorUsedError;
@@ -50,10 +53,10 @@ abstract class $FundLedgerModelCopyWith<$Res> {
       {String id,
       String type,
       double amount,
-      String? periodId,
-      String? gatheringEventId,
+      @JsonKey(name: 'period_id') String? periodId,
+      @JsonKey(name: 'gathering_event_id') String? gatheringEventId,
       String? description,
-      String createdBy,
+      @JsonKey(name: 'created_by') String createdBy,
       @JsonKey(name: 'created_at') DateTime createdAt});
 }
 
@@ -130,10 +133,10 @@ abstract class _$$FundLedgerModelImplCopyWith<$Res>
       {String id,
       String type,
       double amount,
-      String? periodId,
-      String? gatheringEventId,
+      @JsonKey(name: 'period_id') String? periodId,
+      @JsonKey(name: 'gathering_event_id') String? gatheringEventId,
       String? description,
-      String createdBy,
+      @JsonKey(name: 'created_by') String createdBy,
       @JsonKey(name: 'created_at') DateTime createdAt});
 }
 
@@ -203,10 +206,10 @@ class _$FundLedgerModelImpl implements _FundLedgerModel {
       {required this.id,
       required this.type,
       required this.amount,
-      this.periodId,
-      this.gatheringEventId,
+      @JsonKey(name: 'period_id') this.periodId,
+      @JsonKey(name: 'gathering_event_id') this.gatheringEventId,
       this.description,
-      required this.createdBy,
+      @JsonKey(name: 'created_by') required this.createdBy,
       @JsonKey(name: 'created_at') required this.createdAt});
 
   factory _$FundLedgerModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -219,12 +222,15 @@ class _$FundLedgerModelImpl implements _FundLedgerModel {
   @override
   final double amount;
   @override
+  @JsonKey(name: 'period_id')
   final String? periodId;
   @override
+  @JsonKey(name: 'gathering_event_id')
   final String? gatheringEventId;
   @override
   final String? description;
   @override
+  @JsonKey(name: 'created_by')
   final String createdBy;
   @override
   @JsonKey(name: 'created_at')
@@ -282,10 +288,10 @@ abstract class _FundLedgerModel implements FundLedgerModel {
           {required final String id,
           required final String type,
           required final double amount,
-          final String? periodId,
-          final String? gatheringEventId,
+          @JsonKey(name: 'period_id') final String? periodId,
+          @JsonKey(name: 'gathering_event_id') final String? gatheringEventId,
           final String? description,
-          required final String createdBy,
+          @JsonKey(name: 'created_by') required final String createdBy,
           @JsonKey(name: 'created_at') required final DateTime createdAt}) =
       _$FundLedgerModelImpl;
 
@@ -299,12 +305,15 @@ abstract class _FundLedgerModel implements FundLedgerModel {
   @override
   double get amount;
   @override
+  @JsonKey(name: 'period_id')
   String? get periodId;
   @override
+  @JsonKey(name: 'gathering_event_id')
   String? get gatheringEventId;
   @override
   String? get description;
   @override
+  @JsonKey(name: 'created_by')
   String get createdBy;
   @override
   @JsonKey(name: 'created_at')

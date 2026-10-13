@@ -56,7 +56,7 @@ abstract final class AppRouter {
             ),
           paymentList => const PaymentListScreen(),
           eventChecklist => EventChecklistScreen(
-              periodId: settings.arguments as String,
+              periodId: settings.arguments as String? ?? '',
             ),
           draw => DrawScreen(
               periodId: settings.arguments as String,

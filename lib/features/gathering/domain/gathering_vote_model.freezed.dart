@@ -21,8 +21,11 @@ GatheringVoteModel _$GatheringVoteModelFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$GatheringVoteModel {
   String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'gathering_event_id')
   String get gatheringEventId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'option_id')
   String get optionId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'member_id')
   String get memberId => throw _privateConstructorUsedError;
   @JsonKey(name: 'voted_at')
   DateTime get votedAt => throw _privateConstructorUsedError;
@@ -45,9 +48,9 @@ abstract class $GatheringVoteModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String gatheringEventId,
-      String optionId,
-      String memberId,
+      @JsonKey(name: 'gathering_event_id') String gatheringEventId,
+      @JsonKey(name: 'option_id') String optionId,
+      @JsonKey(name: 'member_id') String memberId,
       @JsonKey(name: 'voted_at') DateTime votedAt});
 }
 
@@ -107,9 +110,9 @@ abstract class _$$GatheringVoteModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
-      String gatheringEventId,
-      String optionId,
-      String memberId,
+      @JsonKey(name: 'gathering_event_id') String gatheringEventId,
+      @JsonKey(name: 'option_id') String optionId,
+      @JsonKey(name: 'member_id') String memberId,
       @JsonKey(name: 'voted_at') DateTime votedAt});
 }
 
@@ -162,9 +165,9 @@ class __$$GatheringVoteModelImplCopyWithImpl<$Res>
 class _$GatheringVoteModelImpl implements _GatheringVoteModel {
   const _$GatheringVoteModelImpl(
       {required this.id,
-      required this.gatheringEventId,
-      required this.optionId,
-      required this.memberId,
+      @JsonKey(name: 'gathering_event_id') required this.gatheringEventId,
+      @JsonKey(name: 'option_id') required this.optionId,
+      @JsonKey(name: 'member_id') required this.memberId,
       @JsonKey(name: 'voted_at') required this.votedAt});
 
   factory _$GatheringVoteModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -173,10 +176,13 @@ class _$GatheringVoteModelImpl implements _GatheringVoteModel {
   @override
   final String id;
   @override
+  @JsonKey(name: 'gathering_event_id')
   final String gatheringEventId;
   @override
+  @JsonKey(name: 'option_id')
   final String optionId;
   @override
+  @JsonKey(name: 'member_id')
   final String memberId;
   @override
   @JsonKey(name: 'voted_at')
@@ -227,9 +233,10 @@ class _$GatheringVoteModelImpl implements _GatheringVoteModel {
 abstract class _GatheringVoteModel implements GatheringVoteModel {
   const factory _GatheringVoteModel(
           {required final String id,
+          @JsonKey(name: 'gathering_event_id')
           required final String gatheringEventId,
-          required final String optionId,
-          required final String memberId,
+          @JsonKey(name: 'option_id') required final String optionId,
+          @JsonKey(name: 'member_id') required final String memberId,
           @JsonKey(name: 'voted_at') required final DateTime votedAt}) =
       _$GatheringVoteModelImpl;
 
@@ -239,10 +246,13 @@ abstract class _GatheringVoteModel implements GatheringVoteModel {
   @override
   String get id;
   @override
+  @JsonKey(name: 'gathering_event_id')
   String get gatheringEventId;
   @override
+  @JsonKey(name: 'option_id')
   String get optionId;
   @override
+  @JsonKey(name: 'member_id')
   String get memberId;
   @override
   @JsonKey(name: 'voted_at')

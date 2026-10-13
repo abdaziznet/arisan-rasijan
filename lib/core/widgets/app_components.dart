@@ -249,8 +249,24 @@ class AppBottomSheet extends StatelessWidget {
 }
 
 abstract final class AppSnackbar {
-  static void show(BuildContext context, String message) =>
+  /// Global messenger key — daftar di MaterialApp.scaffoldMessengerKey.
+  /// Dipakai saat context lokal tidak aman (misal setelah image picker kembali
+  /// dari native activity dan element tree sedang tidak stabil).
+  static final GlobalKey<ScaffoldMessengerState> messengerKey =
+      GlobalKey<ScaffoldMessengerState>();
+
+  static void show(BuildContext context, String message) {
+    // Coba global messenger dulu (tidak butuh context lookup).
+    final messenger = messengerKey.currentState;
+    if (messenger != null && messenger.mounted) {
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+      return;
+    }
+    // Fallback ke context lokal jika global belum terdaftar.
+    if (context.mounted) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
 }

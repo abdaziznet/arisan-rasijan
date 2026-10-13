@@ -22,10 +22,13 @@ GatheringPollOptionModel _$GatheringPollOptionModelFromJson(
 /// @nodoc
 mixin _$GatheringPollOptionModel {
   String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'gathering_event_id')
   String get gatheringEventId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'option_label')
   String get optionLabel => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   DateTime get createdAt => throw _privateConstructorUsedError;
+  @JsonKey(includeFromJson: false, includeToJson: false)
   int get voteCount => throw _privateConstructorUsedError;
 
   /// Serializes this GatheringPollOptionModel to a JSON map.
@@ -46,10 +49,10 @@ abstract class $GatheringPollOptionModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String gatheringEventId,
-      String optionLabel,
+      @JsonKey(name: 'gathering_event_id') String gatheringEventId,
+      @JsonKey(name: 'option_label') String optionLabel,
       @JsonKey(name: 'created_at') DateTime createdAt,
-      int voteCount});
+      @JsonKey(includeFromJson: false, includeToJson: false) int voteCount});
 }
 
 /// @nodoc
@@ -110,10 +113,10 @@ abstract class _$$GatheringPollOptionModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
-      String gatheringEventId,
-      String optionLabel,
+      @JsonKey(name: 'gathering_event_id') String gatheringEventId,
+      @JsonKey(name: 'option_label') String optionLabel,
       @JsonKey(name: 'created_at') DateTime createdAt,
-      int voteCount});
+      @JsonKey(includeFromJson: false, includeToJson: false) int voteCount});
 }
 
 /// @nodoc
@@ -167,9 +170,10 @@ class __$$GatheringPollOptionModelImplCopyWithImpl<$Res>
 class _$GatheringPollOptionModelImpl implements _GatheringPollOptionModel {
   const _$GatheringPollOptionModelImpl(
       {required this.id,
-      required this.gatheringEventId,
-      required this.optionLabel,
+      @JsonKey(name: 'gathering_event_id') required this.gatheringEventId,
+      @JsonKey(name: 'option_label') required this.optionLabel,
       @JsonKey(name: 'created_at') required this.createdAt,
+      @JsonKey(includeFromJson: false, includeToJson: false)
       this.voteCount = 0});
 
   factory _$GatheringPollOptionModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -178,14 +182,16 @@ class _$GatheringPollOptionModelImpl implements _GatheringPollOptionModel {
   @override
   final String id;
   @override
+  @JsonKey(name: 'gathering_event_id')
   final String gatheringEventId;
   @override
+  @JsonKey(name: 'option_label')
   final String optionLabel;
   @override
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
   @override
-  @JsonKey()
+  @JsonKey(includeFromJson: false, includeToJson: false)
   final int voteCount;
 
   @override
@@ -234,9 +240,11 @@ class _$GatheringPollOptionModelImpl implements _GatheringPollOptionModel {
 abstract class _GatheringPollOptionModel implements GatheringPollOptionModel {
   const factory _GatheringPollOptionModel(
       {required final String id,
+      @JsonKey(name: 'gathering_event_id')
       required final String gatheringEventId,
-      required final String optionLabel,
+      @JsonKey(name: 'option_label') required final String optionLabel,
       @JsonKey(name: 'created_at') required final DateTime createdAt,
+      @JsonKey(includeFromJson: false, includeToJson: false)
       final int voteCount}) = _$GatheringPollOptionModelImpl;
 
   factory _GatheringPollOptionModel.fromJson(Map<String, dynamic> json) =
@@ -245,13 +253,16 @@ abstract class _GatheringPollOptionModel implements GatheringPollOptionModel {
   @override
   String get id;
   @override
+  @JsonKey(name: 'gathering_event_id')
   String get gatheringEventId;
   @override
+  @JsonKey(name: 'option_label')
   String get optionLabel;
   @override
   @JsonKey(name: 'created_at')
   DateTime get createdAt;
   @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
   int get voteCount;
 
   /// Create a copy of GatheringPollOptionModel

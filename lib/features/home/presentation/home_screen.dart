@@ -541,21 +541,21 @@ class _HomeOverview extends ConsumerWidget {
                           childAspectRatio: childAspectRatio,
                           children: [
                             _AdminActionCard(
-                              icon: Icons.calendar_month_rounded,
+                              icon: Icons.edit_calendar_rounded,
                               label: 'Periode Baru',
                               color: AppColors.primary,
                               onTap: () => PeriodFormDialog.show(context),
                             ),
                             _AdminActionCard(
-                              icon: Icons.receipt_long_rounded,
+                              icon: Icons.payments_rounded,
                               label: 'Catat Iuran',
                               color: AppColors.info,
                               onTap: () => onNavigate(1),
                             ),
                             _AdminActionCard(
-                              icon: Icons.event_note_rounded,
+                              icon: Icons.format_list_bulleted_rounded,
                               label: 'Agenda Acara',
-                              color: AppColors.primaryDark,
+                              color: const Color(0xFF6366F1),
                               onTap: () => activePeriodAsync.maybeWhen(
                                 data: (period) {
                                   if (period != null) {
@@ -575,9 +575,9 @@ class _HomeOverview extends ConsumerWidget {
                             ),
                             if (!areAdminQuickActionsExpanded)
                               _AdminActionCard(
-                                icon: Icons.grid_view_rounded,
+                                icon: Icons.apps_rounded,
                                 label: 'Semua Menu',
-                                color: AppColors.textSecondary,
+                                color: const Color(0xFF64748B),
                                 onTap: () => ref
                                     .read(_adminQuickActionsExpandedProvider
                                         .notifier)
@@ -585,7 +585,7 @@ class _HomeOverview extends ConsumerWidget {
                               ),
                             if (areAdminQuickActionsExpanded) ...[
                               _AdminActionCard(
-                                icon: Icons.celebration_rounded,
+                                icon: Icons.casino_rounded,
                                 label: 'Kocokan',
                                 color: AppColors.accent,
                                 onTap: () => activePeriodAsync.maybeWhen(
@@ -606,16 +606,16 @@ class _HomeOverview extends ConsumerWidget {
                                 ),
                               ),
                               _AdminActionCard(
-                                icon: Icons.timeline_rounded,
+                                icon: Icons.history_rounded,
                                 label: 'Riwayat',
-                                color: AppColors.orange,
+                                color: const Color(0xFFEA580C),
                                 onTap: () => Navigator.pushNamed(
                                     context, AppRouter.history),
                               ),
                               _AdminActionCard(
-                                icon: Icons.photo_outlined,
+                                icon: Icons.photo_library_rounded,
                                 label: 'Galeri',
-                                color: AppColors.success,
+                                color: const Color(0xFFE11D48),
                                 onTap: () => activePeriodAsync.maybeWhen(
                                   data: (period) {
                                     if (period != null) {
@@ -634,18 +634,18 @@ class _HomeOverview extends ConsumerWidget {
                                 ),
                               ),
                               _AdminActionCard(
-                                icon: Icons.tune_rounded,
+                                icon: Icons.admin_panel_settings_rounded,
                                 label: 'Pengaturan',
-                                color: AppColors.textSecondary,
+                                color: const Color(0xFF475569),
                                 onTap: () => Navigator.pushNamed(
                                   context,
                                   AppRouter.adminSettings,
                                 ),
                               ),
                               _AdminActionCard(
-                                icon: Icons.keyboard_arrow_up_rounded,
+                                icon: Icons.expand_less_rounded,
                                 label: 'Ringkas',
-                                color: AppColors.textSecondary,
+                                color: const Color(0xFF64748B),
                                 onTap: () => ref
                                     .read(_adminQuickActionsExpandedProvider
                                         .notifier)
@@ -680,7 +680,7 @@ class _HomeOverview extends ConsumerWidget {
                       );
                       return activePeriodAsync.maybeWhen(
                         data: (period) => _SummaryCard(
-                          icon: Icons.receipt_long_rounded,
+                          icon: Icons.payments_rounded,
                           title: 'Iuran Saya',
                           value: isPaid ? 'Sudah lunas' : 'Belum dibayar',
                           valueIcon: paidIcon,
@@ -691,7 +691,7 @@ class _HomeOverview extends ConsumerWidget {
                           onTap: () => onNavigate(1),
                         ),
                         orElse: () => _SummaryCard(
-                          icon: Icons.receipt_long_rounded,
+                          icon: Icons.payments_rounded,
                           title: 'Iuran Saya',
                           value: isPaid ? 'Sudah lunas' : 'Belum dibayar',
                           valueIcon: paidIcon,
@@ -703,7 +703,7 @@ class _HomeOverview extends ConsumerWidget {
                     },
                   ),
                   _SummaryCard(
-                    icon: Icons.account_balance_wallet,
+                    icon: Icons.savings_rounded,
                     title: 'Kas Gathering',
                     value: totalGatheringFund.when(
                       data: (total) => Formatters.formatCurrency(total),
@@ -755,7 +755,7 @@ class _HomeOverview extends ConsumerWidget {
                                 color: AppColors.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(Icons.people_alt_rounded,
+                              child: const Icon(Icons.groups_rounded,
                                   color: AppColors.primary, size: 22),
                             ),
                             const SizedBox(width: AppSpacing.md),

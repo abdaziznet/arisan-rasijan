@@ -12,16 +12,16 @@ _$GatheringEventModelImpl _$$GatheringEventModelImplFromJson(
       id: json['id'] as String,
       title: json['title'] as String,
       status: json['status'] as String? ?? 'voting',
-      winningOptionId: json['winningOptionId'] as String?,
-      eventDate: json['eventDate'] == null
+      winningOptionId: json['winning_option_id'] as String?,
+      eventDate: json['event_date'] == null
           ? null
-          : DateTime.parse(json['eventDate'] as String),
-      fundUsed: (json['fundUsed'] as num?)?.toDouble() ?? 0,
-      createdBy: json['createdBy'] as String,
+          : DateTime.parse(json['event_date'] as String),
+      fundUsed: (json['fund_used'] as num?)?.toDouble() ?? 0,
+      createdBy: json['created_by'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
-      closedAt: json['closedAt'] == null
+      closedAt: json['closed_at'] == null
           ? null
-          : DateTime.parse(json['closedAt'] as String),
+          : DateTime.parse(json['closed_at'] as String),
     );
 
 Map<String, dynamic> _$$GatheringEventModelImplToJson(
@@ -30,10 +30,10 @@ Map<String, dynamic> _$$GatheringEventModelImplToJson(
       'id': instance.id,
       'title': instance.title,
       'status': instance.status,
-      'winningOptionId': instance.winningOptionId,
-      'eventDate': instance.eventDate?.toIso8601String(),
-      'fundUsed': instance.fundUsed,
-      'createdBy': instance.createdBy,
+      'winning_option_id': instance.winningOptionId,
+      'event_date': instance.eventDate?.toIso8601String(),
+      'fund_used': instance.fundUsed,
+      'created_by': instance.createdBy,
       'created_at': instance.createdAt.toIso8601String(),
-      'closedAt': instance.closedAt?.toIso8601String(),
+      'closed_at': instance.closedAt?.toIso8601String(),
     };

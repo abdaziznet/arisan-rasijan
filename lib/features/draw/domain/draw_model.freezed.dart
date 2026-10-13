@@ -14,21 +14,19 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-DrawModel _$DrawModelFromJson(Map<String, dynamic> json) {
-  return _DrawModel.fromJson(json);
-}
-
 /// @nodoc
 mixin _$DrawModel {
   String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'period_id')
   String get periodId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'winner_id')
   String get winnerId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'conducted_at')
   DateTime get createdAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'winner_name')
   String? get winnerName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'total_collected')
   double? get totalCollected => throw _privateConstructorUsedError;
-
-  /// Serializes this DrawModel to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of DrawModel
   /// with the given fields replaced by the non-null parameter values.
@@ -44,11 +42,11 @@ abstract class $DrawModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String periodId,
-      String winnerId,
-      DateTime createdAt,
-      String? winnerName,
-      double? totalCollected});
+      @JsonKey(name: 'period_id') String periodId,
+      @JsonKey(name: 'winner_id') String winnerId,
+      @JsonKey(name: 'conducted_at') DateTime createdAt,
+      @JsonKey(name: 'winner_name') String? winnerName,
+      @JsonKey(name: 'total_collected') double? totalCollected});
 }
 
 /// @nodoc
@@ -112,11 +110,11 @@ abstract class _$$DrawModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
-      String periodId,
-      String winnerId,
-      DateTime createdAt,
-      String? winnerName,
-      double? totalCollected});
+      @JsonKey(name: 'period_id') String periodId,
+      @JsonKey(name: 'winner_id') String winnerId,
+      @JsonKey(name: 'conducted_at') DateTime createdAt,
+      @JsonKey(name: 'winner_name') String? winnerName,
+      @JsonKey(name: 'total_collected') double? totalCollected});
 }
 
 /// @nodoc
@@ -169,30 +167,32 @@ class __$$DrawModelImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$DrawModelImpl implements _DrawModel {
   const _$DrawModelImpl(
       {required this.id,
-      required this.periodId,
-      required this.winnerId,
-      required this.createdAt,
-      this.winnerName,
-      this.totalCollected});
-
-  factory _$DrawModelImpl.fromJson(Map<String, dynamic> json) =>
-      _$$DrawModelImplFromJson(json);
+      @JsonKey(name: 'period_id') required this.periodId,
+      @JsonKey(name: 'winner_id') required this.winnerId,
+      @JsonKey(name: 'conducted_at') required this.createdAt,
+      @JsonKey(name: 'winner_name') this.winnerName,
+      @JsonKey(name: 'total_collected') this.totalCollected});
 
   @override
   final String id;
   @override
+  @JsonKey(name: 'period_id')
   final String periodId;
   @override
+  @JsonKey(name: 'winner_id')
   final String winnerId;
   @override
+  @JsonKey(name: 'conducted_at')
   final DateTime createdAt;
   @override
+  @JsonKey(name: 'winner_name')
   final String? winnerName;
   @override
+  @JsonKey(name: 'total_collected')
   final double? totalCollected;
 
   @override
@@ -218,7 +218,6 @@ class _$DrawModelImpl implements _DrawModel {
                 other.totalCollected == totalCollected));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, periodId, winnerId,
       createdAt, winnerName, totalCollected);
@@ -230,38 +229,34 @@ class _$DrawModelImpl implements _DrawModel {
   @pragma('vm:prefer-inline')
   _$$DrawModelImplCopyWith<_$DrawModelImpl> get copyWith =>
       __$$DrawModelImplCopyWithImpl<_$DrawModelImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$DrawModelImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class _DrawModel implements DrawModel {
   const factory _DrawModel(
-      {required final String id,
-      required final String periodId,
-      required final String winnerId,
-      required final DateTime createdAt,
-      final String? winnerName,
-      final double? totalCollected}) = _$DrawModelImpl;
-
-  factory _DrawModel.fromJson(Map<String, dynamic> json) =
-      _$DrawModelImpl.fromJson;
+          {required final String id,
+          @JsonKey(name: 'period_id') required final String periodId,
+          @JsonKey(name: 'winner_id') required final String winnerId,
+          @JsonKey(name: 'conducted_at') required final DateTime createdAt,
+          @JsonKey(name: 'winner_name') final String? winnerName,
+          @JsonKey(name: 'total_collected') final double? totalCollected}) =
+      _$DrawModelImpl;
 
   @override
   String get id;
   @override
+  @JsonKey(name: 'period_id')
   String get periodId;
   @override
+  @JsonKey(name: 'winner_id')
   String get winnerId;
   @override
+  @JsonKey(name: 'conducted_at')
   DateTime get createdAt;
   @override
+  @JsonKey(name: 'winner_name')
   String? get winnerName;
   @override
+  @JsonKey(name: 'total_collected')
   double? get totalCollected;
 
   /// Create a copy of DrawModel

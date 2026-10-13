@@ -28,14 +28,18 @@ final galleryPhotosStreamProvider =
 class GalleryUploadNotifier extends StateNotifier<AsyncValue<void>> {
   final Ref ref;
 
-  GalleryUploadNotifier(this.ref) : super(const AsyncValue.loading());
+  GalleryUploadNotifier(this.ref) : super(const AsyncValue.data(null));
+
+  void reset() {
+    if (mounted) state = const AsyncValue.data(null);
+  }
 
   Future<void> uploadPhoto({
     required String periodId,
     required File imageFile,
     required String uploadedBy,
   }) async {
-    state = const AsyncValue.loading();
+    if (mounted) state = const AsyncValue.loading();
     try {
       final repo = ref.read(galleryRepositoryProvider);
       // First upload to storage to get the public URL
@@ -47,9 +51,9 @@ class GalleryUploadNotifier extends StateNotifier<AsyncValue<void>> {
         photoUrl: photoUrl,
         uploadedBy: uploadedBy,
       );
-      state = const AsyncValue.data(null);
+      if (mounted) state = const AsyncValue.data(null);
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      if (mounted) state = AsyncValue.error(e, st);
       rethrow;
     }
   }
@@ -58,14 +62,16 @@ class GalleryUploadNotifier extends StateNotifier<AsyncValue<void>> {
     required String photoId,
     required String storagePath,
   }) async {
-    state = const AsyncValue.loading();
+    if (mounted) state = const AsyncValue.loading();
     try {
       final repo = ref.read(galleryRepositoryProvider);
       await repo.deletePhoto(photoId);
-      await repo.deletePhotoFromStorage(storagePath);
-      state = const AsyncValue.data(null);
+      if (storagePath.isNotEmpty) {
+        await repo.deletePhotoFromStorage(storagePath);
+      }
+      if (mounted) state = const AsyncValue.data(null);
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      if (mounted) state = AsyncValue.error(e, st);
       rethrow;
     }
   }

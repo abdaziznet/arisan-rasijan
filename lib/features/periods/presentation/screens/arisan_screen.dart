@@ -225,29 +225,42 @@ class _ActivePeriodCard extends StatelessWidget {
               value: period.winner!.fullName,
             ),
           ],
-          if (isAdmin) ...[
-            const SizedBox(height: AppSpacing.lg),
-            const Divider(height: 1),
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: _ActionButton(
-                    icon: Icons.checklist_rounded,
-                    label: 'Agenda Acara',
-                    color: AppColors.info,
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      AppRouter.eventChecklist,
-                      arguments: period.id,
-                    ),
+          const SizedBox(height: AppSpacing.lg),
+          const Divider(height: 1),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: _ActionButton(
+                  icon: Icons.format_list_bulleted_rounded,
+                  label: 'Agenda',
+                  color: const Color(0xFF6366F1),
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.eventChecklist,
+                    arguments: period.id,
                   ),
                 ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _ActionButton(
+                  icon: Icons.photo_library_rounded,
+                  label: 'Galeri',
+                  color: const Color(0xFFE11D48),
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.gallery,
+                    arguments: period.id,
+                  ),
+                ),
+              ),
+              if (isAdmin) ...[
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: _ActionButton(
                     icon: Icons.casino_rounded,
-                    label: 'Mulai Kocok',
+                    label: 'Kocokan',
                     color: AppColors.accent,
                     onTap: () => Navigator.pushNamed(
                       context,
@@ -257,25 +270,8 @@ class _ActivePeriodCard extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: _ActionButton(
-                    icon: Icons.photo_library_rounded,
-                    label: 'Galeri',
-                    color: Colors.teal,
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      AppRouter.gallery,
-                      arguments: period.id,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ],
       ),
     );

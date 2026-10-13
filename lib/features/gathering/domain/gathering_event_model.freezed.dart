@@ -23,12 +23,17 @@ mixin _$GatheringEventModel {
   String get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get status => throw _privateConstructorUsedError;
+  @JsonKey(name: 'winning_option_id')
   String? get winningOptionId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'event_date')
   DateTime? get eventDate => throw _privateConstructorUsedError;
+  @JsonKey(name: 'fund_used')
   double get fundUsed => throw _privateConstructorUsedError;
+  @JsonKey(name: 'created_by')
   String get createdBy => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   DateTime get createdAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'closed_at')
   DateTime? get closedAt => throw _privateConstructorUsedError;
 
   /// Serializes this GatheringEventModel to a JSON map.
@@ -51,12 +56,12 @@ abstract class $GatheringEventModelCopyWith<$Res> {
       {String id,
       String title,
       String status,
-      String? winningOptionId,
-      DateTime? eventDate,
-      double fundUsed,
-      String createdBy,
+      @JsonKey(name: 'winning_option_id') String? winningOptionId,
+      @JsonKey(name: 'event_date') DateTime? eventDate,
+      @JsonKey(name: 'fund_used') double fundUsed,
+      @JsonKey(name: 'created_by') String createdBy,
       @JsonKey(name: 'created_at') DateTime createdAt,
-      DateTime? closedAt});
+      @JsonKey(name: 'closed_at') DateTime? closedAt});
 }
 
 /// @nodoc
@@ -137,12 +142,12 @@ abstract class _$$GatheringEventModelImplCopyWith<$Res>
       {String id,
       String title,
       String status,
-      String? winningOptionId,
-      DateTime? eventDate,
-      double fundUsed,
-      String createdBy,
+      @JsonKey(name: 'winning_option_id') String? winningOptionId,
+      @JsonKey(name: 'event_date') DateTime? eventDate,
+      @JsonKey(name: 'fund_used') double fundUsed,
+      @JsonKey(name: 'created_by') String createdBy,
       @JsonKey(name: 'created_at') DateTime createdAt,
-      DateTime? closedAt});
+      @JsonKey(name: 'closed_at') DateTime? closedAt});
 }
 
 /// @nodoc
@@ -216,12 +221,12 @@ class _$GatheringEventModelImpl implements _GatheringEventModel {
       {required this.id,
       required this.title,
       this.status = 'voting',
-      this.winningOptionId,
-      this.eventDate,
-      this.fundUsed = 0,
-      required this.createdBy,
+      @JsonKey(name: 'winning_option_id') this.winningOptionId,
+      @JsonKey(name: 'event_date') this.eventDate,
+      @JsonKey(name: 'fund_used') this.fundUsed = 0,
+      @JsonKey(name: 'created_by') required this.createdBy,
       @JsonKey(name: 'created_at') required this.createdAt,
-      this.closedAt});
+      @JsonKey(name: 'closed_at') this.closedAt});
 
   factory _$GatheringEventModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$GatheringEventModelImplFromJson(json);
@@ -234,18 +239,22 @@ class _$GatheringEventModelImpl implements _GatheringEventModel {
   @JsonKey()
   final String status;
   @override
+  @JsonKey(name: 'winning_option_id')
   final String? winningOptionId;
   @override
+  @JsonKey(name: 'event_date')
   final DateTime? eventDate;
   @override
-  @JsonKey()
+  @JsonKey(name: 'fund_used')
   final double fundUsed;
   @override
+  @JsonKey(name: 'created_by')
   final String createdBy;
   @override
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
   @override
+  @JsonKey(name: 'closed_at')
   final DateTime? closedAt;
 
   @override
@@ -299,15 +308,16 @@ class _$GatheringEventModelImpl implements _GatheringEventModel {
 
 abstract class _GatheringEventModel implements GatheringEventModel {
   const factory _GatheringEventModel(
-      {required final String id,
-      required final String title,
-      final String status,
-      final String? winningOptionId,
-      final DateTime? eventDate,
-      final double fundUsed,
-      required final String createdBy,
-      @JsonKey(name: 'created_at') required final DateTime createdAt,
-      final DateTime? closedAt}) = _$GatheringEventModelImpl;
+          {required final String id,
+          required final String title,
+          final String status,
+          @JsonKey(name: 'winning_option_id') final String? winningOptionId,
+          @JsonKey(name: 'event_date') final DateTime? eventDate,
+          @JsonKey(name: 'fund_used') final double fundUsed,
+          @JsonKey(name: 'created_by') required final String createdBy,
+          @JsonKey(name: 'created_at') required final DateTime createdAt,
+          @JsonKey(name: 'closed_at') final DateTime? closedAt}) =
+      _$GatheringEventModelImpl;
 
   factory _GatheringEventModel.fromJson(Map<String, dynamic> json) =
       _$GatheringEventModelImpl.fromJson;
@@ -319,17 +329,22 @@ abstract class _GatheringEventModel implements GatheringEventModel {
   @override
   String get status;
   @override
+  @JsonKey(name: 'winning_option_id')
   String? get winningOptionId;
   @override
+  @JsonKey(name: 'event_date')
   DateTime? get eventDate;
   @override
+  @JsonKey(name: 'fund_used')
   double get fundUsed;
   @override
+  @JsonKey(name: 'created_by')
   String get createdBy;
   @override
   @JsonKey(name: 'created_at')
   DateTime get createdAt;
   @override
+  @JsonKey(name: 'closed_at')
   DateTime? get closedAt;
 
   /// Create a copy of GatheringEventModel

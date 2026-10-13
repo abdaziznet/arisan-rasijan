@@ -9,9 +9,9 @@ part of 'photo_model.dart';
 _$PhotoModelImpl _$$PhotoModelImplFromJson(Map<String, dynamic> json) =>
     _$PhotoModelImpl(
       id: json['id'] as String,
-      periodId: json['periodId'] as String,
-      photoUrl: json['photoUrl'] as String,
-      uploadedBy: json['uploadedBy'] as String,
+      periodId: json['period_id'] as String,
+      photoUrl: json['photo_url'] as String,
+      uploadedBy: json['uploaded_by'] as String,
       uploadedAt: json['uploaded_at'] == null
           ? null
           : DateTime.parse(json['uploaded_at'] as String),
@@ -20,8 +20,8 @@ _$PhotoModelImpl _$$PhotoModelImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$PhotoModelImplToJson(_$PhotoModelImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'periodId': instance.periodId,
-      'photoUrl': instance.photoUrl,
-      'uploadedBy': instance.uploadedBy,
+      'period_id': instance.periodId,
+      'photo_url': instance.photoUrl,
+      'uploaded_by': instance.uploadedBy,
       'uploaded_at': instance.uploadedAt?.toIso8601String(),
     };
