@@ -452,53 +452,60 @@ class _HomeOverview extends ConsumerWidget {
                                     icon: Icons.location_on_rounded,
                                     label: 'Lokasi Acara',
                                     value: address,
-                                    trailing: TextButton(
-                                      style: TextButton.styleFrom(
-                                        foregroundColor:
-                                            destination.hasLaunchTarget
-                                                ? Colors.white
-                                                : AppColors.textSecondary,
-                                        backgroundColor:
-                                            destination.hasLaunchTarget
-                                                ? AppColors.accent
-                                                : AppColors.accent.withValues(
-                                                    alpha: 0.35,
-                                                  ),
-                                        disabledForegroundColor:
-                                            AppColors.textSecondary,
-                                        disabledBackgroundColor:
-                                            AppColors.accent.withValues(
-                                          alpha: 0.35,
+                                  ),
+                                  const SizedBox(height: AppSpacing.xs),
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 38 + AppSpacing.mdSm,
+                                    ),
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      child: TextButton.icon(
+                                        style: TextButton.styleFrom(
+                                          foregroundColor:
+                                              destination.hasLaunchTarget
+                                                  ? Colors.white
+                                                  : AppColors.textSecondary,
+                                          backgroundColor:
+                                              destination.hasLaunchTarget
+                                                  ? AppColors.accent
+                                                  : AppColors.accent
+                                                      .withValues(alpha: 0.35),
+                                          disabledForegroundColor:
+                                              AppColors.textSecondary,
+                                          disabledBackgroundColor:
+                                              AppColors.accent.withValues(
+                                            alpha: 0.35,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          alignment: Alignment.centerLeft,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: AppSpacing.md,
+                                          ),
+                                          minimumSize: const Size(0, 44),
                                         ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: AppSpacing.sm,
-                                        ),
-                                        minimumSize: const Size(0, 44),
-                                      ),
-                                      onPressed: destination.hasLaunchTarget
-                                          ? () async {
-                                              final result = await ref
-                                                  .read(mapsLauncherProvider)
-                                                  .open(destination);
-                                              if (!context.mounted) return;
-                                              if (!result.launched) {
-                                                AppSnackbar.show(
-                                                  context,
-                                                  'Google Maps tidak dapat dibuka.',
-                                                );
+                                        onPressed: destination.hasLaunchTarget
+                                            ? () async {
+                                                final result = await ref
+                                                    .read(mapsLauncherProvider)
+                                                    .open(destination);
+                                                if (!context.mounted) return;
+                                                if (!result.launched) {
+                                                  AppSnackbar.show(
+                                                    context,
+                                                    'Google Maps tidak dapat dibuka.',
+                                                  );
+                                                }
                                               }
-                                            }
-                                          : null,
-                                      child: const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(Icons.directions_outlined,
-                                              size: 20),
-                                        ],
+                                            : null,
+                                        icon: const Icon(
+                                          Icons.directions_outlined,
+                                          size: 20,
+                                        ),
+                                        label: const Text('Petunjuk Arah'),
                                       ),
                                     ),
                                   ),
@@ -879,13 +886,11 @@ class _PeriodDetailRow extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
-    this.trailing,
   });
 
   final IconData icon;
   final String label;
   final String value;
-  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -923,7 +928,6 @@ class _PeriodDetailRow extends StatelessWidget {
               ],
             ),
           ),
-          if (trailing != null) trailing!,
         ],
       );
 }

@@ -159,6 +159,22 @@ void main() {
         findsOneWidget);
   });
 
+  testWidgets('shows directions action below the event address',
+      (tester) async {
+    await tester.pumpWidget(buildWidget());
+    await tester.pumpAndSettle();
+
+    final addressPosition = tester.getTopLeft(find.text('Jl. Melati No. 17'));
+    final directionsPosition = tester.getTopLeft(find.text('Petunjuk Arah'));
+    final directionsButton = find.widgetWithText(TextButton, 'Petunjuk Arah');
+    final directionsButtonPosition = tester.getTopLeft(directionsButton);
+
+    expect(directionsPosition.dy, greaterThan(addressPosition.dy));
+    expect(directionsButtonPosition.dx, closeTo(addressPosition.dx, 1));
+    expect(tester.getSize(directionsButton).width, greaterThan(400));
+    expect(find.byIcon(Icons.directions_outlined), findsOneWidget);
+  });
+
   testWidgets('shows profile information and account menu', (tester) async {
     await tester.pumpWidget(buildWidget());
     await tester.pumpAndSettle();

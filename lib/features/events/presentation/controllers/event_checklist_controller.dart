@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -93,11 +94,16 @@ class EventChecklistController
     BuildContext? context,
   }) async {
     final currentList = List<EventChecklistModel>.from(state.valueOrNull ?? []);
+    debugPrint(
+      '[EventChecklist] Reorder started: oldIndex=$oldIndex, '
+      'newIndex=$newIndex, itemCount=${currentList.length}',
+    );
     if (oldIndex == newIndex ||
         oldIndex < 0 ||
         oldIndex >= currentList.length ||
         newIndex < 0 ||
         newIndex >= currentList.length) {
+      debugPrint('[EventChecklist] Reorder ignored: invalid or unchanged indices.');
       return;
     }
 
@@ -108,6 +114,10 @@ class EventChecklistController
     final reorderedList = List.generate(currentList.length, (i) {
       return currentList[i].copyWith(stepOrder: i + 1);
     });
+    debugPrint(
+      '[EventChecklist] Optimistic order: '
+      '${reorderedList.map((item) => '${item.id}:${item.stepOrder}').toList()}',
+    );
 
     // Optimistic UI update
     state = AsyncValue.data(reorderedList);
@@ -115,7 +125,10 @@ class EventChecklistController
     try {
       final repo = ref.read(eventChecklistRepositoryProvider);
       await repo.updateItemsOrder(reorderedList);
+      debugPrint('[EventChecklist] Reorder save completed.');
     } catch (e, st) {
+      debugPrint('[EventChecklist] Reorder save failed: $e');
+      debugPrintStack(stackTrace: st);
       // Rollback on failure
       ref.invalidateSelf();
       if (context != null && context.mounted) {

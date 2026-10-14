@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -179,7 +180,14 @@ class _AgendaListView extends StatelessWidget {
         ),
         itemCount: checklist.length,
         onReorderItem: (oldIndex, newIndex) {
-          if (!isAdmin) return;
+          debugPrint(
+            '[EventChecklist] Drop requested: oldIndex=$oldIndex, '
+            'newIndex=$newIndex, isAdmin=$isAdmin',
+          );
+          if (!isAdmin) {
+            debugPrint('[EventChecklist] Drop ignored: user is not admin.');
+            return;
+          }
           HapticFeedback.mediumImpact();
           controller.reorderAgendaItems(oldIndex, newIndex, context: context);
         },
