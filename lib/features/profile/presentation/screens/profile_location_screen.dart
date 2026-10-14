@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_components.dart';
@@ -319,125 +320,253 @@ class _ProfileLocationScreenState extends ConsumerState<ProfileLocationScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Alamat Rumah')),
       body: _isInitialLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const AppLoading()
           : SafeArea(
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 560),
-                  child: Form(
-                    key: _formKey,
-                    child: ListView(
-                      padding: const EdgeInsets.all(AppSpacing.lg),
-                      children: [
-                        const Text(
-                          'Lokasi Rumah',
-                          style: AppTypography.h2,
+                  constraints: const BoxConstraints(maxWidth: 640),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => Form(
+                      key: _formKey,
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md,
+                          AppSpacing.lg,
+                          AppSpacing.md,
+                          AppSpacing.xl,
                         ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          'Simpan alamat agar keluarga lebih mudah menemukan rumah tuan rumah saat arisan.',
-                          style: AppTypography.body.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        TextFormField(
-                          controller: _addressController,
-                          maxLines: 3,
-                          validator: _validateText,
-                          decoration: const InputDecoration(
-                            labelText: 'Alamat Lengkap',
-                            hintText: 'Jalan, nomor rumah, RT/RW',
-                            prefixIcon: Icon(Icons.home_outlined),
-                            alignLabelWithHint: true,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        TextFormField(
-                          controller: _cityController,
-                          validator: _validateText,
-                          decoration: const InputDecoration(
-                            labelText: 'Kota / Kecamatan',
-                            prefixIcon: Icon(Icons.location_city_outlined),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        OutlinedButton.icon(
-                          onPressed: _isLocating ? null : _fillCurrentLocation,
-                          icon: _isLocating
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.1,
                                   ),
-                                )
-                              : const Icon(Icons.my_location_outlined),
-                          label: Text(
-                            _isLocating
-                                ? 'Mengambil lokasi...'
-                                : 'Ambil Lokasi Saat Ini',
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        OutlinedButton.icon(
-                          onPressed: _pickLocationOnMap,
-                          icon: const Icon(Icons.place_outlined),
-                          label: const Text('Tentukan Lokasi di Peta'),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: _latitudeController,
-                                readOnly: true,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                  decimal: true,
-                                  signed: true,
+                                  borderRadius: AppRadii.input,
                                 ),
-                                decoration: const InputDecoration(
-                                  labelText: 'Latitude',
+                                child: const Icon(
+                                  Icons.home_work_outlined,
+                                  color: AppColors.primary,
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: AppSpacing.md),
-                            Expanded(
-                              child: TextFormField(
-                                controller: _longitudeController,
-                                readOnly: true,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                  decimal: true,
-                                  signed: true,
-                                ),
-                                decoration: const InputDecoration(
-                                  labelText: 'Longitude',
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Lokasi Rumah',
+                                      style: AppTypography.h2,
+                                    ),
+                                    const SizedBox(height: AppSpacing.xs),
+                                    Text(
+                                      'Simpan alamat agar keluarga lebih mudah menemukan rumah tuan rumah saat arisan.',
+                                      style: AppTypography.body.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          _hasValidCoordinatePair
-                              ? 'Titik lokasi siap disimpan.'
-                              : 'Pilih lokasi otomatis atau tentukan titik di peta sebelum menyimpan.',
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.textSecondary,
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        AppButton(
-                          label: 'Simpan Alamat',
-                          icon: Icons.save_outlined,
-                          isLoading: _isSaving,
-                          onPressed: _isSaving || !_hasValidCoordinatePair
-                              ? null
-                              : _save,
-                        ),
-                      ],
+                          const SizedBox(height: AppSpacing.xl),
+                          const AppSectionHeader(title: 'Alamat rumah'),
+                          const SizedBox(height: AppSpacing.sm),
+                          AppCard(
+                            child: Column(
+                              children: [
+                                TextFormField(
+                                  controller: _addressController,
+                                  maxLines: 3,
+                                  validator: _validateText,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Alamat Lengkap',
+                                    hintText: 'Jalan, nomor rumah, RT/RW',
+                                    prefixIcon: Icon(Icons.home_outlined),
+                                    alignLabelWithHint: true,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                TextFormField(
+                                  controller: _cityController,
+                                  validator: _validateText,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Kota / Kecamatan',
+                                    prefixIcon:
+                                        Icon(Icons.location_city_outlined),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          const AppSectionHeader(title: 'Titik lokasi'),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Pilih lokasi melalui GPS atau tandai langsung pada peta.',
+                            style: AppTypography.body.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          AppCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(48),
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: AppRadii.button,
+                                    ),
+                                  ),
+                                  onPressed:
+                                      _isLocating ? null : _fillCurrentLocation,
+                                  icon: _isLocating
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Icon(Icons.my_location_outlined),
+                                  label: Text(
+                                    _isLocating
+                                        ? 'Mengambil lokasi...'
+                                        : 'Ambil Lokasi Saat Ini',
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.sm),
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(48),
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: AppRadii.button,
+                                    ),
+                                  ),
+                                  onPressed: _pickLocationOnMap,
+                                  icon: const Icon(Icons.map_outlined),
+                                  label: const Text('Tentukan Lokasi di Peta'),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                if (constraints.maxWidth < 380) ...[
+                                  TextFormField(
+                                    controller: _latitudeController,
+                                    readOnly: true,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                      signed: true,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Latitude',
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.sm),
+                                  TextFormField(
+                                    controller: _longitudeController,
+                                    readOnly: true,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                      signed: true,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Longitude',
+                                    ),
+                                  ),
+                                ] else
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          controller: _latitudeController,
+                                          readOnly: true,
+                                          keyboardType: const TextInputType
+                                              .numberWithOptions(
+                                            decimal: true,
+                                            signed: true,
+                                          ),
+                                          decoration: const InputDecoration(
+                                            labelText: 'Latitude',
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSpacing.md),
+                                      Expanded(
+                                        child: TextFormField(
+                                          controller: _longitudeController,
+                                          readOnly: true,
+                                          keyboardType: const TextInputType
+                                              .numberWithOptions(
+                                            decimal: true,
+                                            signed: true,
+                                          ),
+                                          decoration: const InputDecoration(
+                                            labelText: 'Longitude',
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                const SizedBox(height: AppSpacing.sm),
+                                Container(
+                                  padding: const EdgeInsets.all(AppSpacing.sm),
+                                  decoration: BoxDecoration(
+                                    color: (_hasValidCoordinatePair
+                                            ? AppColors.success
+                                            : AppColors.info)
+                                        .withValues(alpha: 0.08),
+                                    borderRadius: AppRadii.small,
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        _hasValidCoordinatePair
+                                            ? Icons.check_circle_outline
+                                            : Icons.info_outline,
+                                        size: 20,
+                                        color: _hasValidCoordinatePair
+                                            ? AppColors.success
+                                            : AppColors.info,
+                                      ),
+                                      const SizedBox(width: AppSpacing.sm),
+                                      Expanded(
+                                        child: Text(
+                                          _hasValidCoordinatePair
+                                              ? 'Titik lokasi siap disimpan.'
+                                              : 'Pilih lokasi otomatis atau tentukan titik di peta sebelum menyimpan.',
+                                          style:
+                                              AppTypography.bodyMedium.copyWith(
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          AppButton(
+                            label: 'Simpan Alamat',
+                            icon: Icons.save_outlined,
+                            isLoading: _isSaving,
+                            onPressed: _isSaving || !_hasValidCoordinatePair
+                                ? null
+                                : _save,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

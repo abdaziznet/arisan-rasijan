@@ -13,7 +13,8 @@ class AdminSettingsScreen extends ConsumerStatefulWidget {
   const AdminSettingsScreen({super.key});
 
   @override
-  ConsumerState<AdminSettingsScreen> createState() => _AdminSettingsScreenState();
+  ConsumerState<AdminSettingsScreen> createState() =>
+      _AdminSettingsScreenState();
 }
 
 class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
@@ -45,11 +46,15 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
       return;
     }
 
-    await ref.read(appSettingsNotifierProvider.notifier).updateGatheringFundAmount(value);
+    await ref
+        .read(appSettingsNotifierProvider.notifier)
+        .updateGatheringFundAmount(value);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Nilai kas gathering disimpan: Rp${value.toInt().toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.')}')),
+        SnackBar(
+            content: Text(
+                'Nilai kas gathering disimpan: Rp${value.toInt().toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.')}')),
       );
     }
   }
@@ -81,7 +86,8 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.savings_outlined, color: AppColors.primary),
+                          Icon(Icons.account_balance_wallet_rounded,
+                              color: AppColors.primary),
                           const SizedBox(width: AppSpacing.sm),
                           Text('Kas Gathering', style: AppTypography.h3),
                         ],
@@ -89,7 +95,8 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                       const SizedBox(height: AppSpacing.sm),
                       Text(
                         'Nilai tetap yang dipotong dari tiap iuran untuk kas gathering.',
-                        style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                        style: AppTypography.caption
+                            .copyWith(color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       Row(
@@ -97,7 +104,9 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                           Expanded(
                             child: TextField(
                               controller: _fundAmountController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: false),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: false),
                               inputFormatters: [
                                 FilteringTextInputFormatter.digitsOnly,
                               ],
@@ -118,11 +127,18 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.lg,
+                                  vertical: AppSpacing.md),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
                             ),
                             child: isSaving
-                                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white))
                                 : const Text('Simpan'),
                           ),
                         ],
@@ -132,7 +148,8 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                       if (_fundAmountController.text.isNotEmpty) ...[
                         const Divider(),
                         const SizedBox(height: AppSpacing.sm),
-                        _buildPreview(double.tryParse(_fundAmountController.text) ?? 0),
+                        _buildPreview(
+                            double.tryParse(_fundAmountController.text) ?? 0),
                       ],
                     ],
                   ),
@@ -143,19 +160,25 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
               // Vote Visibility
               Card(
                 child: SwitchListTile(
-                  title: Text('Vote Gathering Terlihat Anggota', style: AppTypography.bodyLarge),
+                  title: Text('Vote Gathering Terlihat Anggota',
+                      style: AppTypography.bodyLarge),
                   subtitle: Text(
                     'Jika aktif, semua anggota bisa melihat siapa memilih opsi apa saat voting berlangsung.',
-                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.textSecondary),
                   ),
-                  value: settings['gathering_votes_visible_to_members'] == 'true',
+                  value:
+                      settings['gathering_votes_visible_to_members'] == 'true',
                   onChanged: isSaving
                       ? null
                       : (value) {
-                          ref.read(appSettingsNotifierProvider.notifier).toggleVoteVisibility(value);
+                          ref
+                              .read(appSettingsNotifierProvider.notifier)
+                              .toggleVoteVisibility(value);
                         },
                   activeThumbColor: AppColors.primary,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -172,7 +195,8 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
   }
 
   Widget _buildPreview(double fundAmount) {
-    final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final formatter =
+        NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -184,10 +208,14 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Contoh perhitungan:', style: AppTypography.caption.copyWith(fontWeight: FontWeight.w600)),
+          Text('Contoh perhitungan:',
+              style:
+                  AppTypography.caption.copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: AppSpacing.xs),
-          Text('Iuran Rp 120.000 → iuran bersih: ${formatter.format(120000 - fundAmount.toInt())}, kas gathering: ${formatter.format(fundAmount.toInt())}'),
-          Text('Iuran Rp 150.000 → iuran bersih: ${formatter.format(150000 - fundAmount.toInt())}, kas gathering: ${formatter.format(fundAmount.toInt())}'),
+          Text(
+              'Iuran Rp 120.000 → iuran bersih: ${formatter.format(120000 - fundAmount.toInt())}, kas gathering: ${formatter.format(fundAmount.toInt())}'),
+          Text(
+              'Iuran Rp 150.000 → iuran bersih: ${formatter.format(150000 - fundAmount.toInt())}, kas gathering: ${formatter.format(fundAmount.toInt())}'),
         ],
       ),
     );

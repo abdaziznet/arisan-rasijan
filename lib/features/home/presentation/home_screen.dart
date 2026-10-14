@@ -1332,180 +1332,179 @@ class _HeroProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      width: double.infinity,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [AppColors.primary, AppColors.primaryDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: AppRadii.hero,
+        borderRadius: AppRadii.card,
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-            spreadRadius: -4,
-          ),
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.15),
-            blurRadius: 40,
-            offset: const Offset(0, 20),
-            spreadRadius: -8,
+            color: AppColors.primary.withValues(alpha: 0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Stack(
         children: [
-          // Avatar with gradient circle background (like donation form)
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: hasWon
-                    ? [AppColors.accent, const Color(0xFFB47818)]
-                    : [AppColors.primary, AppColors.primaryDark],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: (hasWon ? AppColors.accent : AppColors.primary)
-                      .withValues(alpha: 0.35),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: ClipOval(
-                child: (displayPhoto != null && displayPhoto!.isNotEmpty)
-                    ? Image.network(
-                        displayPhoto!,
-                        fit: BoxFit.cover,
-                        width: 92,
-                        height: 92,
-                      )
-                    : AppAvatar(name: displayName, radius: 46),
+          Positioned(
+            right: -24,
+            top: -24,
+            child: Container(
+              width: 110,
+              height: 110,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.08),
               ),
             ),
           ),
-          // Winner badge overlay
-          if (hasWon)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppColors.accent,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.accent.withValues(alpha: 0.5),
-                      blurRadius: 12,
-                      offset: const Offset(0, 3),
-                      spreadRadius: 1,
+          Positioned(
+            right: 40,
+            bottom: -30,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.accent.withValues(alpha: 0.15),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final avatar = Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 88,
+                      height: 88,
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.2),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.55),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: ClipOval(
+                        child:
+                            (displayPhoto != null && displayPhoto!.isNotEmpty)
+                                ? Image.network(
+                                    displayPhoto!,
+                                    fit: BoxFit.cover,
+                                    width: 82,
+                                    height: 82,
+                                  )
+                                : AppAvatar(name: displayName, radius: 41),
+                      ),
                     ),
+                    if (hasWon)
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: AppColors.accent,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.emoji_events_rounded,
+                            color: Colors.white,
+                            size: 17,
+                          ),
+                        ),
+                      ),
                   ],
-                ),
-                child: const Icon(
-                  Icons.emoji_events_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-            ),
-          const SizedBox(height: AppSpacing.md),
-          // Name
-          Text(
-            displayName,
-            style: AppTypography.h1.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          // Email
-          Text(
-            email,
-            style: AppTypography.body.copyWith(
-              color: Colors.white.withValues(alpha: 0.85),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          // Role badge
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.xs,
-            ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isAdmin
-                    ? [
-                        AppColors.accent.withValues(alpha: 0.35),
-                        AppColors.primary.withValues(alpha: 0.35),
-                      ]
-                    : hasWon
-                        ? [
-                            AppColors.accent.withValues(alpha: 0.3),
-                            AppColors.warning.withValues(alpha: 0.25),
-                          ]
-                        : [
-                            Colors.white.withValues(alpha: 0.18),
-                            Colors.white.withValues(alpha: 0.08),
-                          ],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: isAdmin
-                    ? AppColors.accent.withValues(alpha: 0.7)
-                    : hasWon
-                        ? AppColors.accent.withValues(alpha: 0.6)
-                        : Colors.white.withValues(alpha: 0.3),
-                width: 1.5,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isAdmin
-                      ? Icons.admin_panel_settings_rounded
-                      : hasWon
-                          ? Icons.emoji_events_rounded
-                          : Icons.family_restroom_rounded,
-                  size: 15,
-                  color: isAdmin || hasWon
-                      ? AppColors.accent
-                      : Colors.white.withValues(alpha: 0.95),
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                Text(
-                  isAdmin
-                      ? 'Pengurus Arisan'
-                      : hasWon
-                          ? 'Pemenang Arisan'
-                          : 'Anggota Keluarga',
-                  style: AppTypography.caption.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.3,
+                );
+                final roleBadge = Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
                   ),
-                ),
-              ],
+                  decoration: BoxDecoration(
+                    color: (isAdmin || hasWon ? AppColors.accent : Colors.white)
+                        .withValues(alpha: isAdmin || hasWon ? 0.24 : 0.14),
+                    borderRadius: AppRadii.small,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.28),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isAdmin
+                            ? Icons.admin_panel_settings_rounded
+                            : hasWon
+                                ? Icons.emoji_events_rounded
+                                : Icons.family_restroom_rounded,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        isAdmin
+                            ? 'Pengurus Arisan'
+                            : hasWon
+                                ? 'Pemenang Arisan'
+                                : 'Anggota Keluarga',
+                        style: AppTypography.caption.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                final details = Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      displayName,
+                      style: AppTypography.h1.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      email,
+                      style: AppTypography.body.copyWith(
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    roleBadge,
+                  ],
+                );
+
+                return SizedBox(
+                  width: constraints.maxWidth,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      avatar,
+                      const SizedBox(height: AppSpacing.md),
+                      SizedBox(width: constraints.maxWidth, child: details),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],

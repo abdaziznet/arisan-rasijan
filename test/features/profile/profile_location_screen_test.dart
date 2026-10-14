@@ -46,6 +46,8 @@ void main() {
     expect(find.text('Bandung'), findsOneWidget);
     expect(find.text('Ambil Lokasi Saat Ini'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Ambil Lokasi Saat Ini'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Ambil Lokasi Saat Ini'));
     await tester.pumpAndSettle();
 

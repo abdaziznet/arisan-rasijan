@@ -6,6 +6,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_components.dart';
 import '../../../members/presentation/providers/members_providers.dart';
+import '../../data/periods_repository_provider.dart';
 import '../../domain/period_model.dart';
 import '../providers/periods_providers.dart';
 
@@ -118,7 +119,8 @@ class _PeriodFormDialogSheet extends ConsumerState<PeriodFormDialog>
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+                    icon: const Icon(Icons.close_rounded,
+                        color: AppColors.textSecondary),
                     onPressed: () => Navigator.pop(context),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -157,6 +159,8 @@ class _PeriodFormContentState extends ConsumerState<_PeriodFormContent> {
   late TextEditingController _addressController;
   late TextEditingController _amountController;
 
+  bool _isLoadingPeriodNumber = false;
+  bool _hasPeriodNumberLoadError = false;
   DateTime _eventDate = DateTime.now().add(const Duration(days: 14));
   String? _selectedHostId;
   String _status = 'upcoming';
@@ -167,7 +171,7 @@ class _PeriodFormContentState extends ConsumerState<_PeriodFormContent> {
     super.initState();
     final p = widget.period;
     _numberController = TextEditingController(
-      text: p != null ? p.periodNumber.toString() : '1',
+      text: p?.periodNumber.toString() ?? '',
     );
     _addressController = TextEditingController(text: p?.hostAddress ?? '');
     _amountController = TextEditingController(
@@ -180,6 +184,9 @@ class _PeriodFormContentState extends ConsumerState<_PeriodFormContent> {
       _eventDate = p.eventDate;
       _selectedHostId = p.hostId;
       _status = p.status;
+    } else {
+      _isLoadingPeriodNumber = true;
+      _loadNextPeriodNumber();
     }
   }
 
@@ -189,6 +196,35 @@ class _PeriodFormContentState extends ConsumerState<_PeriodFormContent> {
     _addressController.dispose();
     _amountController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadNextPeriodNumber() async {
+    if (mounted && _hasPeriodNumberLoadError) {
+      setState(() {
+        _isLoadingPeriodNumber = true;
+        _hasPeriodNumberLoadError = false;
+      });
+    }
+
+    try {
+      final periods = await ref.read(periodsRepositoryProvider).getPeriods();
+      if (!mounted) return;
+      final latestNumber = periods.fold<int>(
+        0,
+        (latest, period) =>
+            period.periodNumber > latest ? period.periodNumber : latest,
+      );
+      setState(() {
+        _numberController.text = (latestNumber + 1).toString();
+        _isLoadingPeriodNumber = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingPeriodNumber = false;
+        _hasPeriodNumberLoadError = true;
+      });
+    }
   }
 
   Future<void> _pickDate() async {
@@ -267,9 +303,30 @@ class _PeriodFormContentState extends ConsumerState<_PeriodFormContent> {
           TextFormField(
             controller: _numberController,
             keyboardType: TextInputType.number,
+            readOnly: true,
             decoration: InputDecoration(
               labelText: 'Nomor Periode *',
-              hintText: 'Misal: 1',
+              hintText: _isLoadingPeriodNumber
+                  ? 'Memuat nomor periode...'
+                  : 'Nomor diisi otomatis',
+              helperText: _hasPeriodNumberLoadError
+                  ? 'Nomor periode belum dapat dimuat. Coba lagi.'
+                  : 'Nomor berikutnya ditentukan otomatis.',
+              suffixIcon: _isLoadingPeriodNumber
+                  ? const Padding(
+                      padding: EdgeInsets.all(AppSpacing.md),
+                      child: SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : _hasPeriodNumberLoadError
+                      ? IconButton(
+                          tooltip: 'Coba lagi',
+                          onPressed: _loadNextPeriodNumber,
+                          icon: const Icon(Icons.refresh_rounded),
+                        )
+                      : const Icon(Icons.lock_outline_rounded),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -310,8 +367,7 @@ class _PeriodFormContentState extends ConsumerState<_PeriodFormContent> {
               style: AppTypography.body.copyWith(color: AppColors.error),
             ),
             data: (members) {
-              final activeMembers =
-                  members.where((m) => m.isActive).toList();
+              final activeMembers = members.where((m) => m.isActive).toList();
               return DropdownButtonFormField<String>(
                 initialValue: _selectedHostId,
                 decoration: InputDecoration(
@@ -437,7 +493,11 @@ class _PeriodFormContentState extends ConsumerState<_PeriodFormContent> {
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submit,
+                  onPressed: _isLoading ||
+                          _isLoadingPeriodNumber ||
+                          _hasPeriodNumberLoadError
+                      ? null
+                      : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
@@ -469,4 +529,3 @@ class _PeriodFormContentState extends ConsumerState<_PeriodFormContent> {
     );
   }
 }
-

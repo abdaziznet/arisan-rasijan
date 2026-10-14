@@ -167,6 +167,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Informasi Anggota'), findsOneWidget);
+    expect(find.text('Ahmad Rasijan'), findsAtLeast(1));
+    expect(find.text('Keluarga Bani Rasijan'), findsOneWidget);
+    expect(find.text('Pengurus Arisan'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Menu Profil'),
       300,

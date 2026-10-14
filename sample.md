@@ -30,4 +30,4 @@ spesifikasinya sebgai berikut:
     4. Gunakan skill yang ada pada project ini terutama untuk design ui/ux @.claude/skills/frontend-design/ @.claude/skills/flutter-animations/references/ @.claude/skills/flutter-build-responsive-layout/ @.claude/skills/flutter-animations/ 
   5. implementasikan komponen atau widget yang sudah ada pada aplikasi ini agar konsisten
  6.  gunakan  mcp dart server bila perlu untuk standarisasi
- 7. lakukan test terhadap feature gathering ini
+ 7. lakukan test terhadap feature yang sudah di revamp ini
