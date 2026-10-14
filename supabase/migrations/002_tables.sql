@@ -50,7 +50,7 @@ create table if not exists public.payments (
 create table if not exists public.donations (
   id uuid primary key default gen_random_uuid(),
   period_id uuid not null references public.arisan_periods(id) on delete cascade,
-  member_id uuid not null references public.profiles(id),
+  member_id uuid references public.profiles(id),
   amount numeric not null,
   note text,
   created_at timestamptz not null default now()

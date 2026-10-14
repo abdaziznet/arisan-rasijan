@@ -106,9 +106,12 @@ class _DonationFormDialogState extends ConsumerState<DonationFormDialog> {
   }
 
   Future<void> _submitDonation() async {
+    debugPrint('[DonationFormDialog] _submitDonation called');
+
     _clearInlineMessage();
 
     if (!_formKey.currentState!.validate()) {
+      debugPrint('[DonationFormDialog] Form validation failed');
       _showInlineMessage('Pastikan nominal donasi terisi dengan benar',
           _InlineMessageType.error);
       return;
@@ -117,7 +120,10 @@ class _DonationFormDialogState extends ConsumerState<DonationFormDialog> {
     final amountText = _amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
     final amount = double.tryParse(amountText);
 
+    debugPrint('[DonationFormDialog] Amount text: $amountText, parsed: $amount');
+
     if (amount == null || amount <= 0) {
+      debugPrint('[DonationFormDialog] Invalid amount: $amount');
       _showInlineMessage(
           'Nominal donasi harus lebih dari Rp 0', _InlineMessageType.error);
       return;
@@ -125,13 +131,22 @@ class _DonationFormDialogState extends ConsumerState<DonationFormDialog> {
 
     final currentMember = ref.read(currentMemberProfileProvider).valueOrNull;
 
+    debugPrint('[DonationFormDialog] Current member: $currentMember');
+    debugPrint('[DonationFormDialog] Is anonymous: $_isAnonymous');
+    debugPrint('[DonationFormDialog] Is proxy: $_isProxyForOtherMember');
+    if (_proxySelectedMember != null) {
+      debugPrint('[DonationFormDialog] Proxy member: ${_proxySelectedMember!.fullName}');
+    }
+
     if (!_isAnonymous) {
       if (_isProxyForOtherMember && _proxySelectedMember == null) {
+        debugPrint('[DonationFormDialog] Proxy member selected but null');
         _showInlineMessage('Silakan pilih anggota yang menitipkan donasi',
             _InlineMessageType.error);
         return;
       }
       if (!_isProxyForOtherMember && currentMember == null) {
+        debugPrint('[DonationFormDialog] Current member is null');
         _showInlineMessage(
             'Profil anggota login tidak ditemukan', _InlineMessageType.error);
         return;
@@ -147,22 +162,39 @@ class _DonationFormDialogState extends ConsumerState<DonationFormDialog> {
         ? null
         : _notesController.text.trim();
 
-    final success =
-        await ref.read(donationFormProvider.notifier).submitDonation(
-              memberId: memberId,
-              amount: amount,
-              notes: notes,
-            );
+    debugPrint('[DonationFormDialog] Submitting donation:');
+    debugPrint('[DonationFormDialog]  - memberId: $memberId');
+    debugPrint('[DonationFormDialog]  - amount: $amount');
+    debugPrint('[DonationFormDialog]  - notes: $notes');
 
-    if (success && mounted) {
-      _showInlineMessage('Donasi berhasil dicatat. Semoga menjadi berkah!',
-          _InlineMessageType.success);
-      Future.delayed(const Duration(milliseconds: 700), () {
-        if (mounted) Navigator.pop(context);
-      });
-    } else if (!success && mounted) {
-      _showInlineMessage('Gagal menyimpan donasi. Silakan coba kembali.',
-          _InlineMessageType.error);
+    try {
+      final success =
+          await ref.read(donationFormProvider.notifier).submitDonation(
+                memberId: memberId,
+                amount: amount,
+                notes: notes,
+              );
+
+      debugPrint('[DonationFormDialog] Submit result: $success');
+
+      if (success && mounted) {
+        _showInlineMessage('Donasi berhasil dicatat. Semoga menjadi berkah!',
+            _InlineMessageType.success);
+        Future.delayed(const Duration(milliseconds: 700), () {
+          if (mounted) Navigator.pop(context);
+        });
+      } else if (!success && mounted) {
+        debugPrint('[DonationFormDialog] Submit failed');
+        _showInlineMessage('Gagal menyimpan donasi. Silakan coba kembali.',
+            _InlineMessageType.error);
+      }
+    } catch (e, stackTrace) {
+      debugPrint('[DonationFormDialog] Exception during submission: $e');
+      debugPrint('[DonationFormDialog] Stack trace: $stackTrace');
+      if (mounted) {
+        _showInlineMessage('Gagal menyimpan donasi. Error: $e',
+            _InlineMessageType.error);
+      }
     }
   }
 

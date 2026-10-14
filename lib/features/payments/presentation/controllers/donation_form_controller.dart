@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/payment_model.dart';
@@ -16,9 +17,11 @@ class DonationFormController extends StateNotifier<DonationFormState> {
     required double amount,
     String? notes,
   }) async {
+    debugPrint('[DonationFormController] submitDonation called');
     state = DonationFormState.loading;
     try {
       final periodId = ref.read(activePeriodIdProvider);
+      debugPrint('[DonationFormController] periodId: $periodId');
 
       final newDonation = Donation(
         id: '', // Supabase akan generate UUID
@@ -29,11 +32,17 @@ class DonationFormController extends StateNotifier<DonationFormState> {
         donatedAt: DateTime.now(),
       );
 
+      debugPrint('[DonationFormController] Attempting to add donation to repository');
       await ref.read(paymentsRepositoryProvider).addDonation(newDonation);
+      debugPrint('[DonationFormController] Donation added successfully to repository');
+
       state = DonationFormState.success;
       ref.invalidate(donationListProvider);
+      debugPrint('[DonationFormController] Donation marked as success, ref invalidated');
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[DonationFormController] EXCEPTION in submitDonation: $e');
+      debugPrint('[DonationFormController] Stack trace: $stackTrace');
       state = DonationFormState.error;
       return false;
     }

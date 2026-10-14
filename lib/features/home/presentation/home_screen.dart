@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radii.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
@@ -1122,9 +1123,11 @@ class _ProfilePage extends ConsumerWidget {
     final isAdmin = currentMember?.isAdmin ?? false;
     final hasWon = currentMember?.hasWonBefore ?? false;
 
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 400),
+      duration: Duration(milliseconds: reduceMotion ? 0 : 350),
       curve: Curves.easeOutCubic,
       builder: (context, value, child) => Transform.translate(
         offset: Offset(0, 20 * (1 - value)),
@@ -1133,252 +1136,378 @@ class _ProfilePage extends ConsumerWidget {
           child: child,
         ),
       ),
-      child: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.lg,
-        ),
-        children: [
-          // Header Hero Profile Card
-          Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.primary, AppColors.primaryDark],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      child: LayoutBuilder(
+        builder: (context, constraints) => Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: ListView(
+              padding: EdgeInsets.symmetric(
+                horizontal:
+                    constraints.maxWidth > 600 ? AppSpacing.xl : AppSpacing.md,
+                vertical: AppSpacing.lg,
               ),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.25),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
               children: [
-                Stack(
-                  alignment: Alignment.center,
+                // Header Hero Profile Card — Modern Animated
+                _HeroProfileCard(
+                  displayName: displayName,
+                  email: email,
+                  displayPhoto: displayPhoto,
+                  isAdmin: isAdmin,
+                  hasWon: hasWon,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // Quick Stats Grid
+                Row(
                   children: [
-                    Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.accent,
-                          width: 3,
-                        ),
+                    Expanded(
+                      child: _ProfileStatCard(
+                        icon: Icons.verified_user_outlined,
+                        title: 'Status',
+                        value: currentMember?.isActive == false
+                            ? 'Non-Aktif'
+                            : 'Aktif',
+                        color: currentMember?.isActive == false
+                            ? AppColors.error
+                            : AppColors.success,
                       ),
                     ),
-                    if (displayPhoto != null && displayPhoto.isNotEmpty)
-                      CircleAvatar(
-                        radius: 42,
-                        backgroundImage: NetworkImage(displayPhoto),
-                      )
-                    else
-                      AppAvatar(name: displayName, radius: 42),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: _ProfileStatCard(
+                        icon: Icons.emoji_events_outlined,
+                        title: 'Dapat Arisan',
+                        value: hasWon ? 'Sudah' : 'Belum',
+                        color: hasWon ? AppColors.accent : AppColors.info,
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  displayName,
-                  style: AppTypography.h1.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
+                const SizedBox(height: AppSpacing.xl),
+
+                // Section 1: Info Kontak & Detail
+                const AppSectionHeader(title: 'Informasi Anggota'),
+                const SizedBox(height: AppSpacing.sm),
+                AppCard(
+                  child: Column(
+                    children: [
+                      _ProfileInfoRow(
+                        icon: Icons.phone_outlined,
+                        label: 'Nomor Telepon',
+                        value: phone,
+                      ),
+                      const Divider(height: 1),
+                      _ProfileInfoRow(
+                        icon: Icons.location_on_outlined,
+                        label: 'Alamat Rumah',
+                        value: address,
+                      ),
+                    ],
                   ),
-                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  email,
-                  style: AppTypography.body.copyWith(
-                    color: Colors.white.withValues(alpha: 0.85),
+                const SizedBox(height: AppSpacing.lg),
+
+                // Section 2: Navigasi Akun
+                const AppSectionHeader(title: 'Menu Profil'),
+                const SizedBox(height: AppSpacing.sm),
+                AppCard(
+                  child: Column(
+                    children: [
+                      _ProfileMenuTile(
+                        icon: Icons.edit_outlined,
+                        title: 'Edit Profil Saya',
+                        subtitle: 'Ubah nama, nomor HP, alamat, & foto',
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          AppRouter.profileCompletion,
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      _ProfileMenuTile(
+                        icon: Icons.location_on_outlined,
+                        title: 'Alamat Rumah & Maps',
+                        subtitle:
+                            'Simpan lokasi rumah dan buka arah ke tuan rumah',
+                        onTap: () async {
+                          await Navigator.pushNamed(
+                            context,
+                            AppRouter.profileLocation,
+                          );
+                          ref.invalidate(currentMemberProfileProvider);
+                          ref.invalidate(activePeriodProvider);
+                        },
+                      ),
+                      const Divider(height: 1),
+                      _ProfileMenuTile(
+                        icon: Icons.people_outline,
+                        title: 'Daftar Anggota Keluarga',
+                        subtitle: 'Lihat seluruh kerabat & pengurus',
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          AppRouter.members,
+                        ),
+                      ),
+                      if (isAdmin) ...[
+                        const Divider(height: 1),
+                        _ProfileMenuTile(
+                          icon: Icons.admin_panel_settings_outlined,
+                          title: 'Pengaturan Admin',
+                          subtitle:
+                              'Atur persentase kas gathering & visibilitas voting',
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            AppRouter.adminSettings,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: AppSpacing.md),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.xs,
+                const SizedBox(height: AppSpacing.xl),
+
+                // Tombol Keluar dari Akun
+                OutlinedButton.icon(
+                  icon:
+                      const Icon(Icons.logout_rounded, color: AppColors.error),
+                  label: Text(
+                    'Keluar dari Akun',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.error,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
+                  style: OutlinedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                    side: const BorderSide(color: AppColors.error),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  child: Row(
+                  onPressed: onSignOut,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // Footer Versi Aplikasi
+                Center(
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        isAdmin
-                            ? Icons.admin_panel_settings_rounded
-                            : Icons.family_restroom_rounded,
-                        size: 16,
-                        color: AppColors.accent,
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
+                      const AppLogo(size: AppLogoSize.small),
+                      const SizedBox(height: AppSpacing.sm),
                       Text(
-                        isAdmin ? 'Pengurus Arisan' : 'Anggota Keluarga',
+                        'BANI RASIJAN v1.0.0 · Arisan Keluarga',
                         style: AppTypography.caption.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: AppSpacing.md),
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.lg),
+        ),
+      ),
+    );
+  }
+}
 
-          // Quick Stats Grid
-          Row(
-            children: [
-              Expanded(
-                child: _ProfileStatCard(
-                  icon: Icons.verified_user_outlined,
-                  title: 'Status',
-                  value:
-                      currentMember?.isActive == false ? 'Non-Aktif' : 'Aktif',
-                  color: currentMember?.isActive == false
-                      ? AppColors.error
-                      : AppColors.success,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: _ProfileStatCard(
-                  icon: Icons.emoji_events_outlined,
-                  title: 'Dapat Arisan',
-                  value: hasWon ? 'Sudah' : 'Belum',
-                  color: hasWon ? AppColors.accent : AppColors.info,
-                ),
-              ),
-            ],
+class _HeroProfileCard extends StatelessWidget {
+  const _HeroProfileCard({
+    required this.displayName,
+    required this.email,
+    required this.displayPhoto,
+    required this.isAdmin,
+    required this.hasWon,
+  });
+
+  final String displayName;
+  final String email;
+  final String? displayPhoto;
+  final bool isAdmin;
+  final bool hasWon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: AppRadii.hero,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+            spreadRadius: -4,
           ),
-          const SizedBox(height: AppSpacing.xl),
-
-          // Section 1: Info Kontak & Detail
-          const AppSectionHeader(title: 'Detail Anggota'),
-          const SizedBox(height: AppSpacing.sm),
-          AppCard(
-            child: Column(
-              children: [
-                _ProfileInfoRow(
-                  icon: Icons.phone_outlined,
-                  label: 'Nomor Telepon',
-                  value: phone,
-                ),
-                const Divider(height: 1),
-                _ProfileInfoRow(
-                  icon: Icons.location_on_outlined,
-                  label: 'Alamat Rumah',
-                  value: address,
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.15),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
+            spreadRadius: -8,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Avatar with gradient circle background (like donation form)
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: hasWon
+                    ? [AppColors.accent, const Color(0xFFB47818)]
+                    : [AppColors.primary, AppColors.primaryDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: (hasWon ? AppColors.accent : AppColors.primary)
+                      .withValues(alpha: 0.35),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: ClipOval(
+                child: (displayPhoto != null && displayPhoto!.isNotEmpty)
+                    ? Image.network(
+                        displayPhoto!,
+                        fit: BoxFit.cover,
+                        width: 92,
+                        height: 92,
+                      )
+                    : AppAvatar(name: displayName, radius: 46),
+              ),
+            ),
           ),
-          const SizedBox(height: AppSpacing.lg),
-
-          // Section 2: Navigasi Akun
-          const AppSectionHeader(title: 'Aksi & Navigasi'),
-          const SizedBox(height: AppSpacing.sm),
-          AppCard(
-            child: Column(
-              children: [
-                _ProfileMenuTile(
-                  icon: Icons.edit_outlined,
-                  title: 'Edit Profil Saya',
-                  subtitle: 'Ubah nama, nomor HP, alamat, & foto',
-                  onTap: () => Navigator.pushNamed(
-                    context,
-                    AppRouter.profileCompletion,
-                  ),
-                ),
-                const Divider(height: 1),
-                _ProfileMenuTile(
-                  icon: Icons.location_on_outlined,
-                  title: 'Alamat Rumah & Maps',
-                  subtitle: 'Simpan lokasi rumah dan buka arah ke tuan rumah',
-                  onTap: () async {
-                    await Navigator.pushNamed(
-                      context,
-                      AppRouter.profileLocation,
-                    );
-                    ref.invalidate(currentMemberProfileProvider);
-                    ref.invalidate(activePeriodProvider);
-                  },
-                ),
-                const Divider(height: 1),
-                _ProfileMenuTile(
-                  icon: Icons.people_outline,
-                  title: 'Daftar Anggota Keluarga',
-                  subtitle: 'Lihat seluruh kerabat & pengurus',
-                  onTap: () => Navigator.pushNamed(
-                    context,
-                    AppRouter.members,
-                  ),
-                ),
-                if (isAdmin) ...[
-                  const Divider(height: 1),
-                  _ProfileMenuTile(
-                    icon: Icons.admin_panel_settings_outlined,
-                    title: 'Pengaturan Admin',
-                    subtitle:
-                        'Atur persentase kas gathering & visibilitas voting',
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      AppRouter.adminSettings,
+          // Winner badge overlay
+          if (hasWon)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.accent.withValues(alpha: 0.5),
+                      blurRadius: 12,
+                      offset: const Offset(0, 3),
+                      spreadRadius: 1,
                     ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-
-          // Tombol Keluar dari Akun
-          OutlinedButton.icon(
-            icon: const Icon(Icons.logout_rounded, color: AppColors.error),
-            label: Text(
-              'Keluar dari Akun',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.error,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-              side: const BorderSide(color: AppColors.error),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            onPressed: onSignOut,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-
-          // Footer Versi Aplikasi
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const AppLogo(size: AppLogoSize.small),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'BANI RASIJAN v1.0.0 · Arisan Keluarga',
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary.withValues(alpha: 0.6),
-                  ),
+                  ],
                 ),
-              ],
+                child: const Icon(
+                  Icons.emoji_events_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
             ),
+          const SizedBox(height: AppSpacing.md),
+          // Name
+          Text(
+            displayName,
+            style: AppTypography.h1.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          // Email
+          Text(
+            email,
+            style: AppTypography.body.copyWith(
+              color: Colors.white.withValues(alpha: 0.85),
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.md),
+          // Role badge
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.xs,
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isAdmin
+                    ? [
+                        AppColors.accent.withValues(alpha: 0.35),
+                        AppColors.primary.withValues(alpha: 0.35),
+                      ]
+                    : hasWon
+                        ? [
+                            AppColors.accent.withValues(alpha: 0.3),
+                            AppColors.warning.withValues(alpha: 0.25),
+                          ]
+                        : [
+                            Colors.white.withValues(alpha: 0.18),
+                            Colors.white.withValues(alpha: 0.08),
+                          ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: isAdmin
+                    ? AppColors.accent.withValues(alpha: 0.7)
+                    : hasWon
+                        ? AppColors.accent.withValues(alpha: 0.6)
+                        : Colors.white.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isAdmin
+                      ? Icons.admin_panel_settings_rounded
+                      : hasWon
+                          ? Icons.emoji_events_rounded
+                          : Icons.family_restroom_rounded,
+                  size: 15,
+                  color: isAdmin || hasWon
+                      ? AppColors.accent
+                      : Colors.white.withValues(alpha: 0.95),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Text(
+                  isAdmin
+                      ? 'Pengurus Arisan'
+                      : hasWon
+                          ? 'Pemenang Arisan'
+                          : 'Anggota Keluarga',
+                  style: AppTypography.caption.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -1499,14 +1628,20 @@ class _ProfileMenuTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.mdSm,
+        ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(AppSpacing.xs),
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: AppRadii.input,
               ),
               child: Icon(icon, color: AppColors.primary, size: 20),
             ),
@@ -1517,14 +1652,17 @@ class _ProfileMenuTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: AppTypography.body.copyWith(
                       fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     subtitle,
-                    style: AppTypography.caption,
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -1532,7 +1670,7 @@ class _ProfileMenuTile extends StatelessWidget {
             const Icon(
               Icons.chevron_right,
               color: AppColors.textSecondary,
-              size: 20,
+              size: 22,
             ),
           ],
         ),

@@ -149,12 +149,11 @@ class Donation {
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
-      'id': id,
       'period_id': periodId,
       'member_id': memberId,
       'amount': amount,
-      'notes': notes,
-      'donated_at': donatedAt.toIso8601String(),
+      'note': notes,
+      'created_at': donatedAt.toIso8601String(),
     };
   }
 
@@ -164,8 +163,8 @@ class Donation {
       periodId: map['period_id'] as String,
       memberId: map['member_id'] != null ? map['member_id'] as String : null,
       amount: map['amount'] as double,
-      notes: map['notes'] != null ? map['notes'] as String : null,
-      donatedAt: DateTime.parse(map['donated_at'] as String),
+      notes: map['note'] != null ? map['note'] as String : null,
+      donatedAt: DateTime.parse(map['created_at'] as String),
     );
   }
 

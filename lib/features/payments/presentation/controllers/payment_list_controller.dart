@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../periods/presentation/providers/periods_providers.dart';
@@ -19,6 +20,12 @@ final paymentListProvider = FutureProvider<List<Payment>>((ref) async {
 final donationListProvider = FutureProvider<List<Donation>>((ref) async {
   final repository = ref.watch(paymentsRepositoryProvider);
   final periodId = ref.watch(activePeriodIdProvider);
-  if (periodId.isEmpty) return [];
-  return repository.getDonationsForPeriod(periodId);
+  debugPrint('[donationListProvider] periodId: $periodId');
+  if (periodId.isEmpty) {
+    debugPrint('[donationListProvider] periodId is empty, returning []');
+    return [];
+  }
+  final donations = await repository.getDonationsForPeriod(periodId);
+  debugPrint('[donationListProvider] donations fetched: ${donations.length}');
+  return donations;
 });

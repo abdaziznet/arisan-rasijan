@@ -21,9 +21,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:bani_rasijan/core/services/connectivity_service.dart';
 
 class MockMembersRepository extends Mock implements MembersRepository {}
+
 class MockAuthRepository extends Mock implements AuthRepository {}
+
 class MockPeriodsRepository extends Mock implements PeriodsRepository {}
+
 class MockConnectivityService extends Mock implements ConnectivityService {}
+
 class MockGatheringRepository extends Mock implements GatheringRepository {}
 
 void main() {
@@ -69,7 +73,8 @@ void main() {
         .thenAnswer((_) async => [samplePeriod]);
     when(() => mockConnectivityService.checkInitialConnection())
         .thenAnswer((_) async => ConnectionStatus.online);
-    when(() => mockConnectivityService.connectionStatusController).thenReturn(controller);
+    when(() => mockConnectivityService.connectionStatusController)
+        .thenReturn(controller);
     when(() => mockGatheringRepo.getFundLedger()).thenAnswer(
       (_) async => [
         FundLedgerModel(
@@ -99,8 +104,10 @@ void main() {
           authRepositoryProvider.overrideWithValue(mockAuthRepo),
           periodsRepositoryProvider.overrideWithValue(mockPeriodsRepo),
           currentMemberProfileProvider.overrideWith((ref) async => sampleAdmin),
-          connectivityServiceProvider.overrideWithValue(mockConnectivityService),
-          connectionStatusProvider.overrideWith((ref) => Stream.value(ConnectionStatus.online)),
+          connectivityServiceProvider
+              .overrideWithValue(mockConnectivityService),
+          connectionStatusProvider
+              .overrideWith((ref) => Stream.value(ConnectionStatus.online)),
           gatheringRepositoryProvider.overrideWithValue(mockGatheringRepo),
         ],
         child: const MaterialApp(
@@ -123,27 +130,52 @@ void main() {
     expect(find.text('Rp125.000'), findsOneWidget);
   });
 
-  testWidgets('shows offline banner when internet is disconnected', (tester) async {
+  testWidgets('shows offline banner when internet is disconnected',
+      (tester) async {
     // Override the connection status provider to be offline
     Widget buildOfflineWidget() => ProviderScope(
-      overrides: [
-        membersRepositoryProvider.overrideWithValue(mockMembersRepo),
-        authRepositoryProvider.overrideWithValue(mockAuthRepo),
-        periodsRepositoryProvider.overrideWithValue(mockPeriodsRepo),
-        currentMemberProfileProvider.overrideWith((ref) async => sampleAdmin),
-        connectivityServiceProvider.overrideWithValue(mockConnectivityService),
-        connectionStatusProvider.overrideWith((ref) => Stream.value(ConnectionStatus.offline)),
-        gatheringRepositoryProvider.overrideWithValue(mockGatheringRepo),
-      ],
-      child: const MaterialApp(
-        onGenerateRoute: AppRouter.onGenerateRoute,
-        home: HomeScreen(),
-      ),
-    );
+          overrides: [
+            membersRepositoryProvider.overrideWithValue(mockMembersRepo),
+            authRepositoryProvider.overrideWithValue(mockAuthRepo),
+            periodsRepositoryProvider.overrideWithValue(mockPeriodsRepo),
+            currentMemberProfileProvider
+                .overrideWith((ref) async => sampleAdmin),
+            connectivityServiceProvider
+                .overrideWithValue(mockConnectivityService),
+            connectionStatusProvider
+                .overrideWith((ref) => Stream.value(ConnectionStatus.offline)),
+            gatheringRepositoryProvider.overrideWithValue(mockGatheringRepo),
+          ],
+          child: const MaterialApp(
+            onGenerateRoute: AppRouter.onGenerateRoute,
+            home: HomeScreen(),
+          ),
+        );
 
     await tester.pumpWidget(buildOfflineWidget());
     await tester.pumpAndSettle();
 
-    expect(find.text('Anda sedang offline. Data mungkin tidak terbaru.'), findsOneWidget);
+    expect(find.text('Anda sedang offline. Data mungkin tidak terbaru.'),
+        findsOneWidget);
+  });
+
+  testWidgets('shows profile information and account menu', (tester) async {
+    await tester.pumpWidget(buildWidget());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profil'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Informasi Anggota'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Menu Profil'),
+      300,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(find.text('Menu Profil'), findsOneWidget);
+    expect(find.text('Edit Profil Saya'), findsOneWidget);
+    expect(find.text('Alamat Rumah & Maps'), findsOneWidget);
+    expect(find.text('Daftar Anggota Keluarga'), findsOneWidget);
+    expect(find.text('Pengaturan Admin'), findsOneWidget);
   });
 }

@@ -100,14 +100,27 @@ class PaymentsRepository {
   /// Mengambil semua donasi untuk periode tertentu.
   Future<List<Donation>> getDonationsForPeriod(String periodId) async {
     try {
+      debugPrint('[PaymentsRepository] getDonationsForPeriod called with periodId: $periodId');
       final data = await _client
           .from('donations')
           .select()
           .eq('period_id', periodId)
-          .order('donated_at', ascending: false);
+          .order('created_at', ascending: false);
 
-      return data.map((item) => Donation.fromMap(item)).toList();
-    } catch (e) {
+      debugPrint('[PaymentsRepository] Raw data returned: ${data.length} rows');
+      for (final item in data) {
+        debugPrint('[PaymentsRepository] Row: $item');
+      }
+
+      final donations = data.map((item) => Donation.fromMap(item)).toList();
+      debugPrint('[PaymentsRepository] Mapped donations: ${donations.length}');
+      for (final d in donations) {
+        debugPrint('[PaymentsRepository] Donation: id=${d.id}, periodId=${d.periodId}, memberId=${d.memberId}, amount=${d.amount}, notes=${d.notes}, donatedAt=${d.donatedAt}');
+      }
+      return donations;
+    } catch (e, stackTrace) {
+      debugPrint('[PaymentsRepository] ERROR in getDonationsForPeriod: $e');
+      debugPrint('[PaymentsRepository] Stack trace: $stackTrace');
       throw Exception('Gagal mengambil data donasi: $e');
     }
   }
