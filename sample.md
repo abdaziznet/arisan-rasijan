@@ -24,6 +24,10 @@ spesifikasinya sebgai berikut:
 13. pastikan gunakan dependency yang cocok dan support dengan device modern.
 
 
-buatkan saya file issue-6.md untuk melanjutkan pengembangan aplikasi ini
-spesifikasinya sebagai berikut:
-    1. pada 
+1. revamp ui/ux dari screen @lib/features/gathering/presentation/screens/gathering_screen.dart dan screen yang terkait dengan feature gathering ini. buat menjadi lebih modern dan mudah digunakan user. 
+    2. baca kembali file @specification/PRD.md   terutama baca terkait  Event Gathering
+    3. baca juga file @design/DESIGN.md agar design tetap konsisten
+    4. Gunakan skill yang ada pada project ini terutama untuk design ui/ux @.claude/skills/frontend-design/ @.claude/skills/flutter-animations/references/ @.claude/skills/flutter-build-responsive-layout/ @.claude/skills/flutter-animations/ 
+  5. implementasikan komponen atau widget yang sudah ada pada aplikasi ini agar konsisten
+ 6.  gunakan  mcp dart server bila perlu untuk standarisasi
+ 7. lakukan test terhadap feature gathering ini

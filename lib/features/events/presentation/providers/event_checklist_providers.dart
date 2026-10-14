@@ -8,10 +8,10 @@ final eventChecklistRepositoryProvider = Provider<EventChecklistRepository>((ref
   return EventChecklistRepository();
 });
 
-final eventChecklistControllerProvider =
-    AsyncNotifierProvider<EventChecklistController, List<EventChecklistModel>>(() {
-  return EventChecklistController();
-});
+final eventChecklistControllerProvider = AsyncNotifierProvider.family<
+    EventChecklistController, List<EventChecklistModel>, String>(
+  EventChecklistController.new,
+);
 
 final eventChecklistStreamProvider = StreamProvider.autoDispose.family<
     List<EventChecklistModel>, String>((ref, periodId) {

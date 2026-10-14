@@ -495,7 +495,8 @@ class _HomeOverview extends ConsumerWidget {
                                       child: const Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(Icons.directions_outlined, size: 20),
+                                          Icon(Icons.directions_outlined,
+                                              size: 20),
                                         ],
                                       ),
                                     ),
@@ -703,7 +704,7 @@ class _HomeOverview extends ConsumerWidget {
                     },
                   ),
                   _SummaryCard(
-                    icon: Icons.savings_rounded,
+                    icon: Icons.account_balance_wallet_rounded,
                     title: 'Kas Gathering',
                     value: totalGatheringFund.when(
                       data: (total) => Formatters.formatCurrency(total),

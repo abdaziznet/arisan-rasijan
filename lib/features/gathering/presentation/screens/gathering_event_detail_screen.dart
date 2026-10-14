@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bani_rasijan/core/theme/app_colors.dart';
-import 'package:bani_rasijan/core/theme/app_spacing.dart';
-import 'package:bani_rasijan/core/theme/app_typography.dart';
-import 'package:bani_rasijan/core/widgets/app_components.dart';
-import 'package:bani_rasijan/core/widgets/radio_group.dart' as custom_radio;
-import 'package:bani_rasijan/features/gathering/presentation/providers/gathering_providers.dart';
-import 'package:bani_rasijan/features/gathering/domain/gathering_event_model.dart';
-import 'package:bani_rasijan/features/gathering/domain/gathering_poll_option_model.dart';
-import 'package:bani_rasijan/features/gathering/domain/gathering_vote_model.dart';
-import 'package:bani_rasijan/features/members/presentation/providers/members_providers.dart';
 import 'package:uuid/uuid.dart';
-import '../controllers/gathering_controller.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radii.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/app_components.dart';
+import '../../../members/presentation/providers/members_providers.dart';
+import '../../domain/gathering_event_model.dart';
+import '../../domain/gathering_poll_option_model.dart';
+import '../../domain/gathering_vote_model.dart';
+import '../providers/gathering_providers.dart';
+import '../widgets/gathering_dialogs.dart';
+import '../widgets/voting_option_card.dart';
+import '../widgets/voting_progress_bar.dart';
+import '../widgets/voting_result_card.dart';
 
 class GatheringEventDetailScreen extends ConsumerStatefulWidget {
   const GatheringEventDetailScreen({required this.eventId, super.key});
@@ -42,137 +46,142 @@ class _GatheringEventDetailScreenState
     final currentMember = ref.watch(currentMemberProfileProvider).valueOrNull;
     final isAdmin = currentMember?.isAdmin ?? false;
     final settingsAsync = ref.watch(appSettingsProvider);
-    final isVoteVisibilityPrivate =
-        settingsAsync.valueOrNull?['gathering_votes_visible_to_members'] !=
+    final isVoteVisibilityPublic =
+        settingsAsync.valueOrNull?['gathering_votes_visible_to_members'] ==
             'true';
 
+    final membersList = ref.watch(membersControllerProvider).valueOrNull ?? [];
+    final activeMembersCount =
+        membersList.where((m) => m.isActive).length;
+
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Detail Acara Gathering'),
         actions: [
-          if (isAdmin)
+          if (isAdmin) ...[
             IconButton(
-              icon: const Icon(Icons.add_circle_outline),
-              onPressed: () => _showAddPollOptionDialog(context),
-              tooltip: 'Tambah Opsi Pemilihan',
+              icon: const Icon(Icons.add_location_alt_rounded),
+              tooltip: 'Tambah Opsi Destinasi',
+              onPressed: () => GatheringDialogs.showAddPollOption(
+                context,
+                ref,
+                widget.eventId,
+              ),
             ),
-          if (isAdmin)
             IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () => _showAdminSettingsDialog(context),
-              tooltip: 'Pengaturan Voting',
+              icon: const Icon(Icons.visibility_outlined),
+              tooltip: 'Pengaturan Visibilitas Voting',
+              onPressed: () => GatheringDialogs.showAdminSettings(
+                context,
+                ref,
+                widget.eventId,
+              ),
             ),
-          if (isAdmin && eventAsync.valueOrNull?.status == 'decided')
-            IconButton(
-              icon: const Icon(Icons.check_circle),
-              onPressed: () => _showCompleteEventDialog(context),
-              tooltip: 'Selesaikan Event',
-            ),
+            if (eventAsync.valueOrNull?.status == 'decided')
+              IconButton(
+                icon: const Icon(Icons.check_circle_rounded),
+                tooltip: 'Selesaikan Acara',
+                onPressed: () => GatheringDialogs.showCompleteEvent(
+                  context,
+                  ref,
+                  widget.eventId,
+                ),
+              ),
+          ],
         ],
       ),
       body: eventAsync.when(
         loading: () => const AppLoading(),
         error: (err, _) => AppErrorState(
-            onRetry: () =>
-                ref.invalidate(gatheringEventProvider(widget.eventId))),
+          onRetry: () =>
+              ref.invalidate(gatheringEventProvider(widget.eventId)),
+        ),
         data: (event) {
           if (event == null) {
             return const AppEmptyState(
               title: 'Tidak ditemukan',
-              message: 'Acara gathering tidak ditemukan.',
+              message: 'Acara gathering ini tidak ditemukan atau telah dihapus.',
             );
           }
+
           return pollOptionsAsync.when(
             loading: () => const AppLoading(),
             error: (err, _) => AppErrorState(
-                onRetry: () => ref
-                    .invalidate(gatheringPollOptionsProvider(widget.eventId))),
+              onRetry: () => ref.invalidate(
+                gatheringPollOptionsProvider(widget.eventId),
+              ),
+            ),
             data: (options) {
               final hasVoted = hasVotedAsync.valueOrNull ?? false;
 
-              return ListView(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                children: [
-                  _buildEventHeader(event),
-                  const SizedBox(height: AppSpacing.lg),
-                  if (event.status == 'voting' && !isAdmin)
-                    hasVoted
-                        ? const AppCard(
-                            child: Padding(
-                              padding: EdgeInsets.all(AppSpacing.md),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.check_circle,
-                                      color: AppColors.success),
-                                  SizedBox(width: AppSpacing.sm),
-                                  Expanded(
-                                    child: Text(
-                                      'Terima kasih! Suara Anda telah tercatat untuk event ini.',
-                                      style: AppTypography.bodyMedium,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        : _VotingSection(
-                            options: options,
-                            isVoting: _isVoting,
-                            selectedOptionId: _selectedOptionId,
-                            onOptionTap: (optionId) {
-                              setState(() {
-                                _selectedOptionId = optionId;
-                              });
-                            },
-                            onVote: () async {
-                              if (_selectedOptionId == null) return;
-                              setState(() => _isVoting = true);
-                              try {
-                                final member = ref
-                                    .read(currentMemberProfileProvider)
-                                    .valueOrNull;
-                                if (member == null) return;
-                                await ref
-                                    .read(gatheringVoteProvider.notifier)
-                                    .submitVote(
-                                      GatheringVoteModel(
-                                        id: const Uuid().v4(),
-                                        gatheringEventId: widget.eventId,
-                                        optionId: _selectedOptionId!,
-                                        memberId: member.id,
-                                        votedAt: DateTime.now(),
-                                      ),
-                                    );
-                                if (!mounted) return;
-                                AppSnackbar.show(
-                                  context,
-                                  'Terima kasih! Suara Anda telah tercatat.',
-                                );
-                              } catch (e) {
-                                if (!mounted) return;
-                                AppSnackbar.show(
-                                  context,
-                                  'Gagal menyimpan suara: $e',
-                                );
-                              } finally {
-                                if (mounted) setState(() => _isVoting = false);
-                              }
-                            },
-                          ),
-                  if (event.status == 'voting' && isAdmin)
-                    _AdminPollSection(
-                      eventId: widget.eventId,
-                      options: options,
-                      isVisibilityPrivate: isVoteVisibilityPrivate,
+              return RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(gatheringEventProvider(widget.eventId));
+                  ref.invalidate(
+                    gatheringPollOptionsProvider(widget.eventId),
+                  );
+                  ref.invalidate(hasVotedProvider(widget.eventId));
+                },
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  children: [
+                    _buildEventHero(event, options),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Progress Bar Partisipasi (PRD 5.1 H)
+                    FutureBuilder<Map<String, num>>(
+                      future: ref
+                          .read(gatheringRepositoryProvider)
+                          .getGatheringTally(widget.eventId),
+                      builder: (context, snapshot) {
+                        final tally = snapshot.data ?? {};
+                        final totalVotes = tally.isNotEmpty
+                            ? tally.values.fold<int>(
+                                0, (sum, count) => sum + count.toInt())
+                            : options.fold<int>(
+                                0, (sum, opt) => sum + opt.voteCount);
+
+                        final totalTargetMembers = activeMembersCount > 0
+                            ? activeMembersCount
+                            : (totalVotes > 0 ? totalVotes : 1);
+
+                        return VotingProgressBar(
+                          votedCount: totalVotes,
+                          totalMembers: totalTargetMembers,
+                        );
+                      },
                     ),
-                  if (event.status != 'voting')
-                    _ResultsSection(
-                      eventId: widget.eventId,
-                      options: options,
+
+                    const SizedBox(height: AppSpacing.lg),
+
+                    // Voting Section / Confirmation
+                    if (event.status == 'voting') ...[
+                      if (hasVoted)
+                        _buildVotedConfirmationCard()
+                      else
+                        _buildVotingForm(options),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+
+                    // Results / Tally Section
+                    _buildResultsSection(
                       event: event,
-                      isVisibilityPrivate: isVoteVisibilityPrivate,
+                      options: options,
+                      isAdmin: isAdmin,
+                      isVoteVisibilityPublic: isVoteVisibilityPublic,
                     ),
-                ],
+
+                    // Admin Action Banner jika status decided
+                    if (isAdmin && event.status == 'decided') ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      _buildAdminFinalizeBanner(context, event),
+                    ],
+
+                    const SizedBox(height: AppSpacing.xl),
+                  ],
+                ),
               );
             },
           );
@@ -181,559 +190,553 @@ class _GatheringEventDetailScreenState
     );
   }
 
-  Widget _buildEventHeader(GatheringEventModel event) {
-    return AppCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(event.title, style: AppTypography.h2),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Status: ${event.status.toUpperCase()}',
-              style: AppTypography.bodyMedium.copyWith(
-                color: _getStatusColor(event.status),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            if (event.fundUsed > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.xs),
+  Widget _buildEventHero(
+    GatheringEventModel event,
+    List<GatheringPollOptionModel> options,
+  ) {
+    final statusConfig = _getStatusConfig(event.status);
+    final winningOption = event.winningOptionId != null
+        ? options.where((o) => o.id == event.winningOptionId).firstOrNull
+        : null;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: AppRadii.card,
+        border: Border.all(color: AppColors.divider),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
                 child: Text(
-                  'Dana yang digunakan: Rp${event.fundUsed.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
-                  style: AppTypography.caption,
+                  event.title,
+                  style: AppTypography.h2.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'voting':
-        return AppColors.primary;
-      case 'decided':
-        return AppColors.success;
-      case 'completed':
-        return AppColors.textSecondary;
-      case 'cancelled':
-        return AppColors.error;
-      default:
-        return AppColors.primary;
-    }
-  }
-
-  void _showAddPollOptionDialog(BuildContext context) {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Tambah Opsi Pemilihan'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(labelText: 'Label Opsi'),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final label = controller.text.trim();
-              if (label.isEmpty) return;
-              Navigator.pop(ctx);
-              final notifier = ref.read(gatheringControllerProvider.notifier);
-              await notifier.addPollOption(
-                eventId: widget.eventId,
-                optionLabel: label,
-              );
-              ref.invalidate(gatheringPollOptionsProvider(widget.eventId));
-            },
-            child: const Text('Tambah'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showCompleteEventDialog(BuildContext context) {
-    final event = ref.read(gatheringEventProvider(widget.eventId)).valueOrNull;
-    if (event == null) return;
-
-    final dateController = TextEditingController(
-      text: event.eventDate != null
-          ? '${event.eventDate!.year.toString().padLeft(4, '0')}-${event.eventDate!.month.toString().padLeft(2, '0')}-${event.eventDate!.day.toString().padLeft(2, '0')}'
-          : '',
-    );
-    final fundController = TextEditingController(
-      text: event.fundUsed > 0 ? event.fundUsed.toStringAsFixed(0) : '0',
-    );
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Selesaikan Event Gathering'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: dateController,
-              decoration: const InputDecoration(
-                labelText: 'Tanggal Event (YYYY-MM-DD)',
-                hintText: '2026-12-31',
+              const SizedBox(width: AppSpacing.sm),
+              AppBadge(
+                label: statusConfig.label,
+                color: statusConfig.color,
               ),
-              keyboardType: TextInputType.datetime,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            TextField(
-              controller: fundController,
-              decoration: const InputDecoration(
-                labelText: 'Dana yang Digunakan (Rp)',
-                hintText: '1000000',
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          if (winningOption != null) ...[
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.1),
+                borderRadius: AppRadii.small,
+                border: Border.all(
+                  color: AppColors.accent.withValues(alpha: 0.3),
+                ),
               ),
-              keyboardType: TextInputType.number,
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.emoji_events_rounded,
+                    color: AppColors.accent,
+                    size: 20,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      'Tujuan Terpilih: ${winningOption.optionLabel}',
+                      style: AppTypography.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(height: AppSpacing.sm),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final dateText = dateController.text.trim();
-              final fundText = fundController.text.trim();
-
-              if (dateText.isEmpty || fundText.isEmpty) {
-                AppSnackbar.show(context, 'Tanggal dan dana harus diisi.');
-                return;
-              }
-
-              DateTime parsedDate;
-              try {
-                parsedDate = DateTime.parse(dateText);
-              } catch (e) {
-                AppSnackbar.show(context, 'Format tanggal tidak valid.');
-                return;
-              }
-
-              final fund = double.tryParse(fundText);
-              if (fund == null || fund < 0) {
-                AppSnackbar.show(context, 'Nominal dana tidak valid.');
-                return;
-              }
-
-              Navigator.pop(ctx);
-
-              try {
-                await ref
-                    .read(gatheringControllerProvider.notifier)
-                    .updateEventDetails(
-                      eventId: widget.eventId,
-                      eventDate: parsedDate,
-                      fundUsed: fund,
-                    );
-                ref.invalidate(gatheringEventProvider(widget.eventId));
-                ref.invalidate(fundLedgerProvider);
-
-                if (!mounted) return;
-                AppSnackbar.show(
-                  context,
-                  'Event diselesaikan dan kas dicatat.',
-                );
-              } catch (e) {
-                if (!mounted) return;
-                AppSnackbar.show(
-                  context,
-                  'Gagal memperbarui event: $e',
-                );
-              }
-            },
-            child: const Text('Selesaikan'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAdminSettingsDialog(BuildContext context) {
-    final settingsAsync = ref.watch(appSettingsProvider);
-    final eventAsync = ref.watch(gatheringEventProvider(widget.eventId));
-
-    showDialog(
-      context: context,
-      builder: (ctx) => settingsAsync.when(
-        loading: () => const AlertDialog(
-          title: Text('Memuat pengaturan...'),
-          content: AppLoading(),
-        ),
-        error: (e, _) => AlertDialog(
-          title: const Text('Error'),
-          content: Text('Gagal memuat pengaturan: $e'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Tutup'),
-            ),
-          ],
-        ),
-        data: (settings) {
-          final isVoteVisibilityPrivate =
-              settings['gathering_votes_visible_to_members'] == 'true';
-          return eventAsync.when(
-            loading: () => const AlertDialog(
-              title: Text('Memuat acara...'),
-              content: AppLoading(),
-            ),
-            error: (e, _) => AlertDialog(
-              title: const Text('Error'),
-              content: Text('Gagal memuat acara: $e'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Tutup'),
+          if (event.eventDate != null) ...[
+            Row(
+              children: [
+                const Icon(
+                  Icons.calendar_today_rounded,
+                  size: 16,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Text(
+                  'Pelaksanaan: ${Formatters.formatDate(event.eventDate!)}',
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
-            data: (event) {
-              if (event == null) return const SizedBox.shrink();
-              final dateController = TextEditingController(
-                text: event.eventDate?.toIso8601String().split('T').first ?? '',
-              );
-              final fundController = TextEditingController(
-                text: event.fundUsed.toStringAsFixed(0),
-              );
-              return AlertDialog(
-                title: const Text('Pengaturan Gathering Event'),
-                content: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SwitchListTile(
-                        title: const Text('Tampilkan vote anggota'),
-                        value: isVoteVisibilityPrivate,
-                        onChanged: (value) async {
-                          await ref
-                              .read(appSettingsNotifierProvider.notifier)
-                              .toggleVoteVisibility(value);
-                          if (!mounted) return;
-                          Navigator.pop(ctx);
-                          AppSnackbar.show(
-                            context,
-                            'Pengaturan voting diperbarui.',
-                          );
-                        },
-                                                activeTrackColor: AppColors.primary.withAlpha(128),
-                        thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
-                          if (states.contains(WidgetState.selected)) {
-                            return AppColors.primary;
-                          }
-                          return AppColors.divider;
-                        }),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      TextField(
-                        controller: dateController,
-                        decoration: const InputDecoration(
-                            labelText: 'Tanggal Acara (YYYY-MM-DD)'),
-                        onTap: () async {
-                          final pickedDate = await showDatePicker(
-                            context: context,
-                            initialDate: event.eventDate ?? DateTime.now(),
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2100),
-                          );
-                          if (pickedDate != null) {
-                            dateController.text =
-                                '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
-                          }
-                        },
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      TextField(
-                        controller: fundController,
-                        decoration: const InputDecoration(
-                            labelText: 'Dana yang Digunakan (Rp)'),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ],
+            const SizedBox(height: AppSpacing.xs),
+          ],
+          if (event.fundUsed > 0) ...[
+            Row(
+              children: [
+                const Icon(
+                  Icons.payments_outlined,
+                  size: 16,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Text(
+                  'Dana yang Digunakan: ${Formatters.formatCurrency(event.fundUsed)}',
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
                   ),
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Batal'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final newDate = DateTime.tryParse(dateController.text);
-                      final newFundUsed = double.tryParse(fundController.text);
-
-                      if (newDate == null || newFundUsed == null) {
-                        return;
-                      }
-
-                      final updatedEvent = event.copyWith(
-                        eventDate: newDate,
-                        fundUsed: newFundUsed,
-                      );
-
-                      await ref
-                          .read(gatheringControllerProvider.notifier)
-                          .updateGatheringEvent(updatedEvent);
-
-                      if (!mounted) return;
-                      Navigator.pop(ctx);
-                      AppSnackbar.show(
-                        context,
-                        'Pengaturan acara diperbarui.',
-                      );
-                    },
-                    child: const Text('Simpan'),
-                  ),
-                ],
-              );
-            },
-          );
-        },
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xs),
+          ],
+          Row(
+            children: [
+              const Icon(
+                Icons.schedule_rounded,
+                size: 14,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                'Dibuat pada ${Formatters.formatDate(event.createdAt)}',
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
-}
 
-class _VotingSection extends StatelessWidget {
-  const _VotingSection({
-    required this.options,
-    required this.isVoting,
-    required this.selectedOptionId,
-    required this.onOptionTap,
-    required this.onVote,
-  });
-
-  final List<GatheringPollOptionModel> options;
-  final bool isVoting;
-  final String? selectedOptionId;
-  final ValueChanged<String?> onOptionTap;
-  final VoidCallback onVote;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Pilih satu opsi di bawah ini:',
-          style: AppTypography.bodyMedium,
+  Widget _buildVotedConfirmationCard() {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.success.withValues(alpha: 0.08),
+        borderRadius: AppRadii.card,
+        border: Border.all(
+          color: AppColors.success.withValues(alpha: 0.3),
         ),
-        const SizedBox(height: AppSpacing.md),
-        custom_radio.AppRadioGroup<String>(
-          groupValue: selectedOptionId ?? '',
-          onChanged: onOptionTap,
-          children: options
-              .map(
-                (option) => RadioListTile<String>(
-                  title: Text(option.optionLabel),
-                  value: option.id,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: AppColors.success.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.check_rounded,
+              color: AppColors.success,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Suara Anda Telah Tercatat',
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.success,
+                  ),
                 ),
-              )
-              .toList(),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        AppButton(
-          label: 'Kirim Suara',
-          onPressed: isVoting || selectedOptionId == null ? null : onVote,
-          isLoading: isVoting,
-        ),
-      ],
+                const SizedBox(height: 2),
+                Text(
+                  'Terima kasih telah berpartisipasi! Pilihan bersifat final dan tidak dapat diubah.',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
-}
 
-class _AdminPollSection extends ConsumerWidget {
-  const _AdminPollSection({
-    required this.eventId,
-    required this.options,
-    required this.isVisibilityPrivate,
-  });
+  Widget _buildVotingForm(List<GatheringPollOptionModel> options) {
+    if (options.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: AppRadii.card,
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.format_list_bulleted_rounded,
+              size: 36,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            const Text(
+              'Belum Ada Opsi Pemilihan',
+              style: AppTypography.h3,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Admin sedang menyiapkan pilihan destinasi untuk acara ini.',
+              textAlign: TextAlign.center,
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
-  final String eventId;
-  final List<GatheringPollOptionModel> options;
-  final bool isVisibilityPrivate;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Row(
+          children: [
+            const Icon(
+              Icons.touch_app_rounded,
+              size: 18,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Text(
+              'Pilih Satu Opsi Destinasi:',
+              style: AppTypography.h3.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        ...options.map(
+          (option) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: VotingOptionCard(
+              option: option,
+              isSelected: _selectedOptionId == option.id,
+              onTap: () {
+                setState(() {
+                  _selectedOptionId = option.id;
+                });
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
         Text(
-          'Opsi Pemilihan (Admin)',
-          style: AppTypography.bodyMedium.copyWith(
-            fontWeight: FontWeight.w600,
+          'Perhatian: 1 orang = 1 suara. Pilihan tidak dapat diubah setelah dikirim.',
+          style: AppTypography.caption.copyWith(
+            color: AppColors.textSecondary,
+            fontSize: 12,
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        if (!isVisibilityPrivate)
-          ...options.map((option) => _AdminOptionTile(option: option)).toList()
-        else
-          FutureBuilder<Map<String, num>>(
-            future: ref
-                .read(gatheringRepositoryProvider)
-                .getGatheringTally(eventId),
-            builder: (context, tallySnapshot) {
-              final tally = tallySnapshot.data ?? {};
-              return Column(
-                children: options
-                    .map((option) => _AdminOptionTile(
-                          option: option,
-                          tally: tally[option.id]?.toInt() ?? 0,
-                        ))
-                    .toList(),
-              );
-            },
-          )
+        AppButton(
+          label: 'Kirim Suara',
+          icon: Icons.how_to_vote_rounded,
+          onPressed: _selectedOptionId == null || _isVoting ? null : _submitVote,
+          isLoading: _isVoting,
+        ),
       ],
     );
   }
-}
 
-class _AdminOptionTile extends StatelessWidget {
-  const _AdminOptionTile({required this.option, this.tally});
+  Future<void> _submitVote() async {
+    if (_selectedOptionId == null) return;
 
-  final GatheringPollOptionModel option;
-  final int? tally;
+    final pollOptions =
+        ref.read(gatheringPollOptionsProvider(widget.eventId)).valueOrNull ?? [];
+    final selectedOption = pollOptions
+        .where((o) => o.id == _selectedOptionId)
+        .firstOrNull;
 
-  @override
-  Widget build(BuildContext context) {
-    final count = tally ?? option.voteCount;
-    return AppCard(
-      child: ListTile(
-        leading: const Icon(Icons.poll, color: AppColors.primary),
-        title: Text(option.optionLabel),
-        subtitle: Text('$count suara'),
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: const RoundedRectangleBorder(borderRadius: AppRadii.card),
+        title: const Text('Konfirmasi Pilihan', style: AppTypography.h3),
+        content: Text(
+          'Yakin memilih "${selectedOption?.optionLabel ?? 'opsi ini'}"?\n\nPilihan bersifat final dan tidak dapat diubah.',
+          style: AppTypography.body,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: const RoundedRectangleBorder(
+                borderRadius: AppRadii.button,
+              ),
+            ),
+            child: const Text('Ya, Kirim Suara'),
+          ),
+        ],
       ),
     );
+
+    if (confirmed != true) return;
+
+    setState(() => _isVoting = true);
+    try {
+      final member = ref.read(currentMemberProfileProvider).valueOrNull;
+      if (member == null) {
+        if (mounted) {
+          AppSnackbar.show(context, 'Data profil anggota belum siap.');
+        }
+        return;
+      }
+
+      await ref.read(gatheringVoteProvider.notifier).submitVote(
+            GatheringVoteModel(
+              id: const Uuid().v4(),
+              gatheringEventId: widget.eventId,
+              optionId: _selectedOptionId!,
+              memberId: member.id,
+              votedAt: DateTime.now(),
+            ),
+          );
+
+      if (!mounted) return;
+      AppSnackbar.show(context, 'Terima kasih! Suara Anda telah tercatat.');
+    } catch (e) {
+      if (!mounted) return;
+      AppSnackbar.show(context, 'Gagal menyimpan suara: $e');
+    } finally {
+      if (mounted) setState(() => _isVoting = false);
+    }
   }
-}
 
-class _ResultsSection extends ConsumerWidget {
-  const _ResultsSection({
-    required this.eventId,
-    required this.options,
-    required this.event,
-    required this.isVisibilityPrivate,
-  });
-
-  final String eventId;
-  final List<GatheringPollOptionModel> options;
-  final GatheringEventModel event;
-  final bool isVisibilityPrivate;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final winningOptionId = event.winningOptionId;
+  Widget _buildResultsSection({
+    required GatheringEventModel event,
+    required List<GatheringPollOptionModel> options,
+    required bool isAdmin,
+    required bool isVoteVisibilityPublic,
+  }) {
+    final canViewDetails =
+        isAdmin || event.status != 'voting' || isVoteVisibilityPublic;
 
     return FutureBuilder<Map<String, num>>(
-      future: isVisibilityPrivate
-          ? ref.read(gatheringRepositoryProvider).getGatheringTally(eventId)
-          : null,
+      future: ref
+          .read(gatheringRepositoryProvider)
+          .getGatheringTally(widget.eventId),
       builder: (context, tallySnapshot) {
         final tally = tallySnapshot.data;
-        final totalVotes = tally != null
+        final totalVotes = tally != null && tally.isNotEmpty
             ? tally.values.fold<int>(0, (sum, count) => sum + count.toInt())
             : options.fold<int>(0, (sum, opt) => sum + opt.voteCount);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Hasil Pemilihan',
-              style: AppTypography.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.poll_rounded,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      event.status == 'voting'
+                          ? 'Perolehan Suara Sementara'
+                          : 'Hasil Akhir Pemilihan',
+                      style: AppTypography.h3.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                if (canViewDetails)
+                  Text(
+                    'Total $totalVotes suara',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(height: AppSpacing.md),
-            if (totalVotes == 0)
+            const SizedBox(height: AppSpacing.sm),
+            if (!canViewDetails)
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: AppRadii.card,
+                  border: Border.all(color: AppColors.divider),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.visibility_off_outlined,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'Rincian perolehan suara disembunyikan sampai voting ditutup. Pantau progres partisipasi pada bar di atas.',
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else if (options.isEmpty)
               const Text(
-                'Belum ada suara yang masuk.',
+                'Belum ada opsi yang dibuat.',
                 style: AppTypography.caption,
               )
             else
               ...options.map((option) {
-                final voteCount = tally?[option.id]?.toInt() ?? option.voteCount;
-                return _ResultOptionTile(
-                  option: option.copyWith(voteCount: voteCount),
-                  isWinning: option.id == winningOptionId,
+                final voteCount =
+                    tally?[option.id]?.toInt() ?? option.voteCount;
+                final isWinning = option.id == event.winningOptionId;
+
+                return VotingResultCard(
+                  option: option,
+                  voteCount: voteCount,
                   totalVotes: totalVotes,
+                  isWinning: isWinning,
                 );
-              }).toList(),
-            if (event.status == 'decided' && winningOptionId != null)
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.md),
-                child: Text(
-                  'Opsi pemenang: ${options.firstWhere((opt) => opt.id == winningOptionId).optionLabel}',
-                  style: AppTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.success,
-                  ),
-                ),
-              ),
+              }),
           ],
         );
       },
     );
   }
-}
 
-class _ResultOptionTile extends StatelessWidget {
-  const _ResultOptionTile({
-    required this.option,
-    required this.isWinning,
-    required this.totalVotes,
-  });
-
-  final GatheringPollOptionModel option;
-  final bool isWinning;
-  final int totalVotes;
-
-  @override
-  Widget build(BuildContext context) {
-    final percentage =
-        totalVotes > 0 ? (option.voteCount / totalVotes * 100) : 0.0;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Row(
+  Widget _buildAdminFinalizeBanner(
+    BuildContext context,
+    GatheringEventModel event,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withValues(alpha: 0.1),
+        borderRadius: AppRadii.card,
+        border: Border.all(
+          color: AppColors.accent.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (isWinning)
-            const Icon(Icons.emoji_events, color: AppColors.success, size: 20)
-          else
-            const SizedBox(width: 20),
-          Expanded(
-            child: Text(option.optionLabel),
+          Row(
+            children: [
+              const Icon(
+                Icons.admin_panel_settings_rounded,
+                color: AppColors.accent,
+                size: 20,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                'Tindak Lanjut Admin',
+                style: AppTypography.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: AppSpacing.md),
-          Text('${option.voteCount} suara'),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            flex: 2,
-            child: LinearProgressIndicator(
-              value: percentage / 100,
-              backgroundColor: AppColors.divider,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                isWinning ? AppColors.success : AppColors.primary,
+          const SizedBox(height: 4),
+          Text(
+            'Voting telah selesai dan destinasi telah terpilih. Silakan tetapkan tanggal pelaksanaan serta nominal kas gathering yang digunakan.',
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          ElevatedButton.icon(
+            onPressed: () => GatheringDialogs.showCompleteEvent(
+              context,
+              ref,
+              event.id,
+            ),
+            icon: const Icon(Icons.check_circle_outline_rounded),
+            label: const Text('Tetapkan Tanggal & Biaya Acara'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: const RoundedRectangleBorder(
+                borderRadius: AppRadii.button,
               ),
             ),
           ),
-          const SizedBox(width: AppSpacing.md),
-          Text('${percentage.toStringAsFixed(1)}%'),
         ],
       ),
     );
   }
+
+  _StatusConfig _getStatusConfig(String status) {
+    switch (status) {
+      case 'voting':
+        return const _StatusConfig(
+          label: 'VOTING DIBUKA',
+          color: AppColors.primary,
+        );
+      case 'decided':
+        return const _StatusConfig(
+          label: 'TUJUAN TERPILIH',
+          color: AppColors.accent,
+        );
+      case 'completed':
+        return const _StatusConfig(
+          label: 'SELESAI',
+          color: AppColors.success,
+        );
+      case 'cancelled':
+        return const _StatusConfig(
+          label: 'DIBATALKAN',
+          color: AppColors.error,
+        );
+      default:
+        return _StatusConfig(
+          label: status.toUpperCase(),
+          color: AppColors.primary,
+        );
+    }
+  }
+}
+
+class _StatusConfig {
+  const _StatusConfig({required this.label, required this.color});
+  final String label;
+  final Color color;
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/formatters.dart';
@@ -13,42 +14,112 @@ import '../controllers/payment_list_controller.dart';
 import '../providers/payments_providers.dart';
 import '../../domain/payment_model.dart';
 import '../../../periods/presentation/providers/periods_providers.dart';
-import '../widgets/payment_list_item.dart';
+import '../widgets/donation_form_dialog.dart';
+import '../widgets/donation_list_item.dart';
+import '../widgets/donation_summary_card.dart';
 import '../../../gathering/presentation/providers/gathering_providers.dart';
 
-class PaymentListScreen extends ConsumerWidget {
+class PaymentListScreen extends ConsumerStatefulWidget {
   const PaymentListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: const Text('Iuran & Donasi'),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          bottom: const TabBar(
-            indicatorColor: Colors.white,
-            indicatorWeight: 3,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white60,
-            labelStyle: const TextStyle(fontWeight: FontWeight.w600),
-            tabs: const [
-              Tab(text: 'IURAN'),
-              Tab(text: 'DONASI'),
-            ],
+  ConsumerState<PaymentListScreen> createState() => _PaymentListScreenState();
+}
+
+class _PaymentListScreenState extends ConsumerState<PaymentListScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Iuran & Donasi'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          AnimatedBuilder(
+            animation: _tabController,
+            builder: (context, _) {
+              if (_tabController.index != 1) return const SizedBox.shrink();
+              return IconButton(
+                icon: const Icon(Icons.add_circle_outline_rounded),
+                tooltip: 'Salurkan Donasi',
+                onPressed: () => DonationFormDialog.show(context),
+              );
+            },
+          ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Container(
+            color: AppColors.primary,
+            child: TabBar(
+              controller: _tabController,
+              indicatorColor: Colors.white,
+              indicatorWeight: 3,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white60,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w700),
+              tabs: const [
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.receipt_long_rounded, size: 18),
+                      SizedBox(width: AppSpacing.xs),
+                      Text('IURAN'),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.volunteer_activism_rounded, size: 18),
+                      SizedBox(width: AppSpacing.xs),
+                      Text('DONASI'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        body: const TabBarView(
-          children: [
-            _PaymentsTab(),
-            _DonationsTab(),
-          ],
-        ),
-        floatingActionButton: null,
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: const [
+          _PaymentsTab(),
+          _DonationsTab(),
+        ],
+      ),
+      floatingActionButton: AnimatedBuilder(
+        animation: _tabController,
+        builder: (context, _) {
+          if (_tabController.index != 1) return const SizedBox.shrink();
+          return FloatingActionButton.extended(
+            onPressed: () => DonationFormDialog.show(context),
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.volunteer_activism_rounded),
+            label: const Text('Beri Donasi'),
+          );
+        },
       ),
     );
   }
@@ -662,49 +733,175 @@ class _DonationsTab extends ConsumerWidget {
     final membersAsync = ref.watch(membersControllerProvider);
 
     return donationsAsync.when(
-      data: (donations) {
-        if (donations.isEmpty) {
-          return const AppEmptyState(
-            icon: Icons.monetization_on_outlined,
-            title: 'Belum Ada Donasi',
-            message: 'Data donasi untuk periode ini masih kosong.',
-          );
-        }
-
-        final membersMap = membersAsync.whenOrNull(
-          data: (members) => {for (final m in members) m.id: m},
-        ) ?? {};
-
-        return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.md,
-            AppSpacing.md,
-            80,
-          ),
-          itemCount: donations.length,
-          itemBuilder: (context, index) {
-            final donation = donations[index];
-            final member = donation.memberId != null
-                ? membersMap[donation.memberId]
-                : null;
-            final memberName = member?.fullName ?? 'Anonim';
-
-            return PaymentListItem(
-              memberName: memberName,
-              amount: donation.amount,
-              paymentMethod: PaymentMethod.cash,
-              paidAt: donation.donatedAt,
-              isPaid: true,
-            );
-          },
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-        );
-      },
       loading: () => const AppLoading(),
       error: (error, stack) => AppErrorState(
         onRetry: () => ref.refresh(donationListProvider),
       ),
+      data: (donations) {
+        final membersMap = membersAsync.whenOrNull(
+          data: (members) => {for (final m in members) m.id: m},
+        ) ?? {};
+
+        final totalAmount = donations.fold<double>(
+          0,
+          (sum, d) => sum + d.amount,
+        );
+        final donorCount =
+            donations.map((d) => d.memberId ?? d.id).toSet().length;
+
+        if (donations.isEmpty) {
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(donationListProvider);
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                children: [
+                  DonationSummaryCard(
+                    totalAmount: 0,
+                    donorCount: 0,
+                    isLoading: donationsAsync.isLoading,
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.volunteer_activism_outlined,
+                      size: 48,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  const Text(
+                    'Belum Ada Donasi',
+                    style: AppTypography.h3,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Donasi sukarela keluarga bersifat terbuka dan opsional. '
+                    'Setiap rupiah yang disumbangkan sangat berarti untuk silaturahmi keluarga.',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  ElevatedButton.icon(
+                    onPressed: () => DonationFormDialog.show(context),
+                    icon: const Icon(Icons.volunteer_activism_rounded),
+                    label: const Text('Beri Donasi Pertama'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.md,
+                      ),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: AppRadii.button,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(donationListProvider);
+          },
+          child: ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              88,
+            ),
+            itemCount: donations.length + 2,
+            separatorBuilder: (context, index) {
+              if (index == 0) return const SizedBox(height: AppSpacing.md);
+              if (index == 1) return const SizedBox(height: AppSpacing.sm);
+              return const SizedBox(height: 12);
+            },
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return DonationSummaryCard(
+                  totalAmount: totalAmount,
+                  donorCount: donorCount,
+                  isLoading: donationsAsync.isLoading,
+                );
+              }
+
+              if (index == 1) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xs,
+                    vertical: 2,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.receipt_long_rounded,
+                            size: 18,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          Text(
+                            'Daftar Donatur & Doa',
+                            style: AppTypography.h3.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${donations.length} Donasi',
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final donation = donations[index - 2];
+              final member = donation.memberId != null
+                  ? membersMap[donation.memberId]
+                  : null;
+              final memberName = member?.fullName;
+
+              return DonationListItem(
+                donation: donation,
+                memberName: memberName,
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

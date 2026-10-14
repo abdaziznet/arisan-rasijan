@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/payments_repository.dart';
 import '../../domain/payment_model.dart';
 import '../../../periods/presentation/providers/periods_providers.dart';
+import '../controllers/donation_form_controller.dart';
 import '../controllers/payment_form_controller.dart';
 
 final paymentsRepositoryProvider = Provider<PaymentsRepository>((ref) {
@@ -12,6 +13,11 @@ final paymentsRepositoryProvider = Provider<PaymentsRepository>((ref) {
 final paymentFormProvider =
     StateNotifierProvider<PaymentFormController, PaymentFormState>((ref) {
   return PaymentFormController(ref);
+});
+
+final donationFormProvider =
+    StateNotifierProvider<DonationFormController, DonationFormState>((ref) {
+  return DonationFormController(ref);
 });
 
 /// Check if current member has paid for the active period.

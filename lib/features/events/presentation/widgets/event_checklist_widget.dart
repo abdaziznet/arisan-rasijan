@@ -53,7 +53,7 @@ class EventChecklistWidget extends ConsumerWidget {
                       icon: const Icon(Icons.add_outlined, size: 18),
                       label: const Text('Buat Checklist'),
                       onPressed: () =>
-                          ref.read(eventChecklistControllerProvider.notifier)
+                          ref.read(eventChecklistControllerProvider(periodId).notifier)
                               .createDefaultChecklistForPeriod(periodId),
                     ),
                 ],
@@ -71,7 +71,7 @@ class EventChecklistWidget extends ConsumerWidget {
                   item: item,
                   isAdmin: isAdmin,
                   onToggle: () => ref
-                      .read(eventChecklistControllerProvider.notifier)
+                      .read(eventChecklistControllerProvider(periodId).notifier)
                       .toggleChecklistItem(item),
                 );
               },
@@ -253,7 +253,7 @@ class _EmptyChecklist extends ConsumerWidget {
               icon: const Icon(Icons.add_outlined, size: 18),
               label: const Text('Buat Checklist'),
               onPressed: () =>
-                  ref.read(eventChecklistControllerProvider.notifier)
+                  ref.read(eventChecklistControllerProvider(periodId).notifier)
                       .createDefaultChecklistForPeriod(periodId),
             ),
           ],

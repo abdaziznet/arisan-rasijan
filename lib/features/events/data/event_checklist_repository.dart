@@ -23,6 +23,48 @@ class EventChecklistRepository {
         .toList();
   }
 
+  Future<EventChecklistModel> addAgendaItem({
+    required String periodId,
+    required String stepName,
+    required int stepOrder,
+  }) async {
+    final response = await _client
+        .from('event_checklist')
+        .insert({
+          'period_id': periodId,
+          'step_name': stepName,
+          'step_order': stepOrder,
+          'is_completed': false,
+        })
+        .select()
+        .single();
+
+    return EventChecklistModel.fromJson(response);
+  }
+
+  Future<void> deleteAgendaItem(String id) async {
+    await _client.from('event_checklist').delete().eq('id', id);
+  }
+
+  Future<void> updateItemsOrder(List<EventChecklistModel> items) async {
+    final futures = <Future>[];
+    for (int i = 0; i < items.length; i++) {
+      final item = items[i];
+      final newOrder = i + 1;
+      if (item.stepOrder != newOrder) {
+        futures.add(
+          _client
+              .from('event_checklist')
+              .update({'step_order': newOrder})
+              .eq('id', item.id),
+        );
+      }
+    }
+    if (futures.isNotEmpty) {
+      await Future.wait(futures);
+    }
+  }
+
   Future<EventChecklistModel> updateChecklistItem(EventChecklistModel item) async {
     final payload = item.toJson();
     payload.remove('id');
