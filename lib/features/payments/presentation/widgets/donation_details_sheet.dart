@@ -31,10 +31,19 @@ class DonationDetailsSheet extends ConsumerStatefulWidget {
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (_) => DonationDetailsSheet(
-          donation: donation,
-          isAdmin: isAdmin,
-          memberName: memberName,
+        builder: (sheetContext) => AnimatedPadding(
+          duration: MediaQuery.disableAnimationsOf(sheetContext)
+              ? Duration.zero
+              : const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+          ),
+          child: DonationDetailsSheet(
+            donation: donation,
+            isAdmin: isAdmin,
+            memberName: memberName,
+          ),
         ),
       );
 
@@ -214,170 +223,172 @@ class _DonationDetailsSheetState extends ConsumerState<DonationDetailsSheet> {
         _canMemberReport && _paymentDestinationReady(settingsAsync);
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 600,
-          maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+    final availableHeight = MediaQuery.sizeOf(context).height -
+        MediaQuery.viewInsetsOf(context).bottom;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: 600,
+        maxHeight: availableHeight * 0.85,
+      ),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 44,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.divider,
-                  borderRadius: BorderRadius.circular(4),
-                ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 44,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(4),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg, 0, AppSpacing.md, AppSpacing.md),
-                child: Row(
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg, 0, AppSpacing.md, AppSpacing.md),
+              child: Row(
+                children: [
+                  const Icon(Icons.receipt_long_outlined,
+                      color: AppColors.primary),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      widget.isAdmin
+                          ? 'Verifikasi Donasi'
+                          : 'Detail Donasi Saya',
+                      style: AppTypography.h2,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Tutup',
+                    onPressed: _saving ? null : () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: AnimatedSwitcher(
+                duration: reduceMotion
+                    ? Duration.zero
+                    : const Duration(milliseconds: 180),
+                child: ListView(
+                  key: ValueKey('${_donation.id}-${_donation.status}'),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   children: [
-                    const Icon(Icons.receipt_long_outlined,
-                        color: AppColors.primary),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        widget.isAdmin
-                            ? 'Verifikasi Donasi'
-                            : 'Detail Donasi Saya',
-                        style: AppTypography.h2,
+                    _DonationInfoCard(
+                      donation: _donation,
+                      memberName: widget.isAdmin ? widget.memberName : null,
+                      statusLabel: statusLabel,
+                      methodLabel: methodLabel,
+                      payable: payable,
+                    ),
+                    if (_donation.notes?.trim().isNotEmpty == true) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      Text('Pesan', style: AppTypography.bodyMedium),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(_donation.notes!, style: AppTypography.body),
+                    ],
+                    if (_donation.verificationNote?.trim().isNotEmpty ==
+                        true) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      _NoteCard(text: _donation.verificationNote!),
+                    ],
+                    if (_donation.paymentProofPath != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      OutlinedButton.icon(
+                        onPressed: _viewProof,
+                        icon: const Icon(Icons.receipt_long_outlined),
+                        label: const Text('Lihat bukti pembayaran'),
                       ),
-                    ),
-                    IconButton(
-                      tooltip: 'Tutup',
-                      onPressed: _saving ? null : () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded),
-                    ),
+                    ],
+                    if (_canMemberReport) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      _buildMemberPaymentInfo(settingsAsync),
+                      if (_donation.paymentMethod != 'cash') ...[
+                        const SizedBox(height: AppSpacing.md),
+                        TextFormField(
+                          controller: _referenceController,
+                          maxLength: 100,
+                          scrollPadding: const EdgeInsets.only(bottom: 160),
+                          decoration: const InputDecoration(
+                            labelText: 'Referensi transaksi (opsional)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _saving ? null : _pickProof,
+                          icon: const Icon(Icons.attach_file_rounded),
+                          label: Text(_proofImage?.name ??
+                              'Lampirkan bukti (opsional)'),
+                        ),
+                      ],
+                      const SizedBox(height: AppSpacing.md),
+                      SizedBox(
+                        height: 48,
+                        child: FilledButton.icon(
+                          onPressed:
+                              _saving || !canReport ? null : _sendPaymentReport,
+                          icon: _saving
+                              ? const SizedBox.square(
+                                  dimension: 18,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.check_rounded),
+                          label: Text(_donation.paymentMethod == 'cash'
+                              ? 'Uang sudah diserahkan'
+                              : 'Saya sudah bayar'),
+                        ),
+                      ),
+                    ],
+                    if (widget.isAdmin && _canAdminReview) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      Text('Tindakan admin', style: AppTypography.h3),
+                      const SizedBox(height: AppSpacing.sm),
+                      SizedBox(
+                        height: 48,
+                        child: FilledButton.icon(
+                          onPressed:
+                              _saving ? null : () => _adminAction('verified'),
+                          icon: const Icon(Icons.verified_outlined),
+                          label: const Text('Konfirmasi dana diterima'),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: _saving
+                                ? null
+                                : () => _adminAction('needs_review'),
+                            icon: const Icon(Icons.error_outline_rounded),
+                            label: const Text('Perlu diperiksa'),
+                          ),
+                          TextButton.icon(
+                            onPressed:
+                                _saving ? null : () => _adminAction('rejected'),
+                            icon: const Icon(Icons.close_rounded),
+                            label: const Text('Tolak'),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
-              const Divider(height: 1),
-              Flexible(
-                child: AnimatedSwitcher(
-                  duration: reduceMotion
-                      ? Duration.zero
-                      : const Duration(milliseconds: 180),
-                  child: ListView(
-                    key: ValueKey('${_donation.id}-${_donation.status}'),
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    children: [
-                      _DonationInfoCard(
-                        donation: _donation,
-                        memberName: widget.isAdmin ? widget.memberName : null,
-                        statusLabel: statusLabel,
-                        methodLabel: methodLabel,
-                        payable: payable,
-                      ),
-                      if (_donation.notes?.trim().isNotEmpty == true) ...[
-                        const SizedBox(height: AppSpacing.md),
-                        Text('Pesan', style: AppTypography.bodyMedium),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(_donation.notes!, style: AppTypography.body),
-                      ],
-                      if (_donation.verificationNote?.trim().isNotEmpty ==
-                          true) ...[
-                        const SizedBox(height: AppSpacing.md),
-                        _NoteCard(text: _donation.verificationNote!),
-                      ],
-                      if (_donation.paymentProofPath != null) ...[
-                        const SizedBox(height: AppSpacing.md),
-                        OutlinedButton.icon(
-                          onPressed: _viewProof,
-                          icon: const Icon(Icons.receipt_long_outlined),
-                          label: const Text('Lihat bukti pembayaran'),
-                        ),
-                      ],
-                      if (_canMemberReport) ...[
-                        const SizedBox(height: AppSpacing.lg),
-                        _buildMemberPaymentInfo(settingsAsync),
-                        if (_donation.paymentMethod != 'cash') ...[
-                          const SizedBox(height: AppSpacing.md),
-                          TextFormField(
-                            controller: _referenceController,
-                            maxLength: 100,
-                            decoration: const InputDecoration(
-                              labelText: 'Referensi transaksi (opsional)',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: _saving ? null : _pickProof,
-                            icon: const Icon(Icons.attach_file_rounded),
-                            label: Text(_proofImage?.name ??
-                                'Lampirkan bukti (opsional)'),
-                          ),
-                        ],
-                        const SizedBox(height: AppSpacing.md),
-                        SizedBox(
-                          height: 48,
-                          child: FilledButton.icon(
-                            onPressed: _saving || !canReport
-                                ? null
-                                : _sendPaymentReport,
-                            icon: _saving
-                                ? const SizedBox.square(
-                                    dimension: 18,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.check_rounded),
-                            label: Text(_donation.paymentMethod == 'cash'
-                                ? 'Uang sudah diserahkan'
-                                : 'Saya sudah bayar'),
-                          ),
-                        ),
-                      ],
-                      if (widget.isAdmin && _canAdminReview) ...[
-                        const SizedBox(height: AppSpacing.lg),
-                        Text('Tindakan admin', style: AppTypography.h3),
-                        const SizedBox(height: AppSpacing.sm),
-                        SizedBox(
-                          height: 48,
-                          child: FilledButton.icon(
-                            onPressed:
-                                _saving ? null : () => _adminAction('verified'),
-                            icon: const Icon(Icons.verified_outlined),
-                            label: const Text('Konfirmasi dana diterima'),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Wrap(
-                          spacing: AppSpacing.sm,
-                          runSpacing: AppSpacing.sm,
-                          children: [
-                            OutlinedButton.icon(
-                              onPressed: _saving
-                                  ? null
-                                  : () => _adminAction('needs_review'),
-                              icon: const Icon(Icons.error_outline_rounded),
-                              label: const Text('Perlu diperiksa'),
-                            ),
-                            TextButton.icon(
-                              onPressed: _saving
-                                  ? null
-                                  : () => _adminAction('rejected'),
-                              icon: const Icon(Icons.close_rounded),
-                              label: const Text('Tolak'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
