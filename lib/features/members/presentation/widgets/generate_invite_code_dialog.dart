@@ -16,8 +16,12 @@ class GenerateInviteCodeDialog extends ConsumerStatefulWidget {
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (ctx) => Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        builder: (ctx) => AnimatedPadding(
+          duration: MediaQuery.disableAnimationsOf(ctx)
+              ? Duration.zero
+              : const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
           child: TweenAnimationBuilder<double>(
             tween: Tween<double>(begin: 0.0, end: 1.0),
             duration: const Duration(milliseconds: 400),
@@ -56,15 +60,14 @@ class _GenerateInviteCodeDialogState
   Future<void> _generate() async {
     setState(() => _isLoading = true);
     try {
-      final code = await ref
-          .read(membersControllerProvider.notifier)
-          .generateInviteCode(
-            customCode: _customCodeController.text.trim().isEmpty
-                ? null
-                : _customCodeController.text.trim(),
-            maxUses: _maxUses,
-            expiresDays: _expiresDays,
-          );
+      final code =
+          await ref.read(membersControllerProvider.notifier).generateInviteCode(
+                customCode: _customCodeController.text.trim().isEmpty
+                    ? null
+                    : _customCodeController.text.trim(),
+                maxUses: _maxUses,
+                expiresDays: _expiresDays,
+              );
 
       if (mounted) {
         setState(() {
@@ -97,7 +100,9 @@ class _GenerateInviteCodeDialogState
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+        maxHeight: (MediaQuery.sizeOf(context).height -
+                MediaQuery.viewInsetsOf(context).bottom) *
+            0.85,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -142,7 +147,8 @@ class _GenerateInviteCodeDialogState
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+                  icon: const Icon(Icons.close_rounded,
+                      color: AppColors.textSecondary),
                   onPressed: () => Navigator.pop(context),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),

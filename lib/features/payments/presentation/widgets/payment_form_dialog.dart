@@ -21,8 +21,12 @@ class PaymentFormDialog extends ConsumerStatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      builder: (ctx) => AnimatedPadding(
+        duration: MediaQuery.disableAnimationsOf(ctx)
+            ? Duration.zero
+            : const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
         child: TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0.0, end: 1.0),
           duration: const Duration(milliseconds: 400),
@@ -97,23 +101,27 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog>
 
     if (!_formKey.currentState!.validate()) {
       debugPrint('[PaymentForm] Form validation FAILED');
-      _showInlineMessage('Form tidak valid — pastikan semua kolom terisi', _InlineMessageType.error);
+      _showInlineMessage('Form tidak valid — pastikan semua kolom terisi',
+          _InlineMessageType.error);
       return;
     }
 
     if (_selectedMember == null) {
       debugPrint('[PaymentForm] _selectedMember is NULL');
-      _showInlineMessage('Silakan pilih anggota terlebih dahulu', _InlineMessageType.error);
+      _showInlineMessage(
+          'Silakan pilih anggota terlebih dahulu', _InlineMessageType.error);
       return;
     }
 
     if (_contributionAmount == null) {
       debugPrint('[PaymentForm] _contributionAmount is NULL');
-      _showInlineMessage('Gagal memuat nominal iuran dari periode aktif', _InlineMessageType.error);
+      _showInlineMessage('Gagal memuat nominal iuran dari periode aktif',
+          _InlineMessageType.error);
       return;
     }
 
-    debugPrint('[PaymentForm] Submitting: memberId=${_selectedMember!.id}, amount=$_contributionAmount, method=${_selectedMethod.name}');
+    debugPrint(
+        '[PaymentForm] Submitting: memberId=${_selectedMember!.id}, amount=$_contributionAmount, method=${_selectedMethod.name}');
 
     final success = await ref.read(paymentFormProvider.notifier).submitPayment(
           memberId: _selectedMember!.id,
@@ -124,14 +132,16 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog>
     debugPrint('[PaymentForm] submitPayment result: $success');
 
     if (success && mounted) {
-      _showInlineMessage('Pembayaran berhasil dicatat!', _InlineMessageType.success);
+      _showInlineMessage(
+          'Pembayaran berhasil dicatat!', _InlineMessageType.success);
       Future.delayed(const Duration(milliseconds: 800), () {
         if (mounted) Navigator.pop(context);
       });
     } else if (!success && mounted) {
       final errorMsg = ref.read(paymentFormProvider.notifier).errorMessage;
       debugPrint('[PaymentForm] Submit FAILED: $errorMsg');
-      _showInlineMessage(errorMsg ?? 'Gagal menyimpan pembayaran', _InlineMessageType.error);
+      _showInlineMessage(
+          errorMsg ?? 'Gagal menyimpan pembayaran', _InlineMessageType.error);
     }
   }
 
@@ -148,7 +158,9 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog>
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+        maxHeight: (MediaQuery.sizeOf(context).height -
+                MediaQuery.viewInsetsOf(context).bottom) *
+            0.85,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -193,7 +205,8 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog>
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+                  icon: const Icon(Icons.close_rounded,
+                      color: AppColors.textSecondary),
                   onPressed: () => Navigator.pop(context),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -213,8 +226,10 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog>
               child: _showInline && _inlineMessage != null
                   ? Container(
                       width: double.infinity,
-                      margin: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
+                      margin: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md, vertical: 12),
                       decoration: BoxDecoration(
                         color: _inlineType == _InlineMessageType.error
                             ? AppColors.error.withValues(alpha: 0.08)
@@ -290,19 +305,22 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog>
                         initialValue: _selectedMember,
                         items: members
                             .map(
-                              (member) => DropdownMenuItem(value: member, child: Text(member.fullName)),
+                              (member) => DropdownMenuItem(
+                                  value: member, child: Text(member.fullName)),
                             )
                             .toList(),
                         onChanged: isLoading
                             ? null
-                            : (member) => setState(() => _selectedMember = member),
+                            : (member) =>
+                                setState(() => _selectedMember = member),
                         validator: (value) =>
                             value == null ? 'Anggota harus dipilih' : null,
                       ),
                       loading: () => const LinearProgressIndicator(),
                       error: (e, s) => Text(
                         'Gagal memuat anggota: $e',
-                        style: AppTypography.body.copyWith(color: AppColors.error),
+                        style:
+                            AppTypography.body.copyWith(color: AppColors.error),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -319,7 +337,8 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog>
                           children: [
                             Text(
                               'Jumlah Iuran Wajib',
-                              style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                              style: AppTypography.bodyMedium
+                                  .copyWith(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: AppSpacing.xs),
                             Container(
@@ -334,11 +353,13 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog>
                                 border: Border.all(color: AppColors.divider),
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     amountText,
-                                    style: AppTypography.h3.copyWith(color: AppColors.primary),
+                                    style: AppTypography.h3
+                                        .copyWith(color: AppColors.primary),
                                   ),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
@@ -346,7 +367,8 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog>
                                       vertical: AppSpacing.xs,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.primary.withValues(alpha: 0.1),
+                                      color: AppColors.primary
+                                          .withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
@@ -366,7 +388,8 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog>
                       loading: () => const LinearProgressIndicator(),
                       error: (e, _) => Text(
                         'Gagal memuat periode aktif: $e',
-                        style: AppTypography.body.copyWith(color: AppColors.error),
+                        style:
+                            AppTypography.body.copyWith(color: AppColors.error),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -374,7 +397,8 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog>
                     // Pilihan Metode Pembayaran
                     Text(
                       'Metode Pembayaran',
-                      style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                      style: AppTypography.bodyMedium
+                          .copyWith(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     RadioGroup<PaymentMethod>(
@@ -404,7 +428,8 @@ class _PaymentFormDialogState extends ConsumerState<PaymentFormDialog>
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: isLoading ? null : () => Navigator.pop(context),
+                            onPressed:
+                                isLoading ? null : () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
                                 vertical: AppSpacing.md,

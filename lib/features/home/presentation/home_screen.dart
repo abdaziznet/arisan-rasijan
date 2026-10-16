@@ -489,6 +489,48 @@ class _HomeOverview extends ConsumerWidget {
                                         ),
                                         onPressed: destination.hasLaunchTarget
                                             ? () async {
+                                                final shouldContinue =
+                                                    await showDialog<bool>(
+                                                  context: context,
+                                                  builder: (dialogContext) =>
+                                                      AlertDialog(
+                                                    title: const Text(
+                                                      'Doa Naik Kendaraan',
+                                                    ),
+                                                    content: const Text(
+                                                      'Sebelum membuka petunjuk arah, mari membaca doa naik kendaraan:\n\n'
+                                                      'سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ ۞ وَإِنَّا إِلَىٰ رَبِّنَا لَمُنقَلِبُونَ\n\n'
+                                                      'Subhaanalladzii sakhkhara lanaa haadzaa wa maa kunnaa lahuu muqriniin, wa innaa ilaa rabbinaa lamunqalibuun.\n\n'
+                                                      'Artinya: Mahasuci Allah yang telah menundukkan semua ini bagi kami, padahal kami sebelumnya tidak mampu menguasainya. Dan sesungguhnya kami akan kembali kepada Tuhan kami.',
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                          dialogContext,
+                                                          false,
+                                                        ),
+                                                        child: const Text(
+                                                          'Batal',
+                                                        ),
+                                                      ),
+                                                      FilledButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                          dialogContext,
+                                                          true,
+                                                        ),
+                                                        child: const Text(
+                                                          'Lanjutkan',
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                                if (shouldContinue != true ||
+                                                    !context.mounted) {
+                                                  return;
+                                                }
                                                 final result = await ref
                                                     .read(mapsLauncherProvider)
                                                     .open(destination);
@@ -750,43 +792,70 @@ class _HomeOverview extends ConsumerWidget {
                   const AppSectionHeader(title: 'Untuk Keluarga'),
                   const SizedBox(height: AppSpacing.sm),
                   AppCard(
+                    padding: EdgeInsets.zero,
                     child: InkWell(
-                      onTap: () =>
-                          Navigator.pushNamed(context, AppRouter.members),
                       borderRadius: BorderRadius.circular(16),
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        AppRouter.quran,
+                        arguments: 36,
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(AppSpacing.md),
                         child: Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(AppSpacing.xs),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(Icons.groups_rounded,
-                                  color: AppColors.primary, size: 22),
-                            ),
+                            const Icon(Icons.menu_book_rounded,
+                                color: AppColors.primary),
                             const SizedBox(width: AppSpacing.md),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    'Daftar Anggota Keluarga',
-                                    style: AppTypography.bodyMedium
-                                        .copyWith(fontWeight: FontWeight.w600),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  const Text(
-                                    'Lihat seluruh kerabat, kontak, & silsilah',
-                                    style: AppTypography.caption,
-                                  ),
+                                  const Text('Bacaan Yasin',
+                                      style: AppTypography.bodyMedium),
+                                  Text('Buka bacaan untuk agenda keluarga',
+                                      style: AppTypography.caption.copyWith(
+                                          color: AppColors.textSecondary)),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.chevron_right,
-                                color: AppColors.textSecondary),
+                            const Icon(Icons.chevron_right_rounded,
+                                color: AppColors.primary),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppCard(
+                    padding: EdgeInsets.zero,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        AppRouter.dailyPrayers,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.volunteer_activism_outlined,
+                                color: AppColors.primary),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Doa Keluarga',
+                                      style: AppTypography.bodyMedium),
+                                  Text('Doa pilihan arisan dan koleksi lengkap',
+                                      style: AppTypography.caption.copyWith(
+                                          color: AppColors.textSecondary)),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded,
+                                color: AppColors.primary),
                           ],
                         ),
                       ),

@@ -20,7 +20,14 @@ class PeriodFormDialog extends ConsumerStatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => PeriodFormDialog(period: period),
+      builder: (ctx) => AnimatedPadding(
+        duration: MediaQuery.disableAnimationsOf(ctx)
+            ? Duration.zero
+            : const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
+        child: PeriodFormDialog(period: period),
+      ),
     );
   }
 
@@ -70,7 +77,9 @@ class _PeriodFormDialogSheet extends ConsumerState<PeriodFormDialog>
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
+          maxHeight: (MediaQuery.sizeOf(context).height -
+                  MediaQuery.viewInsetsOf(context).bottom) *
+              0.85,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

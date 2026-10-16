@@ -49,8 +49,10 @@ class PaymentsRepository {
         return amount;
       }
 
-      debugPrint('[PaymentsRepo] gathering_fund_amount NOT FOUND in app_settings, returning 0');
-      debugPrint('[PaymentsRepo] ⚠️ Admin harus simpan nilai kas gathering di Pengaturan Admin');
+      debugPrint(
+          '[PaymentsRepo] gathering_fund_amount NOT FOUND in app_settings, returning 0');
+      debugPrint(
+          '[PaymentsRepo] ⚠️ Admin harus simpan nilai kas gathering di Pengaturan Admin');
       return 0;
     } catch (e) {
       debugPrint('[PaymentsRepo] ERROR fetching gathering_fund_amount: $e');
@@ -100,7 +102,8 @@ class PaymentsRepository {
   /// Mengambil semua donasi untuk periode tertentu.
   Future<List<Donation>> getDonationsForPeriod(String periodId) async {
     try {
-      debugPrint('[PaymentsRepository] getDonationsForPeriod called with periodId: $periodId');
+      debugPrint(
+          '[PaymentsRepository] getDonationsForPeriod called with periodId: $periodId');
       final data = await _client
           .from('donations')
           .select()
@@ -115,7 +118,8 @@ class PaymentsRepository {
       final donations = data.map((item) => Donation.fromMap(item)).toList();
       debugPrint('[PaymentsRepository] Mapped donations: ${donations.length}');
       for (final d in donations) {
-        debugPrint('[PaymentsRepository] Donation: id=${d.id}, periodId=${d.periodId}, memberId=${d.memberId}, amount=${d.amount}, notes=${d.notes}, donatedAt=${d.donatedAt}');
+        debugPrint(
+            '[PaymentsRepository] Donation: id=${d.id}, periodId=${d.periodId}, memberId=${d.memberId}, amount=${d.amount}, notes=${d.notes}, donatedAt=${d.donatedAt}');
       }
       return donations;
     } catch (e, stackTrace) {
@@ -123,6 +127,15 @@ class PaymentsRepository {
       debugPrint('[PaymentsRepository] Stack trace: $stackTrace');
       throw Exception('Gagal mengambil data donasi: $e');
     }
+  }
+
+  Future<double> getVerifiedDonationTotal(String periodId) async {
+    final result = await _client.rpc(
+      'get_verified_donation_total',
+      params: {'p_period_id': periodId},
+    );
+    if (result is num) return result.toDouble();
+    return double.tryParse(result?.toString() ?? '') ?? 0;
   }
 
   /// Mengambil pembayaran milik user login untuk periode aktif.
@@ -141,7 +154,8 @@ class PaymentsRepository {
           .order('event_date', ascending: true)
           .limit(1)
           .maybeSingle();
-      debugPrint('[PaymentsRepo] getCurrentMemberPayments periodData=$periodData');
+      debugPrint(
+          '[PaymentsRepo] getCurrentMemberPayments periodData=$periodData');
       if (periodData == null) return [];
       final periodId = periodData['id'] as String;
       final eventDate = DateTime.parse(periodData['event_date'] as String);
@@ -150,7 +164,8 @@ class PaymentsRepository {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final eventDay = DateTime(eventDate.year, eventDate.month, eventDate.day);
-      debugPrint('[PaymentsRepo] getCurrentMemberPayments today=$today eventDay=$eventDay');
+      debugPrint(
+          '[PaymentsRepo] getCurrentMemberPayments today=$today eventDay=$eventDay');
       if (today.isBefore(eventDay)) return [];
 
       // Cek apakah ada pembayaran LUNAS untuk user ini di periode aktif
@@ -162,7 +177,8 @@ class PaymentsRepository {
           .eq('status', 'paid')
           .limit(1);
 
-      debugPrint('[PaymentsRepo] getCurrentMemberPayments found=${data.length}');
+      debugPrint(
+          '[PaymentsRepo] getCurrentMemberPayments found=${data.length}');
       return data.map((item) => Payment.fromMap(item)).toList();
     } catch (e) {
       debugPrint('[PaymentsRepo] ERROR getCurrentMemberPayments: $e');
@@ -186,7 +202,8 @@ class PaymentsRepository {
   }
 
   /// Mengambil semua anggota aktif beserta status pembayaran untuk periode tertentu.
-  Future<List<MemberPaymentStatus>> getMembersWithPaymentStatus(String periodId) async {
+  Future<List<MemberPaymentStatus>> getMembersWithPaymentStatus(
+      String periodId) async {
     try {
       // Ambil semua anggota aktif
       final membersData = await _client
@@ -254,7 +271,8 @@ class PaymentsRepository {
         final gatheringFundAmount = await _getGatheringFundAmount();
         final allocatedToFund = gatheringFundAmount;
         final netAmount = contributionAmount - allocatedToFund;
-        debugPrint('[PaymentsRepo] togglePaymentStatus contributionAmount=$contributionAmount allocatedToFund=$allocatedToFund netAmount=$netAmount');
+        debugPrint(
+            '[PaymentsRepo] togglePaymentStatus contributionAmount=$contributionAmount allocatedToFund=$allocatedToFund netAmount=$netAmount');
 
         // Cek apakah record sudah ada
         final existing = await _client
@@ -282,7 +300,8 @@ class PaymentsRepository {
               .update(baseData)
               .eq('id', existing['id'] as String);
           recordId = existing['id'] as String;
-          debugPrint('[PaymentsRepo] Payment UPDATED as PAID for member=$memberId');
+          debugPrint(
+              '[PaymentsRepo] Payment UPDATED as PAID for member=$memberId');
         } else {
           final inserted = await _client
               .from('payments')
@@ -290,9 +309,11 @@ class PaymentsRepository {
               .select('id')
               .single();
           recordId = inserted['id'] as String;
-          debugPrint('[PaymentsRepo] Payment INSERTED as PAID for member=$memberId');
+          debugPrint(
+              '[PaymentsRepo] Payment INSERTED as PAID for member=$memberId');
         }
-        debugPrint('[PaymentsRepo] allocated_to_fund=$allocatedToFund included in payment record=$recordId');
+        debugPrint(
+            '[PaymentsRepo] allocated_to_fund=$allocatedToFund included in payment record=$recordId');
       } else {
         // Update status jadi unpaid + reset allocated_to_fund
         await _client
@@ -304,7 +325,8 @@ class PaymentsRepository {
             })
             .eq('member_id', memberId)
             .eq('period_id', periodId);
-        debugPrint('[PaymentsRepo] Payment marked as UNPAID for member=$memberId');
+        debugPrint(
+            '[PaymentsRepo] Payment marked as UNPAID for member=$memberId');
       }
     } catch (e) {
       debugPrint('[PaymentsRepo] ERROR togglePaymentStatus: $e');
@@ -319,13 +341,15 @@ class PaymentsRepository {
           .from('payments')
           .select('member_id, status, allocated_to_fund');
 
-      debugPrint('[PaymentsRepo] getTotalGatheringFund: ${data.length} total rows');
+      debugPrint(
+          '[PaymentsRepo] getTotalGatheringFund: ${data.length} total rows');
       double total = 0;
       for (final row in data) {
         final status = row['status'];
         final atf = (row['allocated_to_fund'] as num?)?.toDouble() ?? 0;
         final memberId = row['member_id'];
-        debugPrint('[PaymentsRepo]   row: member=$memberId status=$status allocated_to_fund=$atf');
+        debugPrint(
+            '[PaymentsRepo]   row: member=$memberId status=$status allocated_to_fund=$atf');
         if (status == 'paid') {
           total += atf;
         }
@@ -338,12 +362,152 @@ class PaymentsRepository {
     }
   }
 
-  /// Menyimpan donasi baru ke database.
-  Future<void> addDonation(Donation donation) async {
+  Future<Donation> createDonation(Donation donation) async {
     try {
-      await _client.from('donations').insert(donation.toMap());
+      final row = await _client
+          .from('donations')
+          .insert(donation.toMap(status: 'pending_payment'))
+          .select()
+          .single();
+      return Donation.fromMap(row);
     } catch (e) {
-      throw Exception('Gagal menyimpan donasi: $e');
+      throw Exception('Gagal membuat laporan donasi: $e');
     }
   }
+
+  Future<void> markDonationPaymentSent({
+    required String donationId,
+    required String? paymentMethod,
+    String? paymentReference,
+    String? paymentProofPath,
+  }) async {
+    try {
+      final updates = <String, dynamic>{
+        'status': 'pending_verification',
+      };
+
+      // Cash reports have no transaction reference or uploaded proof. Keep
+      // their update limited to the status transition the member is allowed
+      // to make; non-cash reports may also attach their optional evidence.
+      if (paymentMethod != 'cash') {
+        updates['payment_reference'] = paymentReference;
+        updates['payment_proof_path'] = paymentProofPath;
+      }
+
+      final updatedRow = await _client
+          .from('donations')
+          .update(updates)
+          .eq('id', donationId)
+          .select('id, status')
+          .maybeSingle();
+      if (updatedRow == null ||
+          updatedRow['status'] != 'pending_verification') {
+        throw Exception(
+          'Donasi tidak dapat diperbarui. Pastikan Anda pemilik donasi dan statusnya masih menunggu pembayaran.',
+        );
+      }
+    } catch (e) {
+      throw Exception('Gagal mengirim laporan pembayaran: $e');
+    }
+  }
+
+  Future<void> verifyDonation({
+    required String donationId,
+    required String status,
+    double? receivedAmount,
+    String? note,
+  }) async {
+    try {
+      await _client.from('donations').update({
+        'status': status,
+        'received_amount': receivedAmount,
+        'verification_note': note,
+      }).eq('id', donationId);
+    } catch (e) {
+      throw Exception('Gagal memperbarui verifikasi donasi: $e');
+    }
+  }
+
+  Future<DonationPaymentSettings?> getDonationPaymentSettings() async {
+    final row = await _client
+        .from('donation_payment_settings')
+        .select()
+        .eq('singleton', true)
+        .maybeSingle();
+    if (row == null) return null;
+    return DonationPaymentSettings.fromMap(row);
+  }
+
+  Future<void> saveDonationPaymentSettings({
+    required String bankName,
+    required String bankAccountName,
+    required String bankAccountNumber,
+    required String? qrisImagePath,
+    required String paymentInstructions,
+  }) async {
+    try {
+      await _client.from('donation_payment_settings').update({
+        'bank_name': bankName,
+        'bank_account_name': bankAccountName,
+        'bank_account_number': bankAccountNumber,
+        'qris_image_path': qrisImagePath,
+        'payment_instructions': paymentInstructions,
+      }).eq('singleton', true);
+    } catch (e) {
+      throw Exception('Gagal menyimpan pengaturan donasi: $e');
+    }
+  }
+
+  Future<String> uploadQrisImage({
+    required Uint8List bytes,
+    required String extension,
+    required String contentType,
+  }) async {
+    final path = 'qris/${DateTime.now().microsecondsSinceEpoch}.$extension';
+    try {
+      await _client.storage.from('donation-settings').uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(contentType: contentType),
+          );
+      return path;
+    } catch (e) {
+      throw Exception('Gagal mengunggah gambar QRIS: $e');
+    }
+  }
+
+  Future<void> deleteQrisImage(String path) async {
+    await _client.storage.from('donation-settings').remove([path]);
+  }
+
+  String getQrisImageUrl(String path) =>
+      _client.storage.from('donation-settings').getPublicUrl(path);
+
+  Future<Uint8List> downloadQrisImage(String path) =>
+      _client.storage.from('donation-settings').download(path);
+
+  Future<String> uploadDonationProof({
+    required String donationId,
+    required Uint8List bytes,
+    required String extension,
+    required String contentType,
+  }) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) throw Exception('Sesi login tidak ditemukan.');
+    final path =
+        '$userId/$donationId/${DateTime.now().microsecondsSinceEpoch}.$extension';
+    try {
+      await _client.storage.from('donation-proofs').uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(contentType: contentType),
+          );
+      return path;
+    } catch (e) {
+      throw Exception('Gagal mengunggah bukti pembayaran: $e');
+    }
+  }
+
+  Future<String> getDonationProofUrl(String path) =>
+      _client.storage.from('donation-proofs').createSignedUrl(path, 300);
 }

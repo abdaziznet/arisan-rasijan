@@ -43,6 +43,7 @@ void main() {
       ProviderScope(
         overrides: [
           paymentsRepositoryProvider.overrideWithValue(repository),
+          verifiedDonationTotalProvider.overrideWith((ref) async => 0),
           activePeriodProvider.overrideWith((ref) async => futurePeriod),
           currentMemberProfileProvider.overrideWith((ref) async => admin),
         ],
@@ -76,8 +77,7 @@ void main() {
         .thenAnswer((_) async => [member]);
     when(() => repository.getDonationsForPeriod('period-1'))
         .thenAnswer((_) async => []);
-    when(() => mockMembersRepo.getMembers())
-        .thenAnswer((_) async => [admin]);
+    when(() => mockMembersRepo.getMembers()).thenAnswer((_) async => [admin]);
     when(() => mockMembersRepo.getMemberById('admin-1'))
         .thenAnswer((_) async => admin);
 
@@ -85,7 +85,15 @@ void main() {
       ProviderScope(
         overrides: [
           paymentsRepositoryProvider.overrideWithValue(repository),
+          verifiedDonationTotalProvider.overrideWith((ref) async => 0),
           membersRepositoryProvider.overrideWithValue(mockMembersRepo),
+          donationPaymentSettingsProvider.overrideWith(
+            (ref) async => const DonationPaymentSettings(
+              bankName: 'Bank Keluarga',
+              bankAccountName: 'Bendahara',
+              bankAccountNumber: '123456',
+            ),
+          ),
           activePeriodProvider.overrideWith((ref) async => futurePeriod),
           currentMemberProfileProvider.overrideWith((ref) async => admin),
         ],
@@ -100,18 +108,17 @@ void main() {
 
     // Empty state should render
     expect(find.byType(DonationSummaryCard), findsOneWidget);
-    expect(find.text('Belum Ada Donasi'), findsOneWidget);
-    expect(find.text('Beri Donasi Pertama'), findsOneWidget);
+    expect(find.text('Tidak ada donasi untuk diperiksa'), findsOneWidget);
+    expect(find.text('Tambah Donasi'), findsNothing);
     expect(find.text('Beri Donasi'), findsOneWidget); // FAB
 
-    // Tap Beri Donasi Pertama
-    await tester.tap(find.text('Beri Donasi Pertama'));
+    await tester.tap(find.byTooltip('Salurkan Donasi'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Salurkan Donasi Sukarela'), findsOneWidget);
+    expect(find.text('Buat Laporan Donasi'), findsOneWidget);
   });
 
-  testWidgets('renders DONASI tab with summary card and donation items',
+  testWidgets('admin sees verification queue and payment details',
       (tester) async {
     final repository = MockPaymentsRepository();
     final mockMembersRepo = MockMembersRepository();
@@ -124,14 +131,20 @@ void main() {
         amount: 250000,
         notes: 'Doa untuk keluarga besar',
         donatedAt: DateTime(2026, 10, 14),
+        paymentMethod: 'transfer',
+        status: 'pending_verification',
+        uniqueCode: 37,
+        paymentAmount: 250037,
       ),
       Donation(
         id: 'don-2',
         periodId: 'period-1',
-        memberId: null, // Anonymous
+        memberId: null,
         amount: 100000,
         notes: null,
         donatedAt: DateTime(2026, 10, 14),
+        status: 'verified',
+        receivedAmount: 100000,
       ),
     ];
 
@@ -139,13 +152,13 @@ void main() {
         .thenAnswer((_) async => [member]);
     when(() => repository.getDonationsForPeriod('period-1'))
         .thenAnswer((_) async => testDonations);
-    when(() => mockMembersRepo.getMembers())
-        .thenAnswer((_) async => [admin]);
+    when(() => mockMembersRepo.getMembers()).thenAnswer((_) async => [admin]);
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           paymentsRepositoryProvider.overrideWithValue(repository),
+          verifiedDonationTotalProvider.overrideWith((ref) async => 100000),
           membersRepositoryProvider.overrideWithValue(mockMembersRepo),
           activePeriodProvider.overrideWith((ref) async => futurePeriod),
           currentMemberProfileProvider.overrideWith((ref) async => admin),
@@ -159,20 +172,73 @@ void main() {
     await tester.tap(find.text('DONASI'));
     await tester.pumpAndSettle();
 
-    // Expect DonationSummaryCard with total amount Rp350.000 (250000 + 100000)
     expect(find.byType(DonationSummaryCard), findsOneWidget);
-    expect(find.text('Rp350.000'), findsOneWidget);
-    expect(find.text('2 Donatur'), findsOneWidget);
-
-    // Expect Section Header
-    expect(find.text('Daftar Donatur & Doa'), findsOneWidget);
-    expect(find.text('2 Donasi'), findsOneWidget);
-
-    // Expect DonationListItem
-    expect(find.byType(DonationListItem), findsNWidgets(2));
+    expect(find.text('Rp100.000'), findsOneWidget);
+    expect(find.text('Antrean & riwayat verifikasi'), findsOneWidget);
+    expect(find.text('1 donasi'), findsOneWidget);
+    expect(find.byType(DonationListItem), findsOneWidget);
     expect(find.text('Admin'), findsOneWidget);
     expect(find.text('Doa untuk keluarga besar'), findsOneWidget);
-    expect(find.text('Hamba Allah'), findsOneWidget);
-    expect(find.text('Anonim'), findsOneWidget);
+    expect(find.text('Kode 037'), findsOneWidget);
+  });
+
+  testWidgets('member history and summary exclude other members donations',
+      (tester) async {
+    final repository = MockPaymentsRepository();
+    const currentMember =
+        MemberModel(id: 'member-1', fullName: 'Budi Rasijan', role: 'member');
+    final donations = [
+      Donation(
+        id: 'own',
+        periodId: 'period-1',
+        memberId: 'member-1',
+        amount: 25000,
+        donatedAt: DateTime(2026, 10, 14),
+        status: 'verified',
+        receivedAmount: 25000,
+        paymentMethod: 'cash',
+      ),
+      Donation(
+        id: 'other',
+        periodId: 'period-1',
+        memberId: 'member-2',
+        amount: 900000,
+        notes: 'Catatan rahasia milik anggota lain',
+        donatedAt: DateTime(2026, 10, 14),
+        status: 'verified',
+        receivedAmount: 900000,
+        paymentMethod: 'transfer',
+      ),
+    ];
+    when(() => repository.getMembersWithPaymentStatus('period-1'))
+        .thenAnswer((_) async => [member]);
+    when(() => repository.getDonationsForPeriod('period-1'))
+        .thenAnswer((_) async => donations);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          paymentsRepositoryProvider.overrideWithValue(repository),
+          verifiedDonationTotalProvider.overrideWith((ref) async => 925000),
+          activePeriodProvider.overrideWith((ref) async => futurePeriod),
+          currentMemberProfileProvider.overrideWith(
+            (ref) async => currentMember,
+          ),
+        ],
+        child: const MaterialApp(home: PaymentListScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DONASI'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Rp25.000'), findsNWidgets(2));
+    expect(find.text('Total donasi semua anggota'), findsOneWidget);
+    expect(find.text('Total donasi saya'), findsOneWidget);
+    expect(find.text('Rp925.000'), findsOneWidget);
+    expect(find.text('Rp900.000'), findsNothing);
+    expect(find.text('Catatan rahasia milik anggota lain'), findsNothing);
+    expect(find.text('Donasi saya'), findsOneWidget);
+    expect(find.text('Donasi anggota'), findsNothing);
   });
 }

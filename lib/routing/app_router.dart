@@ -13,6 +13,8 @@ import '../features/gathering/presentation/screens/gathering_screen.dart';
 import '../features/history/presentation/screens/history_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/profile/presentation/screens/profile_location_screen.dart';
+import '../features/prayers/presentation/daily_prayers_screen.dart';
+import '../features/quran/presentation/quran_screen.dart';
 import '../features/settings/presentation/screens/admin_settings_screen.dart';
 import '../features/members/domain/member_model.dart';
 import '../features/members/presentation/screens/member_detail_screen.dart';
@@ -38,6 +40,8 @@ abstract final class AppRouter {
   static const gatheringEventDetail = '/gathering-event-detail';
   static const adminSettings = '/admin-settings';
   static const profileLocation = '/profile-location';
+  static const quran = '/quran';
+  static const dailyPrayers = '/daily-prayers';
   static const biometricLock = '/biometric-lock';
 
   static Route<void> onGenerateRoute(RouteSettings settings) =>
@@ -73,6 +77,10 @@ abstract final class AppRouter {
             ),
           adminSettings => const AdminSettingsScreen(),
           profileLocation => const ProfileLocationScreen(),
+          quran => QuranScreen(initialSurah: settings.arguments as int?),
+          dailyPrayers => DailyPrayersScreen(
+              initialPrayerId: settings.arguments as int?,
+            ),
           biometricLock => const BiometricLockScreen(),
           _ => const SplashScreen(),
         },

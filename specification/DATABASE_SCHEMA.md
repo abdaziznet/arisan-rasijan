@@ -14,6 +14,8 @@
 | `arisan_periods` | Data tiap periode arisan (2 bulan sekali) |
 | `payments` | Pencatatan status iuran per anggota per periode |
 | `donations` | Pencatatan donasi opsional per periode |
+| `donation_payment_settings` | Rekening tujuan, instruksi pembayaran, dan path gambar QRIS |
+| `donation_verification_events` | Jejak append-only perubahan status/verifikasi donasi |
 | `draws` | Histori hasil kocokan per periode |
 | `event_checklist` | Checklist rundown acara per periode |
 | `event_photos` | Galeri foto dokumentasi per periode |
@@ -109,11 +111,29 @@ Donasi opsional, terpisah dari iuran wajib.
 | `id` | `uuid` (PK) | |
 | `period_id` | `uuid` (FK → `arisan_periods.id`) | |
 | `member_id` | `uuid` (FK → `profiles.id`) | |
-| `amount` | `numeric` | |
+| `amount` | `numeric` | Nominal pokok yang dilaporkan member |
+| `payment_method` | `text`, nullable untuk data historis | `cash`, `transfer`, atau `qris` |
+| `status` | `text`, default `pending_payment` | `pending_payment`, `pending_verification`, `needs_review`, `verified`, `rejected`, atau `expired`; data lama dipertahankan sebagai `verified` |
+| `received_amount` | `numeric`, nullable | Nominal yang benar-benar diterima dan dicatat admin |
+| `unique_code` | `smallint`, nullable | Kode 1–150, khusus transfer/QRIS; direservasi database lintas metode |
+| `payment_amount` | `numeric` generated | `amount + unique_code` untuk transfer/QRIS; jumlah yang harus dibayar |
+| `payment_reference` | `text`, nullable | Referensi transaksi dari member |
+| `payment_proof_path` | `text`, nullable | Path bukti pembayaran privat |
+| `verified_by` | `uuid` (FK → `profiles.id`), nullable | Admin yang mengesahkan |
+| `verified_at` | `timestamptz`, nullable | Waktu pengesahan |
+| `verification_note` | `text`, nullable | Catatan admin; wajib untuk `needs_review`/`rejected` |
 | `note` | `text`, nullable | Catatan/tujuan donasi (jika ada) |
 | `created_at` | `timestamptz`, default `now()` | |
 
-**RLS Policy:** sama seperti `payments`.
+**Constraint dan trigger:** Kode unik 001–150 direservasi secara atomik oleh trigger sebelum insert dan tidak boleh dipakai dua laporan aktif transfer/QRIS. Kode dilepas setelah status menjadi final. Nilai kode dari client diabaikan. `payment_amount` dihitung database. Perubahan ke `verified` wajib berisi nominal diterima; admin/waktu diverifikasi dicatat otomatis. Perubahan ke `needs_review` atau `rejected` wajib memiliki alasan. Data donasi lama menjadi `verified` untuk mempertahankan histori.
+
+**RLS Policy:** member hanya dapat membaca baris miliknya; admin dapat membaca semua donasi untuk verifikasi. Member dapat membuat laporannya sendiri dan mengubah referensi/bukti/status pembayaran ke `pending_verification`, tetapi tidak dapat mengubah nominal atau field verifikasi. Hanya admin dapat mengesahkan, mengubah nominal diterima, atau menolak laporan. Donasi anonim hanya dapat dibaca admin. Function `get_verified_donation_total(period_id)` hanya mengembalikan satu angka agregat donasi terverifikasi untuk transparansi bersama; function tidak membuka baris atau identitas donatur kepada member.
+
+### 2.15 `donation_payment_settings` dan `donation_verification_events`
+
+`donation_payment_settings` adalah satu baris konfigurasi pembayaran: nama bank, nama/nomor rekening, instruksi pembayaran, `qris_image_path`, `updated_by`, dan `updated_at`. Semua member terautentikasi boleh membaca instruksi aktif; hanya admin boleh menambah/mengubah pengaturan. Path gambar harus di bawah `qris/`.
+
+`donation_verification_events` menyimpan ID donasi, status lama/baru, nominal diterima, catatan, aktor, dan waktu setiap laporan/perubahan verifikasi. Baris audit tidak dapat ditulis atau diubah langsung oleh client; member dapat membaca riwayat donasinya sendiri, admin dapat membaca semua riwayat.
 
 ---
 
@@ -367,8 +387,8 @@ gathering_events
 Karena ini data keuangan keluarga, prinsip RLS yang dipakai:
 
 1. **Semua tabel** hanya bisa diakses oleh user yang sudah login (`auth.uid() IS NOT NULL`) — tidak ada akses publik/anonim
-2. **Read (SELECT)** umumnya terbuka untuk semua anggota grup — sesuai prinsip transparansi arisan (semua boleh lihat siapa bayar, siapa menang)
-3. **Write (INSERT/UPDATE)** untuk data keuangan & kocokan dibatasi hanya untuk `role = 'admin'`
+2. **Read (SELECT)** umumnya terbuka untuk anggota grup; data donasi adalah pengecualian: member hanya melihat donasinya sendiri, admin melihat semua untuk verifikasi
+3. **Write (INSERT/UPDATE)** untuk data keuangan & kocokan umumnya admin-only; laporan donasi milik sendiri boleh dibuat member tetapi verifikasi dan perubahan nominal diterima hanya admin
 4. Proses **kocokan** sebaiknya dieksekusi lewat **Supabase Edge Function** (server-side), bukan langsung dari Flutter client, supaya random logic & aturan exclude tidak bisa dimanipulasi oleh siapa pun termasuk admin secara tidak sengaja
 5. Proses **penutupan voting gathering otomatis** dan **penghitungan opsi pemenang** juga sebaiknya dijalankan lewat **database trigger** atau **Edge Function**, bukan logic di client, agar hasil voting tidak bisa direkayasa dan konsisten meski beberapa anggota vote bersamaan (race condition)
 
@@ -380,3 +400,5 @@ Karena ini data keuangan keluarga, prinsip RLS yang dipakai:
 |---|---|---|
 | `avatars` | Foto profil anggota | Public read, authenticated write (own file) |
 | `event-photos` | Foto dokumentasi tiap periode acara | Authenticated read & write (semua anggota grup) |
+| `donation-settings` | Gambar QRIS aktif | Public read; hanya admin dapat upload, mengganti, atau menghapus melalui Pengaturan Donasi; gambar maksimal 2 MB |
+| `donation-proofs` | Bukti transfer/QRIS | Private; member pemilik donasi dan admin dapat membaca, member hanya upload bukti untuk laporannya yang masih aktif; maksimal 5 MB |

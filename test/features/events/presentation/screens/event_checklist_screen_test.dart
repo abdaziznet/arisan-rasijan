@@ -65,7 +65,10 @@ void main() {
     expect(find.text('Susunan Acara'), findsOneWidget);
     expect(find.text('Kumpul & Kehadiran'), findsOneWidget);
     expect(find.text('Yasin & Sholawat'), findsOneWidget);
+    expect(find.text('Buka Bacaan Yasin'), findsOneWidget);
     expect(find.text('Makan Bersama'), findsOneWidget);
+    expect(find.text('Doa Pembuka Pertemuan'), findsOneWidget);
+    expect(find.text('Doa Sebelum Makan'), findsOneWidget);
 
     // Sequence indicators
     expect(find.text('01'), findsOneWidget);

@@ -20,6 +20,19 @@ final donationFormProvider =
   return DonationFormController(ref);
 });
 
+final donationPaymentSettingsProvider =
+    FutureProvider<DonationPaymentSettings?>((ref) async {
+  return ref.watch(paymentsRepositoryProvider).getDonationPaymentSettings();
+});
+
+final verifiedDonationTotalProvider = FutureProvider<double>((ref) async {
+  final period = ref.watch(activePeriodProvider).valueOrNull;
+  if (period == null) return 0;
+  return ref
+      .watch(paymentsRepositoryProvider)
+      .getVerifiedDonationTotal(period.id);
+});
+
 /// Check if current member has paid for the active period.
 final currentMemberHasPaidProvider = FutureProvider<bool>((ref) async {
   final repo = ref.watch(paymentsRepositoryProvider);

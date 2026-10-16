@@ -37,6 +37,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Lokasi digunakan satu kali untuk mengisi koordinat alamat rumah Anda.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>QRIS donasi disimpan ke galeri agar dapat dibuka saat melakukan pembayaran.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Akses galeri diperlukan untuk menyimpan QRIS donasi ke perangkat Anda.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Aplikasi BANI RASIJAN membutuhkan akses Face ID untuk mengamankan dan membuka kunci aplikasi Anda.</string>
 	<key>LSRequiresIPhoneOS</key>

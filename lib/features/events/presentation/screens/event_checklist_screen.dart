@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +7,7 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_components.dart';
+import '../../../../routing/app_router.dart';
 import '../../../members/presentation/providers/members_providers.dart';
 import '../../domain/event_checklist_model.dart';
 import '../controllers/event_checklist_controller.dart';
@@ -449,6 +449,14 @@ class _AgendaItemCard extends StatelessWidget {
     final stepColor = _resolveColor(item.stepName);
     final stepIcon = _resolveIcon(item.stepName);
     final stepNumber = '${index + 1}'.padLeft(2, '0');
+    final lowerStep = item.stepName.toLowerCase();
+    final prayerId = lowerStep.contains('makan')
+        ? 135
+        : lowerStep.contains('penutupan')
+            ? 214
+            : lowerStep.contains('kumpul')
+                ? 211
+                : null;
 
     return Container(
       decoration: BoxDecoration(
@@ -518,6 +526,43 @@ class _AgendaItemCard extends StatelessWidget {
                     color: AppColors.textSecondary,
                   ),
                 ),
+                if (lowerStep.contains('yasin'))
+                  TextButton.icon(
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      AppRouter.quran,
+                      arguments: 36,
+                    ),
+                    icon: const Icon(Icons.menu_book_rounded, size: 18),
+                    label: const Text('Buka Bacaan Yasin'),
+                    style: TextButton.styleFrom(
+                      alignment: Alignment.centerLeft,
+                      minimumSize: const Size(48, 44),
+                      padding: EdgeInsets.zero,
+                      foregroundColor: AppColors.primary,
+                    ),
+                  ),
+                if (prayerId != null || lowerStep.contains('doa'))
+                  TextButton.icon(
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      AppRouter.dailyPrayers,
+                      arguments: prayerId,
+                    ),
+                    icon: const Icon(Icons.volunteer_activism_outlined, size: 18),
+                    label: Text(switch (prayerId) {
+                      135 => 'Doa Sebelum Makan',
+                      211 => 'Doa Pembuka Pertemuan',
+                      214 => 'Doa Penutup Pertemuan',
+                      _ => 'Buka Pilihan Doa',
+                    }),
+                    style: TextButton.styleFrom(
+                      alignment: Alignment.centerLeft,
+                      minimumSize: const Size(48, 44),
+                      padding: EdgeInsets.zero,
+                      foregroundColor: AppColors.primary,
+                    ),
+                  ),
               ],
             ),
           ),

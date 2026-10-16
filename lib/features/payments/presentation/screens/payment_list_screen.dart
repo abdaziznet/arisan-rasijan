@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/formatters.dart';
@@ -15,7 +14,9 @@ import '../providers/payments_providers.dart';
 import '../../domain/payment_model.dart';
 import '../../../periods/presentation/providers/periods_providers.dart';
 import '../widgets/donation_form_dialog.dart';
+import '../widgets/donation_details_sheet.dart';
 import '../widgets/donation_list_item.dart';
+import '../widgets/donation_payment_settings_sheet.dart';
 import '../widgets/donation_summary_card.dart';
 import '../../../gathering/presentation/providers/gathering_providers.dart';
 
@@ -44,6 +45,8 @@ class _PaymentListScreenState extends ConsumerState<PaymentListScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin =
+        ref.watch(currentMemberProfileProvider).valueOrNull?.isAdmin ?? false;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -56,10 +59,22 @@ class _PaymentListScreenState extends ConsumerState<PaymentListScreen>
             animation: _tabController,
             builder: (context, _) {
               if (_tabController.index != 1) return const SizedBox.shrink();
-              return IconButton(
-                icon: const Icon(Icons.add_circle_outline_rounded),
-                tooltip: 'Salurkan Donasi',
-                onPressed: () => DonationFormDialog.show(context),
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isAdmin)
+                    IconButton(
+                      icon: const Icon(Icons.settings_outlined),
+                      tooltip: 'Pengaturan Donasi',
+                      onPressed: () =>
+                          DonationPaymentSettingsSheet.show(context),
+                    ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline_rounded),
+                    tooltip: 'Salurkan Donasi',
+                    onPressed: () => DonationFormDialog.show(context),
+                  ),
+                ],
               );
             },
           ),
@@ -152,10 +167,10 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
         ref.watch(currentMemberProfileProvider).valueOrNull?.isAdmin ?? false;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final canUpdatePayment = activePeriod != null &&
-        _isSameDay(activePeriod.eventDate, today);
-    final isBeforeEvent = activePeriod != null &&
-        activePeriod.eventDate.isAfter(today);
+    final canUpdatePayment =
+        activePeriod != null && _isSameDay(activePeriod.eventDate, today);
+    final isBeforeEvent =
+        activePeriod != null && activePeriod.eventDate.isAfter(today);
 
     return membersAsync.when(
       data: (members) {
@@ -175,10 +190,9 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
         final filtered = _searchQuery.isEmpty
             ? members
             : members
-                .where((m) =>
-                    m.fullName
-                        .toLowerCase()
-                        .contains(_searchQuery.toLowerCase()))
+                .where((m) => m.fullName
+                    .toLowerCase()
+                    .contains(_searchQuery.toLowerCase()))
                 .toList();
 
         final paidCount = members.where((m) => m.isPaid).length;
@@ -199,7 +213,10 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: unpaidCount == 0
-                      ? [AppColors.success, AppColors.success.withValues(alpha: 0.8)]
+                      ? [
+                          AppColors.success,
+                          AppColors.success.withValues(alpha: 0.8)
+                        ]
                       : [AppColors.primary, AppColors.primaryDark],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -309,8 +326,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.clear, size: 18),
-                          onPressed: () =>
-                              setState(() => _searchQuery = ''),
+                          onPressed: () => setState(() => _searchQuery = ''),
                         )
                       : null,
                   filled: true,
@@ -375,7 +391,8 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
                           AppEmptyState(
                             icon: Icons.search_off_rounded,
                             title: 'Anggota Tidak Ditemukan',
-                            message: 'Tidak ada anggota yang cocok dengan pencarian.',
+                            message:
+                                'Tidak ada anggota yang cocok dengan pencarian.',
                           ),
                         ],
                       )
@@ -394,9 +411,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
                             isAdmin: isAdmin,
                             canUpdatePayment: canUpdatePayment,
                             initials: _getInitials(member.fullName),
-                            onTap: isAdmin &&
-                                    canUpdatePayment &&
-                                    !member.isPaid
+                            onTap: isAdmin && canUpdatePayment && !member.isPaid
                                 ? () => _toggleStatus(member)
                                 : null,
                           );
@@ -430,7 +445,8 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
     final activePeriod = ref.read(activePeriodProvider).valueOrNull;
     final now = DateTime.now();
     if (activePeriod == null ||
-        !_isSameDay(activePeriod.eventDate, DateTime(now.year, now.month, now.day))) {
+        !_isSameDay(
+            activePeriod.eventDate, DateTime(now.year, now.month, now.day))) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Status iuran hanya dapat diubah pada hari acara.'),
@@ -467,15 +483,13 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
 
   void _copyReminderMessage(
       List<MemberPaymentStatus> unpaidMembers, dynamic period) {
-    final periodInfo = period != null
-        ? 'Periode #${period.periodNumber}'
-        : 'periode arisan';
+    final periodInfo =
+        period != null ? 'Periode #${period.periodNumber}' : 'periode arisan';
     final amount = period?.contributionAmount != null
         ? 'Rp${period!.contributionAmount!.toInt().toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.')}'
         : '';
 
-    final names =
-        unpaidMembers.map((m) => '• ${m.fullName}').join('\n');
+    final names = unpaidMembers.map((m) => '• ${m.fullName}').join('\n');
 
     final message = '''
 Assalamu'alaikum Wr. Wb.
@@ -487,7 +501,8 @@ Yang belum membayar:
 $names
 
 Mohon untuk segera melakukan pembayaran. Terima kasih 🙏
-'''.trim();
+'''
+        .trim();
 
     Clipboard.setData(ClipboardData(text: message));
     if (mounted) {
@@ -613,8 +628,7 @@ class _MemberPaymentTile extends StatelessWidget {
 
             // Status badge
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
                 color: member.isPaid
                     ? AppColors.success.withValues(alpha: 0.1)
@@ -634,17 +648,15 @@ class _MemberPaymentTile extends StatelessWidget {
                         ? Icons.check_circle_outline
                         : Icons.schedule_rounded,
                     size: 14,
-                    color: member.isPaid
-                        ? AppColors.success
-                        : AppColors.warning,
+                    color:
+                        member.isPaid ? AppColors.success : AppColors.warning,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     member.isPaid ? 'Lunas' : 'Belum',
                     style: AppTypography.caption.copyWith(
-                      color: member.isPaid
-                          ? AppColors.success
-                          : AppColors.warning,
+                      color:
+                          member.isPaid ? AppColors.success : AppColors.warning,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -707,7 +719,8 @@ class _PaymentUpdateLockedNotice extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Pembaruan iuran dikunci', style: AppTypography.bodyMedium),
+                  Text('Pembaruan iuran dikunci',
+                      style: AppTypography.bodyMedium),
                   const SizedBox(height: 2),
                   Text(
                     'Status pembayaran dapat diubah pada hari acara: '
@@ -724,13 +737,22 @@ class _PaymentUpdateLockedNotice extends StatelessWidget {
       );
 }
 
-class _DonationsTab extends ConsumerWidget {
+class _DonationsTab extends ConsumerStatefulWidget {
   const _DonationsTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_DonationsTab> createState() => _DonationsTabState();
+}
+
+class _DonationsTabState extends ConsumerState<_DonationsTab> {
+  bool _showAllAdminDonations = false;
+
+  @override
+  Widget build(BuildContext context) {
     final donationsAsync = ref.watch(donationListProvider);
-    final membersAsync = ref.watch(membersControllerProvider);
+    final profile = ref.watch(currentMemberProfileProvider).valueOrNull;
+    final isAdmin = profile?.isAdmin ?? false;
+    final membersAsync = isAdmin ? ref.watch(membersControllerProvider) : null;
 
     return donationsAsync.when(
       loading: () => const AppLoading(),
@@ -738,167 +760,174 @@ class _DonationsTab extends ConsumerWidget {
         onRetry: () => ref.refresh(donationListProvider),
       ),
       data: (donations) {
-        final membersMap = membersAsync.whenOrNull(
-          data: (members) => {for (final m in members) m.id: m},
-        ) ?? {};
+        final communityTotalAsync = ref.watch(verifiedDonationTotalProvider);
+        final memberDonations = isAdmin
+            ? donations
+            : donations
+                .where((donation) => donation.memberId == profile?.id)
+                .toList();
+        final membersMap = membersAsync?.whenOrNull(
+              data: (members) =>
+                  {for (final member in members) member.id: member.fullName},
+            ) ??
+            <String, String>{};
+        final memberVerifiedTotal = donations
+            .where((donation) =>
+                donation.memberId == profile?.id &&
+                donation.status == 'verified')
+            .fold<double>(
+              0,
+              (sum, donation) =>
+                  sum + (donation.receivedAmount ?? donation.amount),
+            );
+        final pendingCount = memberDonations
+            .where((donation) => const {
+                  'pending_payment',
+                  'pending_verification',
+                  'needs_review',
+                }.contains(donation.status))
+            .length;
+        final visibleDonations = isAdmin && !_showAllAdminDonations
+            ? memberDonations
+                .where((donation) => const {
+                      'pending_payment',
+                      'pending_verification',
+                      'needs_review',
+                    }.contains(donation.status))
+                .toList()
+            : memberDonations;
 
-        final totalAmount = donations.fold<double>(
-          0,
-          (sum, d) => sum + d.amount,
-        );
-        final donorCount =
-            donations.map((d) => d.memberId ?? d.id).toSet().length;
-
-        if (donations.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(donationListProvider);
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                children: [
-                  DonationSummaryCard(
-                    totalAmount: 0,
-                    donorCount: 0,
-                    isLoading: donationsAsync.isLoading,
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.volunteer_activism_outlined,
-                      size: 48,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  const Text(
-                    'Belum Ada Donasi',
-                    style: AppTypography.h3,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    'Donasi sukarela keluarga bersifat terbuka dan opsional. '
-                    'Setiap rupiah yang disumbangkan sangat berarti untuk silaturahmi keluarga.',
-                    textAlign: TextAlign.center,
-                    style: AppTypography.body.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  ElevatedButton.icon(
-                    onPressed: () => DonationFormDialog.show(context),
-                    icon: const Icon(Icons.volunteer_activism_rounded),
-                    label: const Text('Beri Donasi Pertama'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
-                        vertical: AppSpacing.md,
-                      ),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: AppRadii.button,
-                      ),
-                    ),
-                  ),
-                ],
+        return LayoutBuilder(
+          builder: (context, constraints) => Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: constraints.maxWidth >= 900 ? 860 : double.infinity,
               ),
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(donationListProvider);
-          },
-          child: ListView.separated(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.md,
-              AppSpacing.md,
-              88,
-            ),
-            itemCount: donations.length + 2,
-            separatorBuilder: (context, index) {
-              if (index == 0) return const SizedBox(height: AppSpacing.md);
-              if (index == 1) return const SizedBox(height: AppSpacing.sm);
-              return const SizedBox(height: 12);
-            },
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return DonationSummaryCard(
-                  totalAmount: totalAmount,
-                  donorCount: donorCount,
-                  isLoading: donationsAsync.isLoading,
-                );
-              }
-
-              if (index == 1) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xs,
-                    vertical: 2,
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(donationListProvider);
+                  ref.invalidate(verifiedDonationTotalProvider);
+                },
+                child: ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    96,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.receipt_long_rounded,
-                            size: 18,
-                            color: AppColors.primary,
-                          ),
-                          const SizedBox(width: AppSpacing.xs),
-                          Text(
-                            'Daftar Donatur & Doa',
-                            style: AppTypography.h3.copyWith(
-                              fontWeight: FontWeight.w700,
+                  itemCount: visibleDonations.isEmpty
+                      ? (isAdmin ? 4 : 3)
+                      : visibleDonations.length + (isAdmin ? 3 : 2),
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                        child: DonationSummaryCard(
+                          communityTotalAmount:
+                              communityTotalAsync.valueOrNull ?? 0,
+                          memberTotalAmount: memberVerifiedTotal,
+                          isCommunityLoading: communityTotalAsync.isLoading,
+                          isCommunityError: communityTotalAsync.hasError,
+                          detail: communityTotalAsync.hasError
+                              ? 'Total semua anggota belum dapat dimuat.'
+                              : isAdmin
+                                  ? '$pendingCount laporan menunggu tindak lanjut admin. Hanya donasi terverifikasi yang dihitung.'
+                                  : 'Total pribadi hanya menampilkan donasi Anda. Daftar donasi anggota lain tetap dirahasiakan.',
+                        ),
+                      );
+                    }
+                    if (index == 1) {
+                      return Padding(
+                        padding: const EdgeInsets.only(
+                          left: AppSpacing.xs,
+                          right: AppSpacing.xs,
+                          bottom: AppSpacing.sm,
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.receipt_long_outlined,
+                                color: AppColors.primary, size: 20),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                isAdmin
+                                    ? 'Antrean & riwayat verifikasi'
+                                    : 'Riwayat donasi saya',
+                                style: AppTypography.h3,
+                              ),
+                            ),
+                            Text(
+                              '${visibleDonations.length} donasi',
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    if (index == 2 && isAdmin) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: FilterChip(
+                            label: Text(_showAllAdminDonations
+                                ? 'Semua donasi'
+                                : 'Perlu tindak lanjut'),
+                            selected: _showAllAdminDonations,
+                            onSelected: (value) =>
+                                setState(() => _showAllAdminDonations = value),
+                            avatar: Icon(
+                              _showAllAdminDonations
+                                  ? Icons.list_alt_rounded
+                                  : Icons.pending_actions_rounded,
+                              size: 18,
                             ),
                           ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: 2,
                         ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
+                      );
+                    }
+                    if (visibleDonations.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.xl),
+                        child: AppEmptyState(
+                          icon: isAdmin
+                              ? Icons.task_alt_rounded
+                              : Icons.volunteer_activism_outlined,
+                          title: isAdmin
+                              ? 'Tidak ada donasi untuk diperiksa'
+                              : 'Belum ada riwayat donasi',
+                          message: isAdmin
+                              ? 'Laporan pembayaran baru akan tampil di sini.'
+                              : 'Donasi yang Anda buat akan tampil di sini beserta status verifikasinya.',
                         ),
-                        child: Text(
-                          '${donations.length} Donasi',
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
+                      );
+                    }
 
-              final donation = donations[index - 2];
-              final member = donation.memberId != null
-                  ? membersMap[donation.memberId]
-                  : null;
-              final memberName = member?.fullName;
-
-              return DonationListItem(
-                donation: donation,
-                memberName: memberName,
-              );
-            },
+                    final itemIndex = index - (isAdmin ? 3 : 2);
+                    final donation = visibleDonations[itemIndex];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: DonationListItem(
+                        donation: donation,
+                        isAdmin: isAdmin,
+                        memberName:
+                            isAdmin ? membersMap[donation.memberId] : null,
+                        onTap: () => DonationDetailsSheet.show(
+                          context,
+                          donation: donation,
+                          isAdmin: isAdmin,
+                          memberName:
+                              isAdmin ? membersMap[donation.memberId] : null,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
           ),
         );
       },
