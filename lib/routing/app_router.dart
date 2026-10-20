@@ -14,6 +14,7 @@ import '../features/history/presentation/screens/history_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/profile/presentation/screens/profile_location_screen.dart';
 import '../features/prayers/presentation/daily_prayers_screen.dart';
+import '../features/prayers/presentation/tahlilan_screen.dart';
 import '../features/quran/presentation/quran_screen.dart';
 import '../features/settings/presentation/screens/admin_settings_screen.dart';
 import '../features/members/domain/member_model.dart';
@@ -42,6 +43,7 @@ abstract final class AppRouter {
   static const profileLocation = '/profile-location';
   static const quran = '/quran';
   static const dailyPrayers = '/daily-prayers';
+  static const tahlilan = '/tahlilan';
   static const biometricLock = '/biometric-lock';
 
   static Route<void> onGenerateRoute(RouteSettings settings) =>
@@ -81,6 +83,7 @@ abstract final class AppRouter {
           dailyPrayers => DailyPrayersScreen(
               initialPrayerId: settings.arguments as int?,
             ),
+          tahlilan => const TahlilanScreen(),
           biometricLock => const BiometricLockScreen(),
           _ => const SplashScreen(),
         },

@@ -833,6 +833,43 @@ class _HomeOverview extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(16),
                       onTap: () => Navigator.pushNamed(
                         context,
+                        AppRouter.tahlilan,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.auto_stories_rounded,
+                                color: AppColors.primary),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Bacaan Tahlilan',
+                                      style: AppTypography.bodyMedium),
+                                  Text(
+                                    'Bacaan Arab, latin, arti, dan jumlah pengulangan',
+                                    style: AppTypography.caption.copyWith(
+                                        color: AppColors.textSecondary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded,
+                                color: AppColors.primary),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppCard(
+                    padding: EdgeInsets.zero,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => Navigator.pushNamed(
+                        context,
                         AppRouter.dailyPrayers,
                       ),
                       child: Padding(

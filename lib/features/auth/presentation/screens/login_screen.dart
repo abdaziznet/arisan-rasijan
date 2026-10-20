@@ -191,9 +191,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     fit: BoxFit.scaleDown,
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        const Icon(Icons.g_mobiledata_rounded, size: 28),
+                                        const Icon(Icons.g_mobiledata_rounded,
+                                            size: 28),
                                         const SizedBox(width: AppSpacing.xs),
                                         Text(
                                           'Lanjut dengan Google',
@@ -211,7 +213,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           SizedBox(
                             height: 48,
                             child: OutlinedButton.icon(
-                              onPressed: isLoading ? null : _signInWithBiometric,
+                              onPressed:
+                                  isLoading ? null : _signInWithBiometric,
                               icon: Icon(
                                 primaryType == AppBiometricType.face
                                     ? Icons.face_rounded
@@ -227,7 +230,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 ),
                               ),
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: AppColors.primary),
+                                side:
+                                    const BorderSide(color: AppColors.primary),
                                 shape: const RoundedRectangleBorder(
                                   borderRadius: AppRadii.button,
                                 ),
@@ -238,24 +242,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xl),
-                  Center(
-                    child: TextButton(
-                      onPressed: isLoading
-                          ? null
-                          : () => Navigator.pushNamed(
-                                context,
-                                AppRouter.invite,
-                              ),
-                      child: Text(
-                        'Punya kode undangan baru?',
-                        style: AppTypography.body.copyWith(
-                          color: AppColors.primaryDark,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
+                  // const SizedBox(height: AppSpacing.xl),
+                  // Center(
+                  //   child: TextButton(
+                  //     onPressed: isLoading
+                  //         ? null
+                  //         : () => Navigator.pushNamed(
+                  //               context,
+                  //               AppRouter.invite,
+                  //             ),
+                  //     child: Text(
+                  //       'Punya kode undangan baru?',
+                  //       style: AppTypography.body.copyWith(
+                  //         color: AppColors.primaryDark,
+                  //         fontWeight: FontWeight.w600,
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ),

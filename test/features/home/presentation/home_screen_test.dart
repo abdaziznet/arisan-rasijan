@@ -127,7 +127,29 @@ void main() {
     expect(find.text('Di rumah Ahmad Rasijan'), findsOneWidget);
     expect(find.text('Aksi Cepat Admin'), findsOneWidget);
     expect(find.text('Periode Baru'), findsOneWidget);
+    await tester.dragUntilVisible(
+      find.text('Rp125.000'),
+      find.byType(Scrollable).first,
+      const Offset(0, -400),
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Rp125.000'), findsOneWidget);
+  });
+
+  testWidgets('opens tahlilan from the family shortcuts', (tester) async {
+    await tester.pumpWidget(buildWidget());
+    await tester.pumpAndSettle();
+
+    await tester.dragUntilVisible(
+      find.text('Bacaan Tahlilan'),
+      find.byType(Scrollable).first,
+      const Offset(0, -400),
+    );
+    await tester.tap(find.text('Bacaan Tahlilan'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Bacaan bersama keluarga'), findsOneWidget);
+    expect(find.text('Pengantar Al-Fatihah'), findsOneWidget);
   });
 
   testWidgets('shows offline banner when internet is disconnected',
