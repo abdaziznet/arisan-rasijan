@@ -164,81 +164,95 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: AppSpacing.xl),
-                        SizedBox(
-                          height: 52,
-                          child: ElevatedButton(
-                            onPressed: isLoading ? null : _signInWithGoogle,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: AppColors.surface,
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: AppRadii.button,
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.md,
-                              ),
-                              elevation: 0,
-                            ),
-                            child: isLoading
-                                ? const SizedBox.square(
-                                    dimension: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: AppColors.surface,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SizedBox(
+                                height: 52,
+                                child: ElevatedButton(
+                                  onPressed:
+                                      isLoading ? null : _signInWithGoogle,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: AppColors.surface,
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: AppRadii.button,
                                     ),
-                                  )
-                                : FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(Icons.g_mobiledata_rounded,
-                                            size: 28),
-                                        const SizedBox(width: AppSpacing.xs),
-                                        Text(
-                                          'Lanjut dengan Google',
-                                          style: AppTypography.button.copyWith(
-                                            fontWeight: FontWeight.w600,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.md,
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  child: isLoading
+                                      ? const SizedBox.square(
+                                          dimension: 22,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.5,
+                                            color: AppColors.surface,
+                                          ),
+                                        )
+                                      : FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Image.asset(
+                                                'assets/image/google-white-icon.webp',
+                                                width: 22,
+                                                height: 22,
+                                                fit: BoxFit.contain,
+                                              ),
+                                              const SizedBox(
+                                                width: AppSpacing.md,
+                                              ),
+                                              Text(
+                                                'Lanjut dengan Google',
+                                                style: AppTypography.button
+                                                    .copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        if (isBioActive) ...[
-                          const SizedBox(height: AppSpacing.md),
-                          SizedBox(
-                            height: 48,
-                            child: OutlinedButton.icon(
-                              onPressed:
-                                  isLoading ? null : _signInWithBiometric,
-                              icon: Icon(
-                                primaryType == AppBiometricType.face
-                                    ? Icons.face_rounded
-                                    : Icons.fingerprint_rounded,
-                                size: 22,
-                                color: AppColors.primary,
-                              ),
-                              label: Text(
-                                'Buka dengan ${primaryType.displayName}',
-                                style: AppTypography.button.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                side:
-                                    const BorderSide(color: AppColors.primary),
-                                shape: const RoundedRectangleBorder(
-                                  borderRadius: AppRadii.button,
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                            if (isBioActive) ...[
+                              const SizedBox(width: AppSpacing.sm),
+                              SizedBox.square(
+                                dimension: 52,
+                                child: Tooltip(
+                                  message:
+                                      'Masuk dengan ${primaryType.displayName}',
+                                  child: OutlinedButton(
+                                    onPressed: isLoading
+                                        ? null
+                                        : _signInWithBiometric,
+                                    style: OutlinedButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      side: const BorderSide(
+                                        color: AppColors.primary,
+                                      ),
+                                      shape: const RoundedRectangleBorder(
+                                        borderRadius: AppRadii.button,
+                                      ),
+                                    ),
+                                    child: Icon(
+                                      primaryType == AppBiometricType.face
+                                          ? Icons.face_rounded
+                                          : Icons.fingerprint_rounded,
+                                      size: 25,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ],
                     ),
                   ),

@@ -1,6 +1,8 @@
 import 'package:bani_rasijan/features/auth/data/auth_repository.dart';
 import 'package:bani_rasijan/features/auth/presentation/providers/auth_providers.dart';
 import 'package:bani_rasijan/features/auth/presentation/screens/login_screen.dart';
+import 'package:bani_rasijan/features/biometric/domain/biometric_type.dart';
+import 'package:bani_rasijan/features/biometric/presentation/providers/biometric_providers.dart';
 import 'package:bani_rasijan/routing/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,6 +36,34 @@ void main() {
     expect(find.text('BANI RASIJAN'), findsOneWidget);
     expect(find.text('Lanjut dengan Google'), findsOneWidget);
     expect(find.byType(ElevatedButton), findsOneWidget);
+  });
+
+  testWidgets('shows biometric icon beside Google button when enabled', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(mockRepo),
+          isBiometricEnabledProvider.overrideWith((ref) async => true),
+          biometricCapabilityProvider.overrideWith((ref) async => true),
+          biometricPrimaryTypeProvider
+              .overrideWith((ref) async => AppBiometricType.fingerprint),
+        ],
+        child: const MaterialApp(
+          onGenerateRoute: AppRouter.onGenerateRoute,
+          home: LoginScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final googleButton = tester.getRect(find.byType(ElevatedButton));
+    final biometricButton = tester.getRect(find.byType(OutlinedButton));
+    expect(find.text('Lanjut dengan Google'), findsOneWidget);
+    expect(find.textContaining('Buka dengan'), findsNothing);
+    expect(biometricButton.height, googleButton.height);
+    expect(biometricButton.top, googleButton.top);
+    expect(biometricButton.left, greaterThan(googleButton.right));
+    expect(find.byTooltip('Masuk dengan Sidik Jari'), findsOneWidget);
   });
 
   testWidgets('triggers signInWithGoogle when Google button is tapped', (tester) async {
