@@ -279,6 +279,7 @@ Show:
 - Repeat-winner rule
 - Participant list
 - Admin-only start action
+- Admin can choose either a random draw or an eligible member by name; show a clear confirmation before recording a selected winner
 
 Always show the active rule before the draw.
 

@@ -182,8 +182,8 @@ Response: { success: boolean }
 - Tombol "Mulai Kocokan" hanya muncul untuk role admin
 - Saat ditekan → panggil Edge Function yang:
   1. Ambil daftar anggota eligible (exclude yang sudah pernah menang, jika opsi ini aktif)
-  2. Random pilih 1 pemenang
-  3. Simpan ke tabel `draws`
+  2. Random pilih 1 pemenang atau validasi pilihan pemenang eligible dari admin
+  3. Simpan hasil beserta metode (`random` atau `admin_selected`) dan admin pelaksana ke tabel `draws`
   4. Update `arisan_periods.winner_id` dan buat baris baru di `arisan_periods` untuk periode berikutnya dengan `host_id` = pemenang
 - Hasil di-broadcast lewat Supabase Realtime → semua device yang membuka layar kocokan otomatis menampilkan animasi & hasil yang sama secara bersamaan
 

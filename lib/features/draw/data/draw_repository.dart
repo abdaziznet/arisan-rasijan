@@ -14,10 +14,8 @@ class DrawRepository {
   /// until all active members have won (then cycle resets).
   Future<List<MemberModel>> getCandidates(String periodId) async {
     // Get active members
-    final activeMembersResp = await _client
-        .from('profiles')
-        .select('*')
-        .eq('is_active', true);
+    final activeMembersResp =
+        await _client.from('profiles').select('*').eq('is_active', true);
 
     // Get past winners
     final pastWinnersResp = await _client
@@ -29,9 +27,8 @@ class DrawRepository {
         .map((json) => MemberModel.fromJson(json as Map<String, dynamic>))
         .toList();
 
-    final pastWinnerIds = (pastWinnersResp as List)
-        .map((p) => p['winner_id'] as String)
-        .toSet();
+    final pastWinnerIds =
+        (pastWinnersResp as List).map((p) => p['winner_id'] as String).toSet();
 
     // If all active members have won, reset the cycle
     if (pastWinnerIds.length >= activeMembers.length) {
@@ -43,10 +40,13 @@ class DrawRepository {
   }
 
   /// Runs the draw via Edge Function
-  Future<DrawModel> runDraw(String periodId) async {
+  Future<DrawModel> runDraw(String periodId, {String? winnerId}) async {
     final response = await _client.functions.invoke(
       'run-draw',
-      body: {'periodId': periodId},
+      body: {
+        'periodId': periodId,
+        if (winnerId != null) 'winnerId': winnerId,
+      },
     );
 
     // FunctionResponse doesn't have error getter in newer versions
@@ -66,17 +66,15 @@ class DrawRepository {
 
   /// Fetches draw history with winner details
   Future<List<DrawHistoryModel>> getDrawHistory() async {
-    final response = await _client
-        .from('draws')
-        .select('''
+    final response = await _client.from('draws').select('''
           id,
           period_id,
           winner_id,
+          draw_method,
           conducted_at,
           arisan_periods!inner(period_number),
           winner:profiles!winner_id(full_name)
-        ''')
-        .order('conducted_at', ascending: false);
+        ''').order('conducted_at', ascending: false);
 
     return (response as List).map((json) {
       final period = json['arisan_periods'] as Map<String, dynamic>;
@@ -88,6 +86,7 @@ class DrawRepository {
         winnerId: json['winner_id'] as String,
         winnerName: winner['full_name'] as String,
         createdAt: DateTime.parse(json['conducted_at'] as String),
+        drawMethod: json['draw_method'] as String? ?? 'random',
       );
     }).toList();
   }

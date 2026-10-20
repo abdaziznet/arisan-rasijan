@@ -10,27 +10,38 @@ class DrawController extends AsyncNotifier<DrawModel?> {
   FutureOr<DrawModel?> build() => null;
 
   Future<void> runDraw(String periodId) async {
+    await _submitDraw(periodId);
+  }
+
+  Future<void> selectWinner(String periodId, String winnerId) async {
+    await _submitDraw(periodId, winnerId: winnerId);
+  }
+
+  Future<void> _submitDraw(String periodId, {String? winnerId}) async {
     // Guard: validasi semua kondisi
     final allPaid = await ref.read(allMembersPaidProvider.future);
     if (!allPaid) {
-      state = AsyncError('Belum semua anggota membayar iuran.', StackTrace.current);
+      state =
+          AsyncError('Belum semua anggota membayar iuran.', StackTrace.current);
       return;
     }
     final isDrawDay = ref.read(isDrawDayProvider);
     if (!isDrawDay) {
-      state = AsyncError('Kocokan hanya bisa dijalankan pada hari-H acara.', StackTrace.current);
+      state = AsyncError('Kocokan hanya bisa dijalankan pada hari-H acara.',
+          StackTrace.current);
       return;
     }
     final isDone = await ref.read(isDrawAlreadyDoneProvider.future);
     if (isDone) {
-      state = AsyncError('Kocokan untuk periode ini sudah selesai.', StackTrace.current);
+      state = AsyncError(
+          'Kocokan untuk periode ini sudah selesai.', StackTrace.current);
       return;
     }
 
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final repo = ref.read(drawRepositoryProvider);
-      return repo.runDraw(periodId);
+      return repo.runDraw(periodId, winnerId: winnerId);
     });
   }
 }

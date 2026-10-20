@@ -146,7 +146,7 @@ Histori hasil kocokan — inti transparansi aplikasi.
 | `period_id` | `uuid` (FK → `arisan_periods.id`, unique) | 1 kocokan per periode |
 | `eligible_member_ids` | `uuid[]` | Daftar anggota yang ikut diundi (setelah exclude, jika ada) |
 | `winner_id` | `uuid` (FK → `profiles.id`) | Hasil undian |
-| `draw_method` | `text`, default `'random'` | Metode (untuk audit, misal `'random'` atau `'manual_override'`) |
+| `draw_method` | `text`, default `'random'` | Metode (untuk audit: `'random'` atau `'admin_selected'`) |
 | `conducted_by` | `uuid` (FK → `profiles.id`) | Admin yang menjalankan kocokan |
 | `conducted_at` | `timestamptz`, default `now()` | |
 
@@ -389,7 +389,7 @@ Karena ini data keuangan keluarga, prinsip RLS yang dipakai:
 1. **Semua tabel** hanya bisa diakses oleh user yang sudah login (`auth.uid() IS NOT NULL`) — tidak ada akses publik/anonim
 2. **Read (SELECT)** umumnya terbuka untuk anggota grup; data donasi adalah pengecualian: member hanya melihat donasinya sendiri, admin melihat semua untuk verifikasi
 3. **Write (INSERT/UPDATE)** untuk data keuangan & kocokan umumnya admin-only; laporan donasi milik sendiri boleh dibuat member tetapi verifikasi dan perubahan nominal diterima hanya admin
-4. Proses **kocokan** sebaiknya dieksekusi lewat **Supabase Edge Function** (server-side), bukan langsung dari Flutter client, supaya random logic & aturan exclude tidak bisa dimanipulasi oleh siapa pun termasuk admin secara tidak sengaja
+4. Proses **kocokan** dieksekusi lewat **Supabase Edge Function** (server-side). Edge Function memeriksa role admin dan database memvalidasi pilihan pemenang terhadap daftar kandidat eligible; metode dan admin pelaksana tercatat untuk audit
 5. Proses **penutupan voting gathering otomatis** dan **penghitungan opsi pemenang** juga sebaiknya dijalankan lewat **database trigger** atau **Edge Function**, bukan logic di client, agar hasil voting tidak bisa direkayasa dan konsisten meski beberapa anggota vote bersamaan (race condition)
 
 ---

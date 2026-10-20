@@ -27,7 +27,8 @@ class DrawHistoryList extends ConsumerWidget {
         if (history.isEmpty) {
           return const AppEmptyState(
             title: 'Belum Ada Riwayat',
-            message: 'Riwayat pemenang akan muncul di sini setelah kocokan pertama.',
+            message:
+                'Riwayat pemenang akan muncul di sini setelah kocokan pertama.',
           );
         }
         return Column(
@@ -44,8 +45,18 @@ class DrawHistoryTile extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -65,7 +76,8 @@ class DrawHistoryTile extends StatelessWidget {
                 color: AppColors.accent.withValues(alpha: 0.15),
                 borderRadius: AppRadii.card,
               ),
-              child: const Icon(Icons.emoji_events_outlined, color: AppColors.accent),
+              child: const Icon(Icons.emoji_events_outlined,
+                  color: AppColors.accent),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -74,12 +86,22 @@ class DrawHistoryTile extends StatelessWidget {
                 children: [
                   Text(
                     draw.winnerName,
-                    style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                    style: AppTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Periode #${draw.periodNumber} • ${_formatDate(draw.createdAt)}',
-                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    draw.drawMethod == 'admin_selected'
+                        ? 'Pemenang ditetapkan admin'
+                        : 'Pemenang dipilih secara acak',
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.textSecondary),
                   ),
                 ],
               ),

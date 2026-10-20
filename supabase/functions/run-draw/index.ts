@@ -47,7 +47,7 @@ serve(async (req) => {
     }
 
     // 3. Get periodId from the request body
-    const { periodId } = await req.json();
+    const { periodId, winnerId } = await req.json();
     if (!periodId) {
       throw new Error('periodId is required.');
     }
@@ -72,7 +72,11 @@ serve(async (req) => {
     //    Pass the authenticated admin's id as conducted_by (auth.uid() is null
     //    inside the RPC when called via service_role).
     const { data: draw, error: drawError } = await supabaseAdmin
-      .rpc('run_draw', { p_period_id: periodId, p_conducted_by: user.id });
+      .rpc('run_draw', {
+        p_period_id: periodId,
+        p_conducted_by: user.id,
+        p_winner_id: winnerId ?? null,
+      });
 
     if (drawError) {
       throw new Error(drawError.message);

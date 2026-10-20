@@ -79,7 +79,9 @@ Aplikasi ini bersifat **privat**, hanya digunakan oleh anggota satu keluarga bes
 
 **D. Sistem Kocokan (Core Feature)**
 - Undian digital dengan animasi visual saat acara berlangsung
+- Admin dapat memilih anggota eligible sebagai pemenang secara langsung, selain menjalankan undian acak. Pilihan ini mendukung kesepakatan keluarga, misalnya anggota yang perlu menjadi tuan rumah untuk acara hajatan
 - Opsi exclude anggota yang sudah pernah menang (configurable)
+- Metode kocokan dan admin pelaksana tercatat di histori; pilihan manual hanya tersedia bagi admin dan tetap mengikuti aturan kandidat eligible
 - Hasil otomatis tersimpan sebagai histori
 - Pemenang otomatis di-set sebagai tuan rumah periode berikutnya
 
@@ -157,7 +159,7 @@ Untuk mendukung koordinasi arisan yang lebih praktis, aplikasi perlu menyimpan d
 3. (Opsional) Anggota memberi donasi, dicatat terpisah oleh admin
 4. Reminder otomatis terkirim H-7 dan H-1
 5. Saat hari-H, admin membuka fitur agenda & mencentang tiap tahap acara berjalan
-6. Di akhir acara, admin membuka fitur kocokan → menjalankan undian di depan anggota
+6. Di akhir acara, admin membuka fitur kocokan → menjalankan undian acak atau memilih pemenang eligible sesuai kesepakatan keluarga
 7. Sistem menampilkan pemenang → otomatis tercatat sebagai penerima uang & tuan rumah periode berikutnya
 8. Admin upload foto-foto acara ke galeri
 9. Periode baru otomatis ter-generate dengan tuan rumah & tanggal baru (+2 bulan)

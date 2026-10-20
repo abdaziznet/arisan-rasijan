@@ -20,4 +20,21 @@ void main() {
       expect(model.totalCollected, 8500000.0);
     });
   });
+
+  group('DrawHistoryModel.fromJson', () {
+    test('retains the selected winner method for transparent history', () {
+      final model = DrawHistoryModel.fromJson({
+        'id': 'draw-2',
+        'period_id': 'period-2',
+        'winner_id': 'winner-2',
+        'draw_method': 'admin_selected',
+        'conducted_at': '2026-10-15T10:00:00.000Z',
+        'arisan_periods': {'period_number': 2},
+        'winner': {'full_name': 'Siti Rasijan'},
+      });
+
+      expect(model.drawMethod, 'admin_selected');
+      expect(model.toJson()['draw_method'], 'admin_selected');
+    });
+  });
 }

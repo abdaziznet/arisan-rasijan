@@ -16,13 +16,16 @@ class DrawAnimationScreen extends ConsumerStatefulWidget {
     super.key,
     required this.periodId,
     required this.candidates,
+    this.selectedWinnerId,
   });
 
   final String periodId;
   final List<MemberModel> candidates;
+  final String? selectedWinnerId;
 
   @override
-  ConsumerState<DrawAnimationScreen> createState() => _DrawAnimationScreenState();
+  ConsumerState<DrawAnimationScreen> createState() =>
+      _DrawAnimationScreenState();
 }
 
 class _DrawAnimationScreenState extends ConsumerState<DrawAnimationScreen>
@@ -46,7 +49,12 @@ class _DrawAnimationScreenState extends ConsumerState<DrawAnimationScreen>
 
     // Mulai panggil API runDraw segera
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(drawControllerProvider.notifier).runDraw(widget.periodId);
+      final controller = ref.read(drawControllerProvider.notifier);
+      if (widget.selectedWinnerId == null) {
+        controller.runDraw(widget.periodId);
+      } else {
+        controller.selectWinner(widget.periodId, widget.selectedWinnerId!);
+      }
     });
   }
 
@@ -83,7 +91,8 @@ class _DrawAnimationScreenState extends ConsumerState<DrawAnimationScreen>
     } else if (state.hasError) {
       // Jika API error, kembali dan tunjukkan pesan
       _timer.cancel();
-      Navigator.pop(context); // kembali ke DrawScreen, state.error ditangani di sana
+      Navigator.pop(
+          context); // kembali ke DrawScreen, state.error ditangani di sana
     } else {
       // API masih berjalan, tunggu 500ms lalu cek lagi
       Future.delayed(const Duration(milliseconds: 500), _checkResult);
@@ -96,7 +105,8 @@ class _DrawAnimationScreenState extends ConsumerState<DrawAnimationScreen>
     setState(() {
       _isFinished = true;
       // Set nama ke pemenang asli
-      _currentIndex = widget.candidates.indexWhere((c) => c.id == result.winnerId);
+      _currentIndex =
+          widget.candidates.indexWhere((c) => c.id == result.winnerId);
       if (_currentIndex == -1) _currentIndex = 0; // fallback
     });
 
@@ -121,9 +131,8 @@ class _DrawAnimationScreenState extends ConsumerState<DrawAnimationScreen>
 
   @override
   Widget build(BuildContext context) {
-    final candidate = widget.candidates.isEmpty
-      ? null
-      : widget.candidates[_currentIndex];
+    final candidate =
+        widget.candidates.isEmpty ? null : widget.candidates[_currentIndex];
 
     return Scaffold(
       body: Container(
@@ -139,7 +148,8 @@ class _DrawAnimationScreenState extends ConsumerState<DrawAnimationScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.casino_rounded, size: 64, color: AppColors.accent),
+                const Icon(Icons.casino_rounded,
+                    size: 64, color: AppColors.accent),
                 const SizedBox(height: AppSpacing.xl),
                 Text(
                   _isFinished ? 'MENETAPKAN PEMENANG...' : 'MENGOCOK...',
@@ -150,9 +160,11 @@ class _DrawAnimationScreenState extends ConsumerState<DrawAnimationScreen>
                 ),
                 const SizedBox(height: AppSpacing.xxl),
                 ScaleTransition(
-                  scale: Tween(begin: 0.95, end: 1.05).animate(_pulseController),
+                  scale:
+                      Tween(begin: 0.95, end: 1.05).animate(_pulseController),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl, vertical: AppSpacing.xl),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xxl, vertical: AppSpacing.xl),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(24),
@@ -165,12 +177,13 @@ class _DrawAnimationScreenState extends ConsumerState<DrawAnimationScreen>
                       ],
                     ),
                     child: candidate != null
-                      ? Text(
-                          candidate.fullName,
-                          style: AppTypography.display.copyWith(color: AppColors.primary),
-                          textAlign: TextAlign.center,
-                        )
-                      : const CircularProgressIndicator(),
+                        ? Text(
+                            candidate.fullName,
+                            style: AppTypography.display
+                                .copyWith(color: AppColors.primary),
+                            textAlign: TextAlign.center,
+                          )
+                        : const CircularProgressIndicator(),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xxxl),

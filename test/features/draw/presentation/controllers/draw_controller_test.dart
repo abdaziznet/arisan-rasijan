@@ -24,7 +24,8 @@ void main() {
         drawRepositoryProvider.overrideWithValue(mockRepository),
         allMembersPaidProvider.overrideWith((ref) => Future.value(allPaid)),
         isDrawDayProvider.overrideWithValue(isDrawDay),
-        isDrawAlreadyDoneProvider.overrideWith((ref) => Future.value(isAlreadyDone)),
+        isDrawAlreadyDoneProvider
+            .overrideWith((ref) => Future.value(isAlreadyDone)),
       ],
     );
     addTearDown(container.dispose);
@@ -45,7 +46,8 @@ void main() {
     final state = container.read(drawControllerProvider);
 
     expect(state.hasError, isTrue);
-    expect(state.error.toString(), contains('Belum semua anggota membayar iuran.'));
+    expect(state.error.toString(),
+        contains('Belum semua anggota membayar iuran.'));
   });
 
   test('runDraw returns error if not draw day', () async {
@@ -56,7 +58,8 @@ void main() {
     final state = container.read(drawControllerProvider);
 
     expect(state.hasError, isTrue);
-    expect(state.error.toString(), contains('Kocokan hanya bisa dijalankan pada hari-H acara.'));
+    expect(state.error.toString(),
+        contains('Kocokan hanya bisa dijalankan pada hari-H acara.'));
   });
 
   test('runDraw returns error if draw already done', () async {
@@ -67,7 +70,8 @@ void main() {
     final state = container.read(drawControllerProvider);
 
     expect(state.hasError, isTrue);
-    expect(state.error.toString(), contains('Kocokan untuk periode ini sudah selesai.'));
+    expect(state.error.toString(),
+        contains('Kocokan untuk periode ini sudah selesai.'));
   });
 
   test('runDraw calls repo and returns DrawModel on success', () async {
@@ -88,5 +92,24 @@ void main() {
     expect(state.hasValue, isTrue);
     expect(state.value, equals(mockDraw));
     verify(() => mockRepository.runDraw('period1')).called(1);
+  });
+
+  test('selectWinner sends the selected member to the repository', () async {
+    final mockDraw = DrawModel(
+      id: 'd2',
+      periodId: 'p1',
+      winnerId: 'member-2',
+      createdAt: DateTime(2026, 1, 1),
+    );
+    when(() => mockRepository.runDraw(any(), winnerId: any(named: 'winnerId')))
+        .thenAnswer((_) async => mockDraw);
+
+    final container = makeProviderContainer();
+    await container
+        .read(drawControllerProvider.notifier)
+        .selectWinner('p1', 'member-2');
+
+    expect(container.read(drawControllerProvider).value, equals(mockDraw));
+    verify(() => mockRepository.runDraw('p1', winnerId: 'member-2')).called(1);
   });
 }

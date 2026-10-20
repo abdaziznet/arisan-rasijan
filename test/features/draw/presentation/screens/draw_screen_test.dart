@@ -1,6 +1,7 @@
 import 'package:bani_rasijan/features/draw/presentation/providers/draw_providers.dart';
 import 'package:bani_rasijan/features/draw/presentation/screens/draw_screen.dart';
 import 'package:bani_rasijan/features/members/domain/member_model.dart';
+import 'package:bani_rasijan/features/members/presentation/providers/members_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,7 +10,9 @@ import 'dart:async';
 void main() {
   Widget buildApp(List<Override> overrides) {
     return ProviderScope(
-      overrides: overrides,
+      overrides: [
+        ...overrides,
+      ],
       child: const MaterialApp(
         home: DrawScreen(periodId: 'p1'),
       ),
@@ -21,17 +24,25 @@ void main() {
       await tester.pumpWidget(buildApp([
         // Leaving drawCandidatesForPeriodProvider to default which might trigger actual fetch
         // Let's mock it
-        drawCandidatesForPeriodProvider('p1').overrideWith((ref) => Completer<List<MemberModel>>().future),
+        drawCandidatesForPeriodProvider('p1')
+            .overrideWith((ref) => Completer<List<MemberModel>>().future),
       ]));
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('shows button enabled when all conditions are met', (tester) async {
+    testWidgets('shows button enabled when all conditions are met',
+        (tester) async {
       await tester.pumpWidget(buildApp([
-        drawCandidatesForPeriodProvider('p1').overrideWith((ref) => Future.value([
-          const MemberModel(id: 'm1', fullName: 'Member 1', phoneNumber: '', address: '', isActive: true)
-        ])),
+        drawCandidatesForPeriodProvider('p1')
+            .overrideWith((ref) => Future.value([
+                  const MemberModel(
+                      id: 'm1',
+                      fullName: 'Member 1',
+                      phoneNumber: '',
+                      address: '',
+                      isActive: true)
+                ])),
         drawHistoryStreamProvider.overrideWith((ref) => Stream.value([])),
         allMembersPaidProvider.overrideWith((ref) => Future.value(true)),
         isDrawDayProvider.overrideWithValue(true),
@@ -44,11 +55,18 @@ void main() {
       expect(tester.widget<ElevatedButton>(buttonFinder).enabled, isTrue);
     });
 
-    testWidgets('shows button disabled when not all members paid', (tester) async {
+    testWidgets('shows button disabled when not all members paid',
+        (tester) async {
       await tester.pumpWidget(buildApp([
-        drawCandidatesForPeriodProvider('p1').overrideWith((ref) => Future.value([
-          const MemberModel(id: 'm1', fullName: 'Member 1', phoneNumber: '', address: '', isActive: true)
-        ])),
+        drawCandidatesForPeriodProvider('p1')
+            .overrideWith((ref) => Future.value([
+                  const MemberModel(
+                      id: 'm1',
+                      fullName: 'Member 1',
+                      phoneNumber: '',
+                      address: '',
+                      isActive: true)
+                ])),
         drawHistoryStreamProvider.overrideWith((ref) => Stream.value([])),
         allMembersPaidProvider.overrideWith((ref) => Future.value(false)),
         isDrawDayProvider.overrideWithValue(true),
@@ -63,9 +81,15 @@ void main() {
 
     testWidgets('shows button disabled when not draw day', (tester) async {
       await tester.pumpWidget(buildApp([
-        drawCandidatesForPeriodProvider('p1').overrideWith((ref) => Future.value([
-          const MemberModel(id: 'm1', fullName: 'Member 1', phoneNumber: '', address: '', isActive: true)
-        ])),
+        drawCandidatesForPeriodProvider('p1')
+            .overrideWith((ref) => Future.value([
+                  const MemberModel(
+                      id: 'm1',
+                      fullName: 'Member 1',
+                      phoneNumber: '',
+                      address: '',
+                      isActive: true)
+                ])),
         drawHistoryStreamProvider.overrideWith((ref) => Stream.value([])),
         allMembersPaidProvider.overrideWith((ref) => Future.value(true)),
         isDrawDayProvider.overrideWithValue(false),
@@ -80,9 +104,15 @@ void main() {
 
     testWidgets('shows button disabled when draw already done', (tester) async {
       await tester.pumpWidget(buildApp([
-        drawCandidatesForPeriodProvider('p1').overrideWith((ref) => Future.value([
-          const MemberModel(id: 'm1', fullName: 'Member 1', phoneNumber: '', address: '', isActive: true)
-        ])),
+        drawCandidatesForPeriodProvider('p1')
+            .overrideWith((ref) => Future.value([
+                  const MemberModel(
+                      id: 'm1',
+                      fullName: 'Member 1',
+                      phoneNumber: '',
+                      address: '',
+                      isActive: true)
+                ])),
         drawHistoryStreamProvider.overrideWith((ref) => Stream.value([])),
         allMembersPaidProvider.overrideWith((ref) => Future.value(true)),
         isDrawDayProvider.overrideWithValue(true),
@@ -95,11 +125,18 @@ void main() {
       expect(tester.widget<ElevatedButton>(buttonFinder).enabled, isFalse);
     });
 
-    testWidgets('opens confirmation dialog on click when enabled', (tester) async {
+    testWidgets('opens confirmation dialog on click when enabled',
+        (tester) async {
       await tester.pumpWidget(buildApp([
-        drawCandidatesForPeriodProvider('p1').overrideWith((ref) => Future.value([
-          const MemberModel(id: 'm1', fullName: 'Member 1', phoneNumber: '', address: '', isActive: true)
-        ])),
+        drawCandidatesForPeriodProvider('p1')
+            .overrideWith((ref) => Future.value([
+                  const MemberModel(
+                      id: 'm1',
+                      fullName: 'Member 1',
+                      phoneNumber: '',
+                      address: '',
+                      isActive: true)
+                ])),
         drawHistoryStreamProvider.overrideWith((ref) => Stream.value([])),
         allMembersPaidProvider.overrideWith((ref) => Future.value(true)),
         isDrawDayProvider.overrideWithValue(true),
@@ -114,6 +151,56 @@ void main() {
       expect(find.text('Konfirmasi Kocokan'), findsOneWidget);
       expect(find.text('Ya, Kocok Sekarang'), findsOneWidget);
       expect(find.text('Batal'), findsOneWidget);
+    });
+
+    testWidgets('admin can select an eligible winner', (tester) async {
+      await tester.pumpWidget(buildApp([
+        drawCandidatesForPeriodProvider('p1')
+            .overrideWith((ref) => Future.value([
+                  const MemberModel(
+                      id: 'm1',
+                      fullName: 'Member 1',
+                      phoneNumber: '',
+                      address: '',
+                      isActive: true),
+                  const MemberModel(
+                      id: 'm2',
+                      fullName: 'Member 2',
+                      phoneNumber: '',
+                      address: '',
+                      isActive: true),
+                ])),
+        drawHistoryStreamProvider.overrideWith((ref) => Stream.value([])),
+        allMembersPaidProvider.overrideWith((ref) => Future.value(true)),
+        isDrawDayProvider.overrideWithValue(true),
+        isDrawAlreadyDoneProvider.overrideWith((ref) => Future.value(false)),
+        currentMemberProfileProvider
+            .overrideWith((ref) async => const MemberModel(
+                  id: 'admin',
+                  fullName: 'Admin',
+                  phoneNumber: '',
+                  address: '',
+                  role: 'admin',
+                  isActive: true,
+                )),
+      ]));
+
+      await tester.pumpAndSettle();
+      expect(find.text('Tentukan Pemenang'), findsOneWidget);
+      await tester.ensureVisible(find.text('Pilih nama anggota'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pilih nama anggota'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Member 2').last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Tetapkan Pemenang'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tetapkan Pemenang'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Konfirmasi Kocokan'), findsOneWidget);
+      expect(find.textContaining('Member 2 akan ditetapkan'), findsOneWidget);
+      expect(find.text('Ya, Tetapkan'), findsOneWidget);
     });
   });
 }
