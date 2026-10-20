@@ -24,8 +24,8 @@ class ArisanScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final periodsAsync = ref.watch(periodsControllerProvider);
-    final isAdmin = ref.watch(currentMemberProfileProvider).valueOrNull?.isAdmin ??
-        false;
+    final isAdmin =
+        ref.watch(currentMemberProfileProvider).valueOrNull?.isAdmin ?? false;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -38,8 +38,8 @@ class ArisanScreen extends ConsumerWidget {
             SizedBox(height: 200, child: AppLoading()),
           ],
         ),
-        error: (err, _) =>
-            AppErrorState(onRetry: () => ref.invalidate(periodsControllerProvider)),
+        error: (err, _) => AppErrorState(
+            onRetry: () => ref.invalidate(periodsControllerProvider)),
         data: (periods) {
           if (periods.isEmpty) {
             return ListView(
@@ -68,9 +68,8 @@ class ArisanScreen extends ConsumerWidget {
           // Riwayat = periode completed saja; preview dibatasi 5 terbaru.
           final sorted = [...periods]
             ..sort((a, b) => b.periodNumber.compareTo(a.periodNumber));
-          final active = sorted
-              .where((p) => p.status != 'completed')
-              .firstOrNull;
+          final active =
+              sorted.where((p) => p.status != 'completed').firstOrNull;
           final completed =
               sorted.where((p) => p.status == 'completed').toList();
           final history = completed.take(5).toList();
@@ -103,9 +102,7 @@ class ArisanScreen extends ConsumerWidget {
               AppSectionHeader(
                 title: 'Periode Berjalan',
                 actionLabel: isAdmin ? 'Periode Baru' : null,
-                onAction: isAdmin
-                    ? () => PeriodFormDialog.show(context)
-                    : null,
+                onAction: isAdmin ? () => PeriodFormDialog.show(context) : null,
               ),
               const SizedBox(height: AppSpacing.sm),
               if (active != null)
@@ -161,14 +158,17 @@ class _ActivePeriodCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: AppRadii.card,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: AppColors.primary.withValues(alpha: 0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -181,6 +181,7 @@ class _ActivePeriodCard extends StatelessWidget {
             children: [
               AppBadge(
                 label: 'ARISAN PERIODE #${period.periodNumber}',
+                color: Colors.white,
               ),
               _StatusBadge(status: period.status),
             ],
@@ -189,21 +190,21 @@ class _ActivePeriodCard extends StatelessWidget {
           Text(
             Formatters.formatDate(period.eventDate),
             style: AppTypography.h2.copyWith(
-              color: AppColors.textPrimary,
+              color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
           _InfoRow(
             icon: Icons.home_rounded,
-            iconColor: AppColors.primary,
+            iconColor: Colors.white,
             label: 'Tuan Rumah',
             value: 'Di rumah $hostName',
           ),
           const SizedBox(height: AppSpacing.sm),
           _InfoRow(
             icon: Icons.location_on_rounded,
-            iconColor: AppColors.accent,
+            iconColor: Colors.white,
             label: 'Lokasi Acara',
             value: address,
           ),
@@ -211,7 +212,7 @@ class _ActivePeriodCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             _InfoRow(
               icon: Icons.payments_rounded,
-              iconColor: AppColors.success,
+              iconColor: Colors.white,
               label: 'Iuran Anggota',
               value: Formatters.formatCurrency(period.contributionAmount!),
             ),
@@ -220,13 +221,13 @@ class _ActivePeriodCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             _InfoRow(
               icon: Icons.emoji_events_rounded,
-              iconColor: AppColors.accent,
+              iconColor: Colors.white,
               label: 'Pemenang',
               value: period.winner!.fullName,
             ),
           ],
           const SizedBox(height: AppSpacing.lg),
-          const Divider(height: 1),
+          Divider(height: 1, color: Colors.white.withValues(alpha: 0.28)),
           const SizedBox(height: AppSpacing.md),
           Row(
             children: [
@@ -234,7 +235,7 @@ class _ActivePeriodCard extends StatelessWidget {
                 child: _ActionButton(
                   icon: Icons.format_list_bulleted_rounded,
                   label: 'Agenda',
-                  color: const Color(0xFF6366F1),
+                  color: Colors.white,
                   onTap: () => Navigator.pushNamed(
                     context,
                     AppRouter.eventChecklist,
@@ -247,7 +248,7 @@ class _ActivePeriodCard extends StatelessWidget {
                 child: _ActionButton(
                   icon: Icons.photo_library_rounded,
                   label: 'Galeri',
-                  color: const Color(0xFFE11D48),
+                  color: Colors.white,
                   onTap: () => Navigator.pushNamed(
                     context,
                     AppRouter.gallery,
@@ -261,7 +262,7 @@ class _ActivePeriodCard extends StatelessWidget {
                   child: _ActionButton(
                     icon: Icons.casino_rounded,
                     label: 'Kocokan',
-                    color: AppColors.accent,
+                    color: Colors.white,
                     onTap: () => Navigator.pushNamed(
                       context,
                       AppRouter.draw,
@@ -307,30 +308,35 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-    children: [
-      Container(
-        padding: const EdgeInsets.all(AppSpacing.xs),
-        decoration: BoxDecoration(
-          color: iconColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: iconColor, size: 20),
-      ),
-      const SizedBox(width: AppSpacing.md),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.xs),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
             ),
-            Text(value, style: AppTypography.bodyMedium),
-          ],
-        ),
-      ),
-    ],
-  );
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTypography.caption.copyWith(
+                    color: Colors.white.withValues(alpha: 0.75),
+                  ),
+                ),
+                Text(
+                  value,
+                  style: AppTypography.bodyMedium.copyWith(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
 }
 
 class _ActionButton extends StatelessWidget {
@@ -347,30 +353,30 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(12),
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(width: AppSpacing.xs),
-          Text(
-            label,
-            style: AppTypography.caption.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
-      ),
-    ),
-  );
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 18),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                label,
+                style: AppTypography.caption.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 }
 
 class _PeriodHistoryTile extends StatelessWidget {
