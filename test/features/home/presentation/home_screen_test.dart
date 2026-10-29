@@ -218,5 +218,6 @@ void main() {
     expect(find.text('Alamat Rumah & Maps'), findsOneWidget);
     expect(find.text('Daftar Anggota Keluarga'), findsOneWidget);
     expect(find.text('Pengaturan Admin'), findsOneWidget);
+    expect(find.text('Backup'), findsOneWidget);
   });
 }

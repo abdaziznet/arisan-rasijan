@@ -1231,6 +1231,10 @@ class _ProfilePage extends ConsumerWidget {
         .toList();
     final address = addressParts.isEmpty ? '-' : addressParts.join(', ');
     final isAdmin = currentMember?.isAdmin ?? false;
+    // Keep the backup entry discoverable for app admins as well. The backup
+    // screen and backend still require the stronger Supabase app_metadata role.
+    final isBackupAdmin =
+        isAdmin || session?.user.appMetadata['role'] == 'admin';
     final hasWon = currentMember?.hasWonBefore ?? false;
 
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
@@ -1368,6 +1372,16 @@ class _ProfilePage extends ConsumerWidget {
                             context,
                             AppRouter.adminSettings,
                           ),
+                        ),
+                      ],
+                      if (isBackupAdmin) ...[
+                        const Divider(height: 1),
+                        _ProfileMenuTile(
+                          icon: Icons.backup_outlined,
+                          title: 'Backup',
+                          subtitle: 'Pantau dan minta backup database keluarga',
+                          onTap: () =>
+                              Navigator.pushNamed(context, AppRouter.backup),
                         ),
                       ],
                     ],

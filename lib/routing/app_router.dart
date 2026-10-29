@@ -4,6 +4,7 @@ import '../features/auth/presentation/screens/invite_code_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/magic_link_sent_screen.dart';
 import '../features/auth/presentation/screens/profile_completion_screen.dart';
+import '../features/backup/presentation/backup_screen.dart';
 import '../features/biometric/presentation/screens/biometric_lock_screen.dart';
 import '../features/draw/presentation/screens/draw_screen.dart';
 import '../features/events/presentation/screens/event_checklist_screen.dart';
@@ -40,6 +41,7 @@ abstract final class AppRouter {
   static const gathering = '/gathering';
   static const gatheringEventDetail = '/gathering-event-detail';
   static const adminSettings = '/admin-settings';
+  static const backup = '/backup';
   static const profileLocation = '/profile-location';
   static const quran = '/quran';
   static const dailyPrayers = '/daily-prayers';
@@ -78,6 +80,7 @@ abstract final class AppRouter {
               eventId: settings.arguments as String,
             ),
           adminSettings => const AdminSettingsScreen(),
+          backup => const BackupScreen(),
           profileLocation => const ProfileLocationScreen(),
           quran => QuranScreen(initialSurah: settings.arguments as int?),
           dailyPrayers => DailyPrayersScreen(

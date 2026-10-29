@@ -55,6 +55,18 @@
       "skillPath": "skills/imagegen-frontend-mobile/SKILL.md",
       "computedHash": "7c1d1dc59cd0df4063b8621af543bf5dea1d576b261507e17b0323c69680b048"
     },
+    "penetration-testing-with-strix": {
+      "source": "usestrix/strix",
+      "sourceType": "github",
+      "skillPath": "skills/penetration-testing-with-strix/SKILL.md",
+      "computedHash": "fa60081abea5dd1b85cf771156d2998ba021429db8abfcf09da171eb171afb1b"
+    },
+    "ponytail": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail/SKILL.md",
+      "computedHash": "9feedbe220d039ba30720217b3fce16214817063fb54a48843d89368c86554e9"
+    },
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",
