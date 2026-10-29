@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "250625819276",
+    "project_id": "arisan-rasijan",
+    "storage_bucket": "arisan-rasijan.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:250625819276:android:38100150140135a49c71a9",
+        "android_client_info": {
+          "package_name": "net.abdaziz.arisanbanirasijan"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "250625819276-kmp89mdvkrbuids5kec4308060rnjqe6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsdQ7jbYSSnRMcXASaNfcAlPMb_VvHCCM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "250625819276-kmp89mdvkrbuids5kec4308060rnjqe6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
